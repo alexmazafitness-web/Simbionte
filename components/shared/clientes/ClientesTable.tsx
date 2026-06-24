@@ -1,0 +1,151 @@
+import { clientesActivos, hasNotas, type ClienteVM } from "@/lib/coaching/clientes";
+import { CATEGORIAS } from "@/lib/coaching/constants";
+import { fmtDateCorta } from "@/lib/coaching/format";
+import { Chip } from "@/components/ui/Chip";
+import { Pill } from "@/components/ui/Pill";
+import { SearchInput } from "@/components/ui/SearchInput";
+import { MesoPill, PagoPill, RevisionPill } from "./statusPills";
+
+export type ClienteFiltro = "all" | "pago" | "meso" | "nota" | "baja";
+
+const FILTROS: { value: ClienteFiltro; label: string }[] = [
+  { value: "all", label: "Todos" },
+  { value: "pago", label: "Pago próximo" },
+  { value: "meso", label: "Meso a actualizar" },
+  { value: "nota", label: "Con nota" },
+  { value: "baja", label: "Bajas" },
+];
+
+function notasCount(c: ClienteVM): number {
+  return CATEGORIAS.reduce((s, cat) => s + c.notas[cat].length, 0);
+}
+
+export function ClientesTable({
+  clientes,
+  search,
+  onSearchChange,
+  filtro,
+  onFiltroChange,
+  onOpenDrawer,
+  onNuevoCliente,
+}: {
+  clientes: ClienteVM[];
+  search: string;
+  onSearchChange: (v: string) => void;
+  filtro: ClienteFiltro;
+  onFiltroChange: (f: ClienteFiltro) => void;
+  onOpenDrawer: (id: string) => void;
+  onNuevoCliente: () => void;
+}) {
+  const q = search.toLowerCase();
+  let list = clientes.filter((c) => c.nombre.toLowerCase().includes(q));
+
+  if (filtro === "baja") {
+    list = list.filter((c) => c.estado === "baja");
+  } else {
+    list = clientesActivos(list);
+    if (filtro === "pago") list = list.filter((c) => c.pagoD !== null && c.pagoD <= 7);
+    if (filtro === "meso") list = list.filter((c) => c.mesociclo && c.mesociclo.estado !== "EN_CURSO");
+    if (filtro === "nota") list = list.filter(hasNotas);
+  }
+
+  return (
+    <div>
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <SearchInput value={search} onChange={onSearchChange} placeholder="Buscar cliente…" />
+        <div className="flex gap-1.5">
+          {FILTROS.map((f) => (
+            <Chip key={f.value} active={filtro === f.value} onClick={() => onFiltroChange(f.value)}>
+              {f.label}
+            </Chip>
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={onNuevoCliente}
+          className="ml-auto rounded-lg bg-gold px-4 py-2.5 text-[12.5px] font-bold text-[#1a1208] transition hover:bg-gold-bright"
+        >
+          + Nuevo cliente
+        </button>
+      </div>
+
+      <div className="overflow-hidden rounded-2xl border border-line-soft bg-panel">
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="bg-panel-2">
+              {["Cliente", "Grupo", "Cuota", "Alta", "Permanencia", "1ª fase", "Próximo pago", "Próxima revisión", "Mesociclo", "Notas", "LTV"].map(
+                (h, i) => (
+                  <th
+                    key={h}
+                    className={`border-b border-line px-4 py-3 text-[10px] font-semibold tracking-wider text-text-dim uppercase ${
+                      i === 10 ? "text-right" : "text-left"
+                    }`}
+                  >
+                    {h}
+                  </th>
+                ),
+              )}
+            </tr>
+          </thead>
+          <tbody>
+            {list.length === 0 ? (
+              <tr>
+                <td colSpan={11} className="px-4 py-9 text-center text-text-dim">
+                  Sin clientes que coincidan
+                </td>
+              </tr>
+            ) : (
+              list.map((c) => {
+                const baja = c.estado === "baja";
+                const n = notasCount(c);
+                return (
+                  <tr
+                    key={c.id}
+                    onClick={() => onOpenDrawer(c.id)}
+                    className={`cursor-pointer border-b border-line-soft last:border-b-0 transition hover:bg-panel-2 ${
+                      baja ? "opacity-60" : ""
+                    }`}
+                  >
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-panel-3 font-heading text-xs font-bold text-gold">
+                          {c.iniciales}
+                        </div>
+                        <div className="font-semibold">{c.nombre}</div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="rounded-md bg-panel-3 px-2.5 py-1 font-heading text-[11px] font-bold tracking-wide text-gold-bright">
+                        {c.grupoCodigo ?? "—"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-[13.5px]">
+                      {c.cuota ?? "—"}
+                      {c.cuota !== null && (
+                        <span className="text-[11px] text-text-dim"> € / {c.recurrencia?.toLowerCase()}</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-[12.5px] text-text-2">{fmtDateCorta(c.fechaAlta)}</td>
+                    <td className="px-4 py-3">{c.permanencia}m</td>
+                    <td className="px-4 py-3">
+                      {c.faseCompletada ? <Pill variant="ok">Sí</Pill> : <Pill variant="neutral">No</Pill>}
+                    </td>
+                    <td className="px-4 py-3">
+                      {baja ? <Pill variant="bad">Baja {c.bajaFecha ? fmtDateCorta(c.bajaFecha) : ""}</Pill> : <PagoPill dias={c.pagoD} />}
+                    </td>
+                    <td className="px-4 py-3">{baja ? <Pill variant="neutral">—</Pill> : <RevisionPill dias={c.revD} />}</td>
+                    <td className="px-4 py-3">{baja ? <Pill variant="neutral">—</Pill> : <MesoPill estado={c.mesociclo?.estado ?? null} />}</td>
+                    <td className="px-4 py-3">
+                      {n ? <Pill variant="neutral">{n}</Pill> : <span className="text-text-dim">—</span>}
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums">{c.ltvAcumulado} €</td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}

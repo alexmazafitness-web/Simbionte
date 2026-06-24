@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#141414">
+<title>Control Clientes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Schibsted+Grotesk:wght@400;500;600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme: dark;
+  --ink:#141414;
+  --panel:#1a1a1a;
+  --panel-2:#1f1f1f;
+  --panel-3:#242424;
+  --line:rgba(201,169,110,.14);
+  --line-soft:rgba(237,230,214,.07);
+  --gold:#C9A96E;
+  --gold-bright:#E2C892;
+  --gold-dim:rgba(201,169,110,.5);
+  --text:#EDE6D6;
+  --text-2:#b9b2a4;
+  --text-dim:#7d776c;
+  --ok:#74C69D;
+  --warn:#D9A441;
+  --bad:#D9624A;
+  --ok-bg:rgba(116,198,157,.1);
+  --warn-bg:rgba(217,164,65,.1);
+  --bad-bg:rgba(217,98,74,.12);
+  --disp:'Bebas Neue',sans-serif;
+  --head:'Schibsted Grotesk',sans-serif;
+  --body:'DM Sans',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{color-scheme:dark;background:var(--ink)!important;color:var(--text);font-family:var(--body)}
+body{min-height:100vh;-webkit-font-smoothing:antialiased;font-feature-settings:"tnum"}
+::selection{background:rgba(201,169,110,.3);color:#fff}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select{font-family:inherit;background:var(--panel-2)!important;color:var(--text)!important}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(201,169,110,.18);border-radius:9px}
+::-webkit-scrollbar-thumb:hover{background:rgba(201,169,110,.35)}
+
+.app{display:grid;grid-template-columns:248px 1fr;min-height:100vh}
+
+.side{background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+.brand{padding:26px 24px 22px;border-bottom:1px solid var(--line-soft)}
+.brand .mark{font-family:var(--disp);font-size:30px;letter-spacing:.04em;line-height:.92;color:var(--text)}
+.brand .mark b{color:var(--gold)}
+.brand .sub{font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:var(--text-dim);margin-top:7px}
+.nav{padding:16px 14px;display:flex;flex-direction:column;gap:2px;flex:1}
+.nav-label{font-size:9.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--text-dim);padding:14px 12px 7px}
+.nav-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:9px;color:var(--text-2);font-weight:500;font-size:14px;transition:.16s;position:relative;width:100%;text-align:left}
+.nav-item svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.7;flex-shrink:0;opacity:.8}
+.nav-item:hover{background:var(--panel-2);color:var(--text)}
+.nav-item.on{background:linear-gradient(90deg,rgba(201,169,110,.14),rgba(201,169,110,.03));color:var(--gold-bright)}
+.nav-item.on::before{content:"";position:absolute;left:0;top:9px;bottom:9px;width:3px;border-radius:3px;background:var(--gold)}
+.nav-item .badge{margin-left:auto;background:var(--bad);color:#fff;font-size:10.5px;font-weight:700;min-width:18px;height:18px;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 5px}
+.nav-item .badge.amber{background:var(--warn);color:#1a1208}
+.side-foot{padding:16px 22px;border-top:1px solid var(--line-soft);display:flex;align-items:center;gap:11px}
+.avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--gold),#9a7c47);display:flex;align-items:center;justify-content:center;font-family:var(--head);font-weight:700;color:#1a1208;font-size:14px}
+.side-foot .nm{font-size:13px;font-weight:600;line-height:1.25}
+.side-foot .rl{font-size:11px;color:var(--text-dim)}
+
+.main{min-width:0;display:flex;flex-direction:column}
+.topbar{display:flex;align-items:center;gap:20px;padding:20px 34px;border-bottom:1px solid var(--line-soft);position:sticky;top:0;background:rgba(20,20,20,.86);backdrop-filter:blur(14px);z-index:20}
+.topbar .tt{flex:1}
+.topbar .date{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--text-dim)}
+.topbar .date.big{font-size:20px;letter-spacing:.02em;text-transform:none;color:var(--text);font-family:var(--head);font-weight:500}
+.topbar h1{font-family:var(--head);font-size:21px;font-weight:700;letter-spacing:-.01em;margin-top:2px}
+.mrr{text-align:right}
+.mrr .lbl{font-size:9.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--text-dim)}
+.mrr .val{font-family:var(--disp);font-size:30px;color:var(--gold);line-height:.9;letter-spacing:.02em}
+.goal{min-width:200px}
+.goal .gtop{font-family:var(--body);font-weight:500;font-size:11.5px;color:var(--text-2);margin-bottom:7px;letter-spacing:.01em}
+.goal .gtop b{color:var(--text);font-weight:600}
+.gbar{height:2px;background:var(--line);border-radius:2px;overflow:hidden}
+.gbar i{display:block;height:100%;background:var(--gold);border-radius:2px}
+
+.view{padding:30px 34px 60px;display:none;animation:fade .3s ease}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+.eyebrow{font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--gold-dim);display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.eyebrow::after{content:"";height:1px;flex:1;background:var(--line)}
+.mod-count{font-family:var(--disp);font-size:13px;letter-spacing:0;text-transform:none;color:var(--gold-bright);background:rgba(201,169,110,.12);padding:1px 9px;border-radius:20px;line-height:1.6}
+
+.mini-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:9px}
+.mini-cli{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line-soft);border-radius:10px;padding:10px 12px;cursor:pointer;transition:.13s}
+.mini-cli:hover{border-color:var(--gold-dim)}
+.mini-cli .mc-ini{width:30px;height:30px;border-radius:8px;background:var(--panel-3);display:flex;align-items:center;justify-content:center;font-family:var(--head);font-weight:700;font-size:11px;color:var(--gold);flex-shrink:0}
+.mini-cli .mc-name{font-size:13px;font-weight:600;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mini-cli .mc-grp{font-size:10.5px;color:var(--text-dim);flex-shrink:0}
+.mini-cli .mc-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.mc-dot.ok{background:var(--ok)}
+.mc-dot.warn{background:var(--warn)}
+.mc-dot.bad{background:var(--bad)}
+.section{margin-bottom:38px}
+
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+.kpi{background:var(--panel);border:1px solid var(--line-soft);border-radius:14px;padding:18px 18px 16px;position:relative;overflow:hidden}
+.kpi .kl{font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--text-dim);font-weight:600;line-height:1.3;min-height:27px}
+.kpi .kv{font-family:var(--disp);font-size:42px;line-height:.85;margin:8px 0 4px;color:var(--text)}
+.kpi .ks{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px}
+.kpi .dot{width:6px;height:6px;border-radius:50%}
+.s-ok{background:var(--ok-bg);color:var(--ok)} .s-ok .dot{background:var(--ok)}
+.s-warn{background:var(--warn-bg);color:var(--warn)} .s-warn .dot{background:var(--warn)}
+.s-bad{background:var(--bad-bg);color:var(--bad)} .s-bad .dot{background:var(--bad)}
+.kpi .kref{position:absolute;top:16px;right:16px;font-size:10px;color:var(--text-dim)}
+
+.queue{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px}
+.qcard{background:var(--panel);border:1px solid var(--line-soft);border-top:3px solid var(--line);border-radius:12px;padding:0;overflow:hidden;position:relative}
+.qcard.urgent{border-top-color:var(--bad)}
+.qcard.soon{border-top-color:var(--warn)}
+.qcard.info{border-top-color:var(--gold)}
+.qcard.low{border-top-color:var(--line)}
+.qhead{display:flex;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid var(--line-soft)}
+.qcard.urgent .qhead{background:var(--bad-bg)}
+.qcard.soon .qhead{background:var(--warn-bg)}
+.qcard.info .qhead{background:rgba(201,169,110,.08)}
+.qcard.low .qhead{background:var(--panel-2)}
+.qhead .qi{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.qhead .qi svg{width:16px;height:16px;stroke-width:1.8;fill:none}
+.urgent .qi{background:var(--bad-bg);color:var(--bad)}
+.soon .qi{background:var(--warn-bg);color:var(--warn)}
+.info .qi{background:rgba(201,169,110,.12);color:var(--gold)}
+.low .qi{background:var(--panel-3);color:var(--text-2)}
+.qprio{font-family:var(--disp);font-size:10px;letter-spacing:.12em;padding:2px 8px;border-radius:5px;text-transform:uppercase;margin-left:auto}
+.qcard.urgent .qprio{background:var(--bad);color:#fff}
+.qcard.soon .qprio{background:var(--warn);color:#1a1208}
+.qcard.info .qprio{background:rgba(201,169,110,.18);color:var(--gold-bright)}
+.qcard.low .qprio{background:var(--panel-3);color:var(--text-dim)}
+.qhead .qt{font-family:var(--head);font-weight:700;font-size:14px}
+.qhead .qcount{font-family:var(--disp);font-size:22px;line-height:1}
+.qcard.urgent .qcount{color:var(--bad)}
+.qcard.soon .qcount{color:var(--warn)}
+.qcard.info .qcount{color:var(--gold)}
+.qcard.low .qcount{color:var(--text-dim)}
+.qbody{padding:7px 9px}
+.qrow{display:flex;align-items:center;gap:10px;padding:8px 8px;border-radius:8px;transition:.13s}
+.qrow:hover{background:var(--panel-2)}
+.qrow .qname{font-size:13.5px;font-weight:500;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:6px}
+.note-client{padding:10px 8px;border-radius:8px;cursor:pointer;transition:.13s}
+.note-client:hover{background:var(--panel-2)}
+.note-client + .note-client{border-top:1px solid var(--line-soft);margin-top:2px}
+.nc-name{font-size:13.5px;font-weight:600;margin-bottom:6px}
+.nc-sec{display:flex;gap:8px;align-items:flex-start;padding:3px 0}
+.nc-tag{flex-shrink:0;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:2px 7px;border-radius:5px;margin-top:1px}
+.nc-tag.meso{background:#243B55;color:#C9A96E}
+.nc-tag.nutricion{background:#2A4A38;color:#C9A96E}
+.nc-tag.seguimiento{background:#000;color:#C9A96E}
+.nc-tag.otros{background:var(--panel-3);color:var(--text-2)}
+.nc-txt{font-size:12.5px;color:var(--text-2);line-height:1.45}
+.qrow .qmeta{font-size:11.5px;color:var(--text-dim);white-space:nowrap}
+.qrow .pill{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap}
+.qcheck{width:24px;height:24px;border-radius:7px;background:var(--panel-3);color:var(--text-dim);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.13s}
+.qcheck svg{width:13px;height:13px}
+.qcheck:hover{background:var(--ok-bg);color:var(--ok)}
+.pill.r{background:var(--bad-bg);color:var(--bad)}
+.pill.w{background:var(--warn-bg);color:var(--warn)}
+.pill.g{background:var(--ok-bg);color:var(--ok)}
+
+.toolbar{display:flex;align-items:center;gap:11px;margin-bottom:16px;flex-wrap:wrap}
+.search{position:relative;flex:1;max-width:300px}
+.search svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);width:15px;height:15px;stroke:var(--text-dim);fill:none;stroke-width:1.8}
+.search input{width:100%;padding:9px 13px 9px 35px;border:1px solid var(--line);border-radius:9px;font-size:13px;outline:none}
+.search input:focus{border-color:var(--gold-dim)}
+.chips{display:flex;gap:7px}
+.chip{padding:7px 14px;border:1px solid var(--line);border-radius:20px;font-size:12px;font-weight:500;color:var(--text-2);transition:.15s}
+.chip:hover{color:var(--text);border-color:var(--gold-dim)}
+.chip.on{background:var(--gold);color:#1a1208;border-color:var(--gold);font-weight:600}
+
+.tbl-wrap{background:var(--panel);border:1px solid var(--line-soft);border-radius:14px;overflow:hidden}
+table{width:100%;border-collapse:collapse}
+thead th{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);font-weight:600;text-align:left;padding:13px 16px;border-bottom:1px solid var(--line);background:var(--panel-2)}
+thead th.num{text-align:right}
+tbody td{padding:13px 16px;border-bottom:1px solid var(--line-soft);font-size:13.5px;vertical-align:middle}
+tbody tr{cursor:pointer;transition:.12s}
+tbody tr:hover{background:var(--panel-2)}
+tbody tr:last-child td{border-bottom:none}
+.cli{display:flex;align-items:center;gap:11px}
+.cli .ci{width:32px;height:32px;border-radius:8px;background:var(--panel-3);display:flex;align-items:center;justify-content:center;font-family:var(--head);font-weight:700;font-size:12px;color:var(--gold);flex-shrink:0}
+.cli .cn{font-weight:600;line-height:1.2}
+.cli .cd{font-size:11px;color:var(--text-dim)}
+td.num{text-align:right;font-variant-numeric:tabular-nums}
+.tag{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:6px}
+.grp{font-family:var(--head);font-weight:700;font-size:11px;padding:3px 9px;border-radius:6px;background:var(--panel-3);color:var(--gold-bright);letter-spacing:.05em}
+
+.board{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.col{background:var(--panel);border:1px solid var(--line-soft);border-radius:14px;overflow:hidden}
+.col-h{padding:15px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:11px}
+.col-h .gt{font-family:var(--disp);font-size:26px;color:var(--gold);line-height:.8;letter-spacing:.03em}
+.col-h .gx .d{font-size:12.5px;font-weight:600}
+.col-h .gx .dt{font-size:10.5px;color:var(--text-dim)}
+.col-h .cnt{margin-left:auto;background:var(--panel-3);color:var(--text-2);font-size:12px;font-weight:700;min-width:24px;height:24px;border-radius:7px;display:flex;align-items:center;justify-content:center}
+.col-b{padding:9px}
+
+.leads-board{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:18px}
+.lead-col{background:var(--panel);border:1px solid var(--line-soft);border-radius:14px;overflow:hidden}
+.lead-col-h{padding:13px 14px;border-bottom:1px solid var(--line);font-family:var(--head);font-weight:700;font-size:12.5px;display:flex;align-items:center;gap:8px}
+.lead-col-h .cnt{margin-left:auto;background:var(--panel-3);color:var(--text-2);font-size:11.5px;font-weight:700;min-width:21px;height:21px;border-radius:6px;display:flex;align-items:center;justify-content:center}
+.lead-col-b{padding:8px;min-height:60px}
+.lead-card{background:var(--panel-2);border-radius:10px;padding:11px 12px;margin-bottom:8px;cursor:pointer;transition:.13s;border:1px solid transparent}
+.lead-card:last-child{margin-bottom:0}
+.lead-card:hover{border-color:var(--gold-dim)}
+.lead-card .lc-n{font-size:13px;font-weight:600;line-height:1.2}
+.lead-card .lc-m{font-size:11px;color:var(--text-dim);margin-top:3px}
+.lead-card .lc-note{font-size:11.5px;color:var(--text-2);margin-top:6px;line-height:1.4}
+.lead-actions{display:flex;gap:5px;margin-top:9px}
+.lead-actions button{flex:1;font-size:10.5px;font-weight:700;padding:5px 4px;border-radius:6px;background:var(--panel-3);color:var(--text-dim);transition:.13s;text-align:center}
+.lead-actions button:hover{color:var(--text)}
+.lead-actions button.la-next:hover{color:var(--gold-bright);background:rgba(201,169,110,.14)}
+.lead-actions button.la-cliente:hover{color:var(--ok);background:var(--ok-bg)}
+.lead-actions button.la-descartar:hover{color:var(--bad);background:var(--bad-bg)}
+.lead-hist-row{display:flex;align-items:center;gap:14px;background:var(--panel);border:1px solid var(--line-soft);border-radius:12px;padding:13px 16px;margin-bottom:8px;cursor:pointer}
+.lead-hist-row:hover{border-color:var(--gold-dim)}
+.lead-hist-row .lc-n{flex:1;font-size:13.5px;font-weight:600}
+.rcard{padding:11px 12px;border-radius:9px;background:var(--panel-2);margin-bottom:8px;cursor:pointer;transition:.13s;border:1px solid transparent}
+.rcard:last-child{margin-bottom:0}
+.rcard:hover{border-color:var(--gold-dim)}
+.rcard .rn{font-size:13px;font-weight:600;line-height:1.2}
+.rcard .rm{font-size:11px;color:var(--text-dim);margin-top:4px;display:flex;align-items:center;gap:6px}
+
+.stack{display:flex;flex-direction:column;gap:10px}
+.lrow{background:var(--panel);border:1px solid var(--line-soft);border-radius:12px;padding:15px 18px;display:flex;align-items:center;gap:18px;cursor:pointer;transition:.13s}
+.lrow:hover{border-color:var(--gold-dim)}
+.lrow .lc{display:flex;align-items:center;gap:12px;min-width:210px}
+.lrow .lmeta{flex:1;min-width:0}
+.prog{height:6px;background:var(--panel-3);border-radius:6px;overflow:hidden;margin-top:8px}
+.prog i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,#9a7c47,var(--gold))}
+.lrow .lr{text-align:right;min-width:120px}
+.lrow .lr .big{font-family:var(--disp);font-size:24px;line-height:.85;color:var(--text)}
+.lrow .lr .sm{font-size:11px;color:var(--text-dim)}
+
+.mgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+
+.tarifas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:24px}
+.tar-card{background:var(--panel);border:1px solid var(--line-soft);border-radius:12px;padding:16px}
+.tar-card .tv{font-family:var(--disp);font-size:32px;color:var(--gold);line-height:.9}
+.tar-card .tv span{font-size:15px;color:var(--text-dim);margin-left:2px}
+.tar-card .tactions{display:flex;gap:8px;margin-top:10px}
+.tar-card .tactions button{font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:6px;color:var(--text-dim);background:var(--panel-2)}
+.tar-card .tactions button:hover{color:var(--text)}
+.tar-card .tactions button.tdel:hover{color:var(--bad)}
+.tar-edit input{width:100%;border:1px solid var(--gold-dim);border-radius:8px;padding:8px 10px;font-size:14px;margin-bottom:8px}
+.tar-add{display:flex;align-items:center;justify-content:center;border:1px dashed var(--line);border-radius:12px;color:var(--gold-dim);font-size:13px;font-weight:600;cursor:pointer;transition:.13s;min-height:90px}
+.tar-add:hover{color:var(--gold-bright);border-color:var(--gold-dim)}
+.mcard{background:var(--panel);border:1px solid var(--line-soft);border-radius:14px;padding:20px}
+.mcard .ml{font-size:12px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:.05em}
+.mcard .mv{font-family:var(--disp);font-size:48px;line-height:.85;margin:12px 0 8px}
+.mcard .mranges{margin-top:14px;border-top:1px solid var(--line-soft);padding-top:12px}
+.mrange{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text-dim);padding:3px 0}
+.mrange .rb{width:8px;height:8px;border-radius:2px}
+
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:.25s;z-index:40}
+.scrim.on{opacity:1;pointer-events:auto}
+.newcli-btn{margin-left:auto;background:var(--gold);color:#1a1208;font-size:12.5px;font-weight:700;padding:9px 16px;border-radius:9px;transition:.15s;white-space:nowrap}
+.newcli-btn:hover{background:var(--gold-bright)}
+.modal-card{position:fixed;top:50%;left:50%;transform:translate(-50%,-48%);width:420px;max-width:92vw;background:var(--panel);border:1px solid var(--line);border-radius:16px;z-index:42;opacity:0;pointer-events:none;transition:.22s;padding:26px 26px 24px}
+.modal-card.on{opacity:1;pointer-events:auto;transform:translate(-50%,-50%)}
+.modal-card h3{font-family:var(--head);font-size:18px;font-weight:700;margin-bottom:18px}
+.mfield{margin-bottom:14px}
+.mfield label{font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:6px}
+.mfield input,.mfield select{width:100%;border:1px solid var(--line);border-radius:9px;padding:10px 12px;font-size:13.5px;outline:none}
+.mfield select{padding-right:32px;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237d776c' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;background-size:14px}
+.mfield input:focus,.mfield select:focus{border-color:var(--gold-dim)}
+.mrow2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.modal-actions{display:flex;gap:10px;margin-top:8px}
+.modal-actions button{flex:1;padding:10px;border-radius:9px;font-size:13.5px;font-weight:600;transition:.13s}
+.modal-actions .mcreate{background:var(--gold);color:#1a1208}
+.modal-actions .mcreate:hover{background:var(--gold-bright)}
+.modal-actions .mcancel{background:var(--panel-3);color:var(--text-2)}
+.modal-actions .mcancel:hover{color:var(--text)}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:480px;max-width:94vw;background:var(--panel);border-left:1px solid var(--line);transform:translateX(100%);transition:.32s cubic-bezier(.4,0,.2,1);z-index:41;overflow-y:auto}
+.drawer.on{transform:none}
+.dr-h{padding:26px 28px 22px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel);z-index:2}
+.dr-h .close{position:absolute;top:24px;right:24px;width:32px;height:32px;border-radius:8px;background:var(--panel-3);display:flex;align-items:center;justify-content:center;color:var(--text-2)}
+.dr-h .close:hover{color:var(--text);background:var(--panel-2)}
+.dr-h .dav{width:52px;height:52px;border-radius:12px;background:linear-gradient(135deg,var(--gold),#9a7c47);display:flex;align-items:center;justify-content:center;font-family:var(--head);font-weight:700;color:#1a1208;font-size:19px}
+.dr-h .dn{font-family:var(--head);font-size:20px;font-weight:700;margin-top:14px}
+.dr-h .dmeta{display:flex;gap:8px;margin-top:9px;flex-wrap:wrap}
+.dr-b{padding:22px 28px 40px}
+.dblock{margin-bottom:24px}
+.dblock .dbt{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold-dim);margin-bottom:11px;display:flex;align-items:center;gap:9px}
+.dblock .dbt::after{content:"";height:1px;flex:1;background:var(--line-soft)}
+.dgrid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.dblock-action{margin-top:10px;width:100%;text-align:center;padding:9px;border-radius:9px;background:var(--panel-2);color:var(--gold-bright);font-size:12.5px;font-weight:600;transition:.13s}
+.dblock-action:hover{background:rgba(201,169,110,.14)}
+.dfield{background:var(--panel-2);border-radius:10px;padding:12px 14px}
+.dfield .fl{font-size:10.5px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.04em}
+.dfield .fv{font-size:15px;font-weight:600;margin-top:4px}
+.dfield.full{grid-column:1/-1}
+.note{background:var(--warn-bg);border:1px solid rgba(217,164,65,.25);border-radius:10px;padding:13px 15px;font-size:13px;color:#e8c98a;display:flex;gap:11px}
+.note svg{width:17px;height:17px;stroke:var(--warn);fill:none;stroke-width:1.8;flex-shrink:0;margin-top:1px}
+
+.note-cat{margin-bottom:16px}
+.note-cat:last-child{margin-bottom:0}
+.nc-head{display:inline-block;font-size:10px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;margin-bottom:8px;padding:3px 9px;border-radius:6px}
+.nc-head.meso{background:#243B55;color:#C9A96E}
+.nc-head.nutricion{background:#2A4A38;color:#C9A96E}
+.nc-head.seguimiento{background:#000;color:#C9A96E}
+.nc-head.otros{background:var(--panel-3);color:var(--text-2)}
+.nv-empty-cat{font-size:12.5px;color:var(--text-dim);font-style:italic;margin-bottom:7px}
+.note-view-row{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:9px 11px;border-radius:8px;background:var(--panel-2);margin-bottom:6px}
+.note-view-row .nv-text{font-size:13px;color:var(--text-2);line-height:1.5;flex:1}
+.note-view-row .nv-edit{flex-shrink:0;font-size:12px;color:var(--text-dim);padding:2px 6px;border-radius:6px;transition:.13s}
+.note-view-row .nv-edit:hover{color:var(--gold-bright);background:rgba(201,169,110,.12)}
+.nv-add{font-size:12px;font-weight:600;color:var(--gold-dim);padding:5px 0;text-align:left;transition:.13s}
+.nv-add:hover{color:var(--gold-bright)}
+
+.note-edit-row{padding:11px 12px;border-radius:9px;background:var(--panel-2);border:1px solid var(--gold-dim);margin-bottom:7px}
+.note-edit-row textarea{width:100%;resize:vertical;border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-size:13px;font-family:var(--body);line-height:1.5;outline:none}
+.note-edit-row textarea:focus{border-color:var(--gold-dim)}
+.ne-actions{display:flex;gap:8px;margin-top:9px}
+.ne-btn{font-size:12px;font-weight:600;padding:6px 13px;border-radius:7px;transition:.13s}
+.ne-btn.save{background:var(--gold);color:#1a1208}
+.ne-btn.save:hover{background:var(--gold-bright)}
+.ne-btn.cancel{background:var(--panel-3);color:var(--text-2)}
+.ne-btn.cancel:hover{color:var(--text)}
+.ne-btn.del{background:var(--bad-bg);color:var(--bad);margin-left:auto}
+.ne-btn.del:hover{background:rgba(217,98,74,.2)}
+
+.foot-note{margin-top:40px;padding:20px 24px;background:var(--panel);border:1px dashed var(--line);border-radius:14px;font-size:13px;color:var(--text-2);line-height:1.65}
+.foot-note b{color:var(--gold-bright)}
+
+@media(max-width:1100px){.kpis{grid-template-columns:repeat(2,1fr)}.board{grid-template-columns:repeat(2,1fr)}.mgrid{grid-template-columns:1fr 1fr}}
+@media(max-width:820px){.app{grid-template-columns:1fr}.side{position:fixed;left:0;top:0;z-index:50;transform:translateX(-100%);transition:.3s;box-shadow:0 0 40px rgba(0,0,0,.5)}.side.open{transform:none}.kpis,.mgrid,.board{grid-template-columns:1fr}.menu-btn{display:flex!important}.topbar{padding:16px 18px}.view{padding:22px 18px 50px}}
+.menu-btn{display:none;width:38px;height:38px;border-radius:9px;background:var(--panel-2);align-items:center;justify-content:center}
+.menu-btn svg{width:20px;height:20px;stroke:var(--text);fill:none;stroke-width:1.8}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side" id="side">
+    <div class="brand">
+      <div class="mark">CONTROL<br><b>CLIENTES</b></div>
+    </div>
+    <nav class="nav" id="nav">
+      <button class="nav-item on" data-v="hoy">
+        <svg viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        Inicio
+      </button>
+      <div class="nav-label">Captación</div>
+      <button class="nav-item" data-v="leads">
+        <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
+        Leads
+      </button>
+      <div class="nav-label">Módulos</div>
+      <button class="nav-item" data-v="clientes">
+        <svg viewBox="0 0 24 24"><path d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6-4a3 3 0 11-3-3"/></svg>
+        Clientes
+      </button>
+      <button class="nav-item" data-v="revisiones">
+        <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7l2 2 4-4"/></svg>
+        Revisiones
+      </button>
+      <button class="nav-item" data-v="pagos">
+        <svg viewBox="0 0 24 24"><path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+        Pagos
+      </button>
+      <button class="nav-item" data-v="meso">
+        <svg viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        Mesociclos
+      </button>
+      <button class="nav-item" data-v="tarifas">
+        <svg viewBox="0 0 24 24"><path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-7l-2-2H5a2 2 0 00-2 2z"/></svg>
+        Tarifas
+      </button>
+      <div class="nav-label">Métricas</div>
+      <button class="nav-item" data-v="metricas">
+        <svg viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        Dashboard
+      </button>
+    </nav>
+    <div class="side-foot">
+      <div class="avatar">AM</div>
+      <div>
+        <div class="nm">Alex Maza</div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <button class="menu-btn" onclick="document.getElementById('side').classList.toggle('open')"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+      <div class="tt">
+        <div class="date big" id="vdate">Martes | 23 junio 2026</div>
+        <h1 id="vtitle" style="display:none">Inicio</h1>
+      </div>
+      <div class="goal">
+        <div class="gtop" id="goal-text">921,67 € / 2.000 € → 46%</div>
+        <div class="gbar"><i id="goal-bar" style="width:46%"></i></div>
+      </div>
+      <div class="mrr">
+        <div class="val" id="mrr-val">922&nbsp;€</div>
+      </div>
+    </header>
+
+    <section class="view on" id="v-hoy">
+      <div class="section">
+        <div class="eyebrow">Acciones</div>
+        <div class="queue" id="queue"></div>
+      </div>
+
+      <div class="section">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
+          <div class="eyebrow" style="flex:1;margin-bottom:0">Clientes <span class="mod-count" id="hoy-cli-count"></span></div>
+          <button class="newcli-btn" onclick="openClientModal()">+ Nuevo cliente</button>
+        </div>
+        <div class="mini-grid" id="mini-clientes"></div>
+      </div>
+    </section>
+
+    <section class="view" id="v-leads">
+      <div class="toolbar">
+        <div class="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><input id="lead-search" placeholder="Buscar lead…" oninput="buildLeadsBoard()"></div>
+        <div class="chips" id="lead-chips">
+          <button class="chip on" data-f="activos" onclick="setLeadFilter(this)">Activos</button>
+          <button class="chip" data-f="historico" onclick="setLeadFilter(this)">Histórico</button>
+        </div>
+        <button class="newcli-btn" onclick="openLeadModal()">+ Nuevo lead</button>
+      </div>
+      <div id="leads-board"></div>
+    </section>
+
+    <section class="view" id="v-clientes">
+      <div class="eyebrow">Clientes <span class="mod-count" id="cli-total-badge"></span></div>
+      <div class="toolbar">
+        <div class="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><input id="cli-search" placeholder="Buscar cliente…" oninput="filterClients()"></div>
+        <div class="chips" id="cli-chips">
+          <button class="chip on" data-f="all" onclick="setFilter(this)">Todos</button>
+          <button class="chip" data-f="pago" onclick="setFilter(this)">Pago próximo</button>
+          <button class="chip" data-f="meso" onclick="setFilter(this)">Meso a actualizar</button>
+          <button class="chip" data-f="nota" onclick="setFilter(this)">Con nota</button>
+          <button class="chip" data-f="baja" onclick="setFilter(this)">Bajas</button>
+        </div>
+        <button class="newcli-btn" onclick="openClientModal()">+ Nuevo cliente</button>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr>
+            <th>Cliente</th><th>Grupo</th><th>Cuota</th><th>Alta</th><th>Permanencia</th><th>1ª fase</th><th>Próximo pago</th><th>Próxima revisión</th><th>Mesociclo</th><th>Notas</th><th class="num">LTV</th>
+          </tr></thead>
+          <tbody id="cli-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="view" id="v-revisiones">
+      <div class="eyebrow">Tablero de revisiones · por grupo <span class="mod-count" id="rev-total-badge"></span></div>
+      <div class="board" id="board"></div>
+      <div class="foot-note" style="margin-top:24px"><b>Por qué importa:</b> en tu Sheet las fechas de revisión individuales y las de grupo se contradicen (cliente con 19-jun mientras el grupo S1 cae el 27-jun). El SaaS unifica: asignas a un cliente a un grupo y su calendario se genera solo. Un clic reprograma a todo el grupo.</div>
+    </section>
+
+    <section class="view" id="v-pagos">
+      <div class="kpis section" style="grid-template-columns:repeat(4,1fr)">
+        <div class="kpi"><div class="kl">MRR activo</div><div class="kv" style="color:var(--gold)" id="kpi-mrr">922€</div><span class="ks s-ok"><span class="dot"></span><span id="kpi-mrr-n">12 clientes</span></span></div>
+        <div class="kpi"><div class="kl">Vencido</div><div class="kv" id="kpi-vencido">0€</div><span class="ks s-bad"><span class="dot"></span><span id="kpi-vencido-n">0 clientes</span></span></div>
+        <div class="kpi"><div class="kl">Cobra en 7 días</div><div class="kv" id="kpi-proximo">0€</div><span class="ks s-warn"><span class="dot"></span><span id="kpi-proximo-n">0 clientes</span></span></div>
+        <div class="kpi"><div class="kl">Ticket medio</div><div class="kv" id="kpi-ticket">0€</div><span class="ks s-ok"><span class="dot"></span>/ mes</span></div>
+      </div>
+      <div class="eyebrow">Estado de cobros <span class="mod-count" id="pag-total-badge"></span></div>
+      <div class="stack" id="pagos"></div>
+    </section>
+
+    <section class="view" id="v-meso">
+      <div class="eyebrow">Mesociclos en curso <span class="mod-count" id="meso-total-badge"></span></div>
+      <div class="stack" id="meso"></div>
+    </section>
+
+    <section class="view" id="v-tarifas">
+      <div class="eyebrow">Tarifas disponibles <span class="mod-count" id="tar-total-badge"></span></div>
+      <div class="tarifas-grid" id="tarifas-list"></div>
+      <div class="foot-note">Estas son las cuotas que aparecen al crear un cliente nuevo. Añade, edita o elimina las que quieras — los clientes ya existentes no se ven afectados, cada uno conserva su propia cuota.</div>
+    </section>
+
+    <section class="view" id="v-metricas">
+      <div class="eyebrow">Retención &amp; LTV</div>
+      <div class="mgrid section" id="m-ret"></div>
+      <div class="eyebrow">Cumplimiento del sistema</div>
+      <div class="mgrid" id="m-acc"></div>
+    </section>
+  </main>
+</div>
+
+<div class="scrim" id="scrim" onclick="closeDrawer();closeClientModal()"></div>
+<aside class="drawer" id="drawer"></aside>
+<div class="modal-wrap" id="modalWrap"></div>
+
+<script>
+const grupos = {S1:{d:"Sábado A",dt:"27 jun"},S2:{d:"Sábado B",dt:"04 jul"},D1:{d:"Domingo A",dt:"28 jun"},D2:{d:"Domingo B",dt:"05 jul"}};
+
+const C = [
+ {n:"Juan Pablo Allende",ini:"JA",alta:"10 jun 25",cuota:"60 €",rec:"Mensual",pago:"10 jul 26",pagoD:17,grupo:"S1",revD:3,meso:"03 ago 26",mesoD:41,mesoEst:"EN CURSO",micros:"6 × 7d",ltv:720,perm:"12,4",fase:1,notas:{meso:"Abrir nuevo meso al acabar micro 14 y plantear minicut.",nutricion:"",seguimiento:"",otros:""}},
+ {n:"Adilson Mendes",ini:"AM",alta:"15 jun 25",cuota:"60 €",rec:"Mensual",pago:"15 jul 26",pagoD:22,grupo:"S2",revD:10,meso:"03 ago 26",mesoD:41,mesoEst:"EN CURSO",micros:"6 × 7d",ltv:720,perm:"12,3",fase:1,notas:{}},
+ {n:"Ilias Chidmi",ini:"IC",alta:"01 sep 25",cuota:"60 €",rec:"Mensual",pago:"01 jul 26",pagoD:8,grupo:"S2",revD:10,meso:"06 jul 26",mesoD:13,mesoEst:"EN CURSO",micros:"10 × 7d",ltv:540,perm:"9,7",fase:1,notas:{}},
+ {n:"Salim Yaakoubi",ini:"SY",alta:"18 oct 25",cuota:"60 €",rec:"Mensual",pago:"18 jul 26",pagoD:25,grupo:"S1",revD:3,meso:"06 jul 26",mesoD:13,mesoEst:"EN CURSO",micros:"6 × 7d",ltv:480,perm:"8,1",fase:1,notas:{meso:"",nutricion:"Ajuste de dieta aplicado en esta revisión.",seguimiento:"",otros:""}},
+ {n:"Carlos Segovia",ini:"CS",alta:"29 nov 25",cuota:"60 €",rec:"Mensual",pago:"29 jun 26",pagoD:6,grupo:"S1",revD:3,meso:"03 ago 26",mesoD:41,mesoEst:"EN CURSO",micros:"6 × 7d",ltv:360,perm:"6,8",fase:1,notas:{}},
+ {n:"Julian García",ini:"JG",alta:"08 ene 26",cuota:"70 €",rec:"Mensual",pago:"08 jul 26",pagoD:15,grupo:"D1",revD:3,meso:"13 jul 26",mesoD:20,mesoEst:"EN CURSO",micros:"13 × 7d",ltv:350,perm:"5,5",fase:0,notas:{}},
+ {n:"Nico Handschuh",ini:"NH",alta:"28 feb 26",cuota:"80 €",rec:"Mensual",pago:"28 jun 26",pagoD:5,grupo:"D1",revD:3,meso:"05 oct 26",mesoD:104,mesoEst:"EN CURSO",micros:"15 × 7d",ltv:240,perm:"3,8",fase:0,notas:{}},
+ {n:"Alejandro Berkaoui",ini:"AB",alta:"08 abr 26",cuota:"230 €",rec:"Trimestral",pago:"08 ago 26",pagoD:46,grupo:"D2",revD:10,meso:"06 jul 26",mesoD:13,mesoEst:"EN CURSO",micros:"12 × 7d",ltv:153,perm:"2,5",fase:0,notas:{meso:"",nutricion:"",seguimiento:"Revisar peso 14/06/2026.",otros:""}},
+ {n:"Aimar Azcárate",ini:"AA",alta:"21 abr 26",cuota:"90 €",rec:"Mensual",pago:"21 jun 26",pagoD:-2,grupo:"D2",revD:10,meso:"13 jul 26",mesoD:20,mesoEst:"EN CURSO",micros:"11 × 7d",ltv:180,perm:"2,1",fase:0,notas:{}},
+ {n:"Kauan Ramos",ini:"KR",alta:"05 may 26",cuota:"115 €",rec:"Mensual",pago:"05 jul 26",pagoD:12,grupo:"S2",revD:10,meso:"06 jul 26",mesoD:13,mesoEst:"EN CURSO",micros:"8 × 7d",ltv:115,perm:"1,6",fase:0,notas:{}},
+ {n:"Ian Choquez",ini:"Iance",alta:"13 may 26",cuota:"90 €",rec:"Mensual",pago:"13 jul 26",pagoD:20,grupo:"D1",revD:3,meso:"13 jul 26",mesoD:20,mesoEst:"EN CURSO",micros:"8 × 7d",ltv:90,perm:"1,3",fase:0,notas:{meso:"",nutricion:"",seguimiento:"En próxima revisión asegurar que el ritmo se ajusta al deseado.",otros:""}},
+ {n:"Iker Mena",ini:"IM",alta:"31 may 26",cuota:"300 €",rec:"Trimestral",pago:"31 ago 26",pagoD:69,grupo:"S1",revD:10,meso:"13 jul 26",mesoD:20,mesoEst:"EN CURSO",micros:"6 × 7d",ltv:0,perm:"0,8",fase:0,notas:{}}
+];
+C.forEach(c=>c.ini=(c.n.split(" ")[0][0]+c.n.split(" ").slice(-1)[0][0]));
+
+const $=s=>document.querySelector(s);
+const pagoTag=d=> d<0?`<span class="tag s-bad"><span class="dot"></span>Vencido ${Math.abs(d)}d</span>`: d<=7?`<span class="tag s-warn"><span class="dot"></span>En ${d}d</span>`:`<span class="tag s-ok"><span class="dot"></span>En ${d}d</span>`;
+const revTag=d=> d<0?`<span class="tag s-bad"><span class="dot"></span>Retraso ${Math.abs(d)}d</span>`:`<span class="tag s-ok"><span class="dot"></span>En ${d}d</span>`;
+const mesoTag=c=> c.mesoEst==="CON RETRASO"?`<span class="tag s-bad"><span class="dot"></span>Retraso</span>`: c.mesoEst==="ACTUALIZAR"?`<span class="tag s-warn"><span class="dot"></span>Actualizar</span>`:`<span class="tag s-ok"><span class="dot"></span>En curso</span>`;
+
+const catLabel={meso:"Mesociclo",nutricion:"Nutrición",seguimiento:"Seguimiento",otros:"Otros"};
+const hasNotas=c=>c.notas&&Object.values(c.notas).some(arr=>Array.isArray(arr)&&arr.length>0);
+const genId=()=>'n'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+function normalizeNotas(c){
+  if(!c.notas) c.notas={};
+  Object.keys(catLabel).forEach(k=>{
+    const v=c.notas[k];
+    if(Array.isArray(v)) c.notas[k]=v.map(it=>typeof it==='string'?{id:genId(),text:it}:it);
+    else if(typeof v==='string') c.notas[k]=v?[{id:genId(),text:v}]:[];
+    else c.notas[k]=[];
+  });
+}
+C.forEach(normalizeNotas);
+function normalizeEstado(c){ if(!c.estado) c.estado="activo"; }
+C.forEach(normalizeEstado);
+const activos=()=>C.filter(c=>c.estado==="activo");
+const toISO=d=>d.toISOString().slice(0,10);
+
+let LEADS=[]; // pipeline de captación: leads antes de convertirse en cliente
+let leadFilter="activos";
+let convertingLeadId=null; // si !=null, el modal de nuevo cliente está convirtiendo este lead
+const ETAPAS={
+  nuevo:{label:"Nuevo contacto",next:"audio"},
+  audio:{label:"Audio enviado",next:"llamada_agendada"},
+  llamada_agendada:{label:"Llamada agendada",next:"llamada_hecha"},
+  llamada_hecha:{label:"Llamada hecha",next:null}
+};
+const ETAPAS_ORDEN=["nuevo","audio","llamada_agendada","llamada_hecha"];
+
+const EXTRA_CLIENTES=[]; // clientes creados a mano, persistidos aparte de los 12 originales
+let TARIFAS=[115,300,570,1080].map(v=>({id:genId(),valor:v})); // tarifas disponibles al crear cliente nuevo, editable por el coach
+let editingTarifa=null; // id de tarifa en edición, o '__new__', o null
+
+const MESES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const fmtDate=d=>`${String(d.getDate()).padStart(2,'0')} ${MESES[d.getMonth()]} ${String(d.getFullYear()).slice(2)}`;
+const addDays=(date,days)=>{const d=new Date(date);d.setDate(d.getDate()+days);return d;};
+const grupoRevDDefault={S1:4,S2:11,D1:4,D2:-3};
+
+function buildQueue(){
+  const A=activos();
+  const vencidos=A.filter(c=>c.pagoD<0);
+  const proximos=A.filter(c=>c.pagoD>=0&&c.pagoD<=7);
+  const cobros=[...vencidos,...proximos].sort((a,b)=>a.pagoD-b.pagoD);
+  const revPend=A.filter(c=>c.revD<0);
+  const mesoUpd=A.filter(c=>c.mesoEst!=="EN CURSO");
+  const conNotas=A.filter(hasNotas);
+  const card=(cls,icon,title,arr,render,prio)=>`
+   <div class="qcard ${cls}">
+     <div class="qhead"><div class="qi">${icon}</div><div class="qt">${title}</div><div class="qcount">${arr.length}</div><div class="qprio">P${prio}</div></div>
+     <div class="qbody">${arr.map(render).join("")}</div>
+   </div>`;
+  const icP=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="1.8" d="M3 10h18M6 5h12a3 3 0 013 3v8a3 3 0 01-3 3H6a3 3 0 01-3-3V8a3 3 0 013-3z"/></svg>`;
+  const icR=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="1.8" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2m-3 7l2 2 4-4"/></svg>`;
+  const icM=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="1.8" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>`;
+  const icN=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-width="1.8" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.4-9.4a2 2 0 112.8 2.8L11.8 16 8 17l1-3.8 8.6-8.6z"/></svg>`;
+  const row=(c,extra,pill,actionBtn)=>`<div class="qrow" onclick="openDrawer('${c.n}')"><span class="qname">${c.n}</span><span class="qmeta">${extra}</span>${pill}${actionBtn||""}</div>`;
+  const noteCard=c=>`<div class="note-client" onclick="openDrawer('${c.n}')">
+     <div class="nc-name">${c.n}</div>
+     ${Object.entries(c.notas).filter(([,arr])=>arr&&arr.length).map(([k,arr])=>arr.map(it=>`<div class="nc-sec"><span class="nc-tag ${k}">${catLabel[k]}</span><span class="nc-txt">${it.text}</span></div>`).join("")).join("")}
+   </div>`;
+  const icCheck=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 13l4 4L19 7"/></svg>`;
+  const icGear=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33h0a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51h0a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v0a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>`;
+  const btnCheck=(fn,name,title)=>`<button class="qcheck" onclick="event.stopPropagation();${fn}('${name}')" title="${title}">${icCheck}</button>`;
+  const btnGear=(name)=>`<button class="qcheck" onclick="event.stopPropagation();openMesoModal('${name}')" title="Gestionar mesociclo">${icGear}</button>`;
+  let p=0;
+  $("#queue").innerHTML=
+    (conNotas.length?card("info",icN,"Notas",conNotas,noteCard,++p):"")+
+    (mesoUpd.length?card("soon",icM,"Mesociclos",mesoUpd,c=>row(c,c.mesoEst==="CON RETRASO"?"Vencido":"Acaba "+c.meso,`<span class="pill ${c.mesoEst==='CON RETRASO'?'r':'w'}">${c.mesoEst==='CON RETRASO'?Math.abs(c.mesoD)+'d':c.mesoD+'d'}</span>`,btnGear(c.n)),++p):"")+
+    (revPend.length?card("soon",icR,"Revisiones",revPend,c=>row(c,`Grupo ${c.grupo}`,`<span class="pill r">${Math.abs(c.revD)}d</span>`,btnCheck('marcarRevisionHecha',c.n,'Marcar revisión hecha')),++p):"")+
+    (cobros.length?card("soon",icP,"Cobros",cobros,c=>row(c,c.cuota,c.pagoD<0?`<span class="pill r">Vencido ${Math.abs(c.pagoD)}d</span>`:`<span class="pill w">${c.pagoD}d</span>`,btnCheck('marcarCobroHecho',c.n,'Marcar cobro cobrado')),++p):"");
+}
+
+let curFilter="all";
+function clientStatus(c){
+  if(c.pagoD<0||c.revD<0) return "bad";
+  if(c.pagoD<=7||c.mesoEst!=="EN CURSO") return "warn";
+  return "ok";
+}
+function buildMiniClientes(){
+  const A=activos();
+  $("#mini-clientes").innerHTML=A.map(c=>`
+   <div class="mini-cli" onclick="openDrawer('${c.n}')">
+     <div class="mc-ini">${c.ini}</div>
+     <span class="mc-name">${c.n}</span>
+     <span class="mc-grp">${c.grupo}</span>
+     <span class="mc-dot ${clientStatus(c)}"></span>
+   </div>`).join("");
+  $("#hoy-cli-count").textContent=A.length;
+}
+
+function renderClients(){
+  const q=($("#cli-search")?.value||"").toLowerCase();
+  let list=C.filter(c=>c.n.toLowerCase().includes(q));
+  if(curFilter==="baja") list=list.filter(c=>c.estado==="baja");
+  else{
+    list=list.filter(c=>c.estado==="activo");
+    if(curFilter==="pago") list=list.filter(c=>c.pagoD<=7);
+    if(curFilter==="meso") list=list.filter(c=>c.mesoEst!=="EN CURSO");
+    if(curFilter==="nota") list=list.filter(hasNotas);
+  }
+  const notasCount=c=>Object.values(c.notas).reduce((s,arr)=>s+(arr?arr.length:0),0);
+  const dash='<span class="tag" style="background:var(--panel-3);color:var(--text-dim)">—</span>';
+  $("#cli-body").innerHTML=list.map(c=>{
+    const nCount=notasCount(c);
+    const baja=c.estado==="baja";
+    return `<tr onclick="openDrawer('${c.n}')" style="${baja?'opacity:.6':''}">
+     <td><div class="cli"><div class="ci">${c.ini}</div><div class="cn">${c.n}</div></div></td>
+     <td><span class="grp">${c.grupo}</span></td>
+     <td>${c.cuota}<span style="color:var(--text-dim);font-size:11px"> / ${c.rec.toLowerCase()}</span></td>
+     <td style="color:var(--text-2);font-size:12.5px">${c.alta}</td>
+     <td>${c.perm}m</td>
+     <td>${c.fase?'<span class="tag s-ok"><span class="dot"></span>Sí</span>':'<span class="tag" style="background:var(--panel-3);color:var(--text-dim)">No</span>'}</td>
+     <td>${baja?`<span class="tag" style="background:var(--bad-bg);color:var(--bad)">Baja ${c.bajaFecha||''}</span>`:pagoTag(c.pagoD)}</td>
+     <td>${baja?dash:revTag(c.revD)}</td>
+     <td>${baja?dash:mesoTag(c)}</td>
+     <td>${nCount?`<span class="tag" style="background:rgba(201,169,110,.14);color:var(--gold-bright)">${nCount}</span>`:'<span style="color:var(--text-dim)">—</span>'}</td>
+     <td class="num">${c.ltv} €</td>
+   </tr>`;
+  }).join("")||`<tr><td colspan="11" style="text-align:center;color:var(--text-dim);padding:34px">Sin clientes que coincidan</td></tr>`;
+  $("#cli-total-badge").textContent=activos().length;
+}
+function setFilter(b){document.querySelectorAll('#cli-chips .chip').forEach(x=>x.classList.remove('on'));b.classList.add('on');curFilter=b.dataset.f;renderClients();}
+function filterClients(){renderClients();}
+
+function buildBoard(){
+  const A=activos();
+  $("#board").innerHTML=Object.keys(grupos).map(g=>{
+    const m=A.filter(c=>c.grupo===g);
+    return `<div class="col">
+      <div class="col-h"><div class="gt">${g}</div><div class="gx"><div class="d">${grupos[g].d}</div><div class="dt">Próxima · ${grupos[g].dt}</div></div><div class="cnt">${m.length}</div></div>
+      <div class="col-b">${m.map(c=>`<div class="rcard" onclick="openDrawer('${c.n}')"><div class="rn">${c.n}</div><div class="rm">${revTag(c.revD)} · ${c.perm}m</div></div>`).join("")}</div>
+    </div>`;
+  }).join("");
+  $("#rev-total-badge").textContent=A.length;
+}
+
+const mesesCiclo={Mensual:1,Trimestral:3,Semestral:6,Anual:12};
+function precioMensual(c){ return cuotaNum(c.cuota)/(mesesCiclo[c.rec]||1); }
+function updateFinanzas(){
+  const A=activos();
+  const mrrExacto=A.reduce((s,c)=>s+precioMensual(c),0);
+  const mrrRedondo=Math.round(mrrExacto);
+  const objetivo=2000;
+  const pct=Math.min(100,Math.round((mrrExacto/objetivo)*100));
+  $("#goal-text").textContent=`${mrrExacto.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})} € / ${objetivo.toLocaleString('es-ES')} € → ${pct}%`;
+  $("#goal-bar").style.width=pct+"%";
+  $("#mrr-val").innerHTML=`${mrrRedondo}&nbsp;€`;
+
+  const vencidos=A.filter(c=>c.pagoD<0);
+  const proximos=A.filter(c=>c.pagoD>=0&&c.pagoD<=7);
+  const vencidoTotal=Math.round(vencidos.reduce((s,c)=>s+cuotaNum(c.cuota),0));
+  const proximoTotal=Math.round(proximos.reduce((s,c)=>s+cuotaNum(c.cuota),0));
+  const ticketMedio=A.length?Math.round(mrrExacto/A.length):0;
+  $("#kpi-mrr").textContent=mrrRedondo+"€";
+  $("#kpi-mrr-n").textContent=A.length+(A.length===1?" cliente":" clientes");
+  $("#kpi-vencido").textContent=vencidoTotal+"€";
+  $("#kpi-vencido-n").textContent=vencidos.length+(vencidos.length===1?" cliente":" clientes");
+  $("#kpi-proximo").textContent=proximoTotal+"€";
+  $("#kpi-proximo-n").textContent=proximos.length+(proximos.length===1?" cliente":" clientes");
+  $("#kpi-ticket").textContent=ticketMedio+"€";
+}
+
+function buildPagos(){
+  const sorted=[...activos()].sort((a,b)=>a.pagoD-b.pagoD);
+  $("#pagos").innerHTML=sorted.map(c=>`
+   <div class="lrow" onclick="openDrawer('${c.n}')">
+     <div class="lc"><div class="ci" style="width:34px;height:34px;border-radius:9px;background:var(--panel-3);display:flex;align-items:center;justify-content:center;font-family:var(--head);font-weight:700;color:var(--gold);font-size:12px">${c.ini}</div><div><div style="font-weight:600">${c.n}</div><div style="font-size:11px;color:var(--text-dim)">${c.rec} · ${c.cuota}</div></div></div>
+     <div class="lmeta"><div style="font-size:12px;color:var(--text-2)">Vence ${c.pago}</div></div>
+     <div class="lr">${pagoTag(c.pagoD)}</div>
+   </div>`).join("");
+  $("#pag-total-badge").textContent=activos().filter(c=>c.pagoD<=7).length;
+}
+
+function buildMeso(){
+  const sorted=[...activos()].sort((a,b)=>a.mesoD-b.mesoD);
+  $("#meso").innerHTML=sorted.map(c=>{
+    const total=70, done=Math.max(0,Math.min(total,total-c.mesoD)); const pct=Math.round(done/total*100);
+    return `<div class="lrow" onclick="openDrawer('${c.n}')">
+      <div class="lc"><div class="ci" style="width:34px;height:34px;border-radius:9px;background:var(--panel-3);display:flex;align-items:center;justify-content:center;font-family:var(--head);font-weight:700;color:var(--gold);font-size:12px">${c.ini}</div><div><div style="font-weight:600">${c.n}</div><div style="font-size:11px;color:var(--text-dim)">${c.micros}</div></div></div>
+      <div class="lmeta"><div style="font-size:12px;color:var(--text-2)">Cierra ${c.meso}</div><div class="prog"><i style="width:${pct}%"></i></div></div>
+      <div class="lr"><div class="big">${c.mesoD<0?'–'+Math.abs(c.mesoD):c.mesoD}<span style="font-size:13px;color:var(--text-dim)">d</span></div>${mesoTag(c)}</div>
+    </div>`;
+  }).join("");
+  $("#meso-total-badge").textContent=C.length;
+}
+
+function buildMetrics(){
+  const ret=[
+    {l:"Permanencia media",v:"5,6",u:"meses",st:"bad",sl:"Problema",ranges:[["ok","Sano ≥ 8m"],["warn","Alerta 6–8m"],["bad","Problema < 6m"]]},
+    {l:"LTV promedio",v:"329",u:"€",st:"bad",sl:"Débil",ranges:[["ok","Sano ≥ 1.200€"],["warn","Alerta 800–1.200€"],["bad","Débil < 800€"]]},
+    {l:"Completó 1ª fase",v:"20",u:"%",st:"bad",sl:"Problema serio",ranges:[["ok","Sano ≥ 70%"],["warn","Alerta 60–70%"],["bad","Problema < 60%"]]},
+    {l:"Bajas tempranas",v:"0",u:"%",st:"ok",sl:"Excelente",ranges:[["ok","Excelente < 10%"],["warn","Alerta 15–20%"],["bad","Problema > 20%"]]},
+    {l:"Tasa de abandono",v:"7,1",u:"%",st:"ok",sl:"Sano",ranges:[["ok","Sano < 8%"],["warn","Alerta 8–12%"],["bad","Problema > 12%"]]},
+    {l:"Calidad de servicio",v:"OK",u:"",st:"warn",sl:"Aceptable",ranges:[["ok","Dudas a tiempo"],["warn","Revisiones a tiempo"],["bad","—"]]}
+  ];
+  const acc=[
+    {l:"Onboarding enviado",v:"100",u:"%",st:"ok",sl:"Sano",ranges:[["ok","Objetivo 100%"]]},
+    {l:"Objetivo inicial definido",v:"100",u:"%",st:"ok",sl:"Sano",ranges:[["ok","Objetivo 100%"]]},
+    {l:"Servicio sin incidencias 30d",v:"0",u:"%",st:"bad",sl:"Sin datos",ranges:[["bad","Columna vacía en Sheet"]]}
+  ];
+  const col={ok:"var(--ok)",warn:"var(--warn)",bad:"var(--bad)"};
+  const card=m=>`<div class="mcard"><div class="ml">${m.l}</div><div class="mv" style="color:${col[m.st]}">${m.v}<span style="font-size:20px;color:var(--text-dim)">${m.u}</span></div><span class="ks s-${m.st}"><span class="dot"></span>${m.sl}</span>
+    <div class="mranges">${m.ranges.map(r=>`<div class="mrange"><span class="rb" style="background:${col[r[0]]}"></span>${r[1]}</div>`).join("")}</div></div>`;
+  $("#m-ret").innerHTML=ret.map(card).join("");
+  $("#m-acc").innerHTML=acc.map(card).join("");
+}
+
+let currentDrawerName=null;
+let editingNote=null; // {name, cat, id} — id=null means "creating a new note"
+
+function buildNotesBlock(c){
+  const sections=Object.keys(catLabel).map(k=>{
+    const items=c.notas[k]||[];
+    const itemsHtml=items.map(it=>{
+      const editing=editingNote&&editingNote.name===c.n&&editingNote.cat===k&&editingNote.id===it.id;
+      if(editing){
+        return `<div class="note-edit-row">
+           <textarea id="ne-text" rows="2">${it.text}</textarea>
+           <div class="ne-actions">
+             <button class="ne-btn save" onclick="saveNote('${c.n}','${k}','${it.id}')">Guardar</button>
+             <button class="ne-btn cancel" onclick="cancelEditNote()">Cancelar</button>
+             <button class="ne-btn del" onclick="deleteNote('${c.n}','${k}','${it.id}')">Eliminar</button>
+           </div>
+         </div>`;
+      }
+      return `<div class="note-view-row">
+         <div class="nv-text">${it.text}</div>
+         <button class="nv-edit" onclick="editNoteItem('${c.n}','${k}','${it.id}')" title="Editar">✎</button>
+       </div>`;
+    }).join("");
+    const adding=editingNote&&editingNote.name===c.n&&editingNote.cat===k&&editingNote.id===null;
+    const addBlock=adding?`<div class="note-edit-row">
+         <textarea id="ne-text" rows="2" placeholder="Escribe la nota…"></textarea>
+         <div class="ne-actions">
+           <button class="ne-btn save" onclick="saveNote('${c.n}','${k}',null)">Guardar</button>
+           <button class="ne-btn cancel" onclick="cancelEditNote()">Cancelar</button>
+         </div>
+       </div>`:`<button class="nv-add" onclick="addNote('${c.n}','${k}')">+ Añadir nota</button>`;
+    return `<div class="note-cat">
+       <div class="nc-head ${k}">${catLabel[k]}</div>
+       ${itemsHtml||(adding?'':'<div class="nv-empty-cat">Sin notas</div>')}
+       ${addBlock}
+     </div>`;
+  }).join("");
+  return `<div class="dblock"><div class="dbt">Notas</div>${sections}</div>`;
+}
+
+function addNote(name,cat){ editingNote={name,cat,id:null}; openDrawer(name); }
+function editNoteItem(name,cat,id){ editingNote={name,cat,id}; openDrawer(name); }
+function cancelEditNote(){ editingNote=null; if(currentDrawerName) openDrawer(currentDrawerName); }
+
+async function persistNotas(){
+  const data={};
+  C.forEach(c=>data[c.n]=c.notas);
+  try{
+    await window.storage.set('notas_data', JSON.stringify(data), false);
+  }catch(e){ console.error('No se pudieron guardar las notas',e); }
+}
+
+async function saveNote(name,cat,id){
+  const ta=document.getElementById('ne-text');
+  const val=(ta?ta.value:"").trim();
+  const c=C.find(x=>x.n===name); if(!c)return;
+  if(!val){ editingNote=null; openDrawer(name); return; }
+  if(id===null||id==='null'){
+    c.notas[cat].push({id:genId(),text:val});
+  }else{
+    const item=c.notas[cat].find(it=>it.id===id);
+    if(item) item.text=val;
+  }
+  editingNote=null;
+  await persistNotas();
+  buildQueue(); renderClients(); buildMiniClientes();
+  openDrawer(name);
+}
+
+async function deleteNote(name,cat,id){
+  const c=C.find(x=>x.n===name); if(!c)return;
+  c.notas[cat]=c.notas[cat].filter(it=>it.id!==id);
+  editingNote=null;
+  await persistNotas();
+  buildQueue(); renderClients(); buildMiniClientes();
+  openDrawer(name);
+}
+
+function buildTarifas(){
+  const cards=TARIFAS.map(t=>{
+    if(editingTarifa===t.id){
+      return `<div class="tar-card tar-edit">
+         <input id="tar-input" type="number" min="0" value="${t.valor}">
+         <div class="tactions">
+           <button onclick="saveTarifa('${t.id}')">Guardar</button>
+           <button onclick="cancelTarifaEdit()">Cancelar</button>
+           <button class="tdel" onclick="deleteTarifa('${t.id}')">Eliminar</button>
+         </div>
+       </div>`;
+    }
+    return `<div class="tar-card">
+       <div class="tv">${t.valor}<span>€</span></div>
+       <div class="tactions">
+         <button onclick="editTarifa('${t.id}')">Editar</button>
+         <button class="tdel" onclick="deleteTarifa('${t.id}')">Eliminar</button>
+       </div>
+     </div>`;
+  }).join("");
+  const addCard=editingTarifa==='__new__'?`<div class="tar-card tar-edit">
+       <input id="tar-input" type="number" min="0" placeholder="Importe en €">
+       <div class="tactions">
+         <button onclick="saveTarifa(null)">Guardar</button>
+         <button onclick="cancelTarifaEdit()">Cancelar</button>
+       </div>
+     </div>`:`<div class="tar-add" onclick="addTarifa()">+ Añadir tarifa</div>`;
+  $("#tarifas-list").innerHTML=cards+addCard;
+  $("#tar-total-badge").textContent=TARIFAS.length;
+  if(editingTarifa) setTimeout(()=>document.getElementById('tar-input')?.focus(),10);
+}
+function addTarifa(){ editingTarifa='__new__'; buildTarifas(); }
+function editTarifa(id){ editingTarifa=id; buildTarifas(); }
+function cancelTarifaEdit(){ editingTarifa=null; buildTarifas(); }
+
+async function persistTarifas(){
+  try{ await window.storage.set('tarifas', JSON.stringify(TARIFAS), false); }
+  catch(e){ console.error('No se pudieron guardar las tarifas',e); }
+}
+
+async function saveTarifa(id){
+  const raw=document.getElementById('tar-input')?.value;
+  const valor=Math.max(0, Math.round(Number(raw)||0));
+  if(!valor){ editingTarifa=null; buildTarifas(); return; }
+  if(id===null||id==='null'){
+    TARIFAS.push({id:genId(),valor});
+  }else{
+    const t=TARIFAS.find(x=>x.id===id);
+    if(t) t.valor=valor;
+  }
+  TARIFAS.sort((a,b)=>a.valor-b.valor);
+  editingTarifa=null;
+  await persistTarifas();
+  buildTarifas();
+}
+
+async function deleteTarifa(id){
+  TARIFAS=TARIFAS.filter(t=>t.id!==id);
+  editingTarifa=null;
+  await persistTarifas();
+  buildTarifas();
+}
+
+async function persistClienteOverride(c){
+  if(EXTRA_CLIENTES.includes(c)){
+    try{ await window.storage.set('clientes_nuevos', JSON.stringify(EXTRA_CLIENTES), false); }
+    catch(e){ console.error('No se pudo guardar el cliente',e); }
+    return;
+  }
+  let map={};
+  try{
+    const res=await window.storage.get('clientes_overrides');
+    if(res && res.value) map=JSON.parse(res.value);
+  }catch(e){ /* aún no existe la clave, partimos de un mapa vacío */ }
+  try{
+    const {notas, ...rest}=c; // las notas se persisten aparte
+    map[c.n]=rest;
+    await window.storage.set('clientes_overrides', JSON.stringify(map), false);
+  }catch(e){ console.error('No se pudo guardar el cliente',e); }
+}
+
+function openBajaModal(name){
+  $("#modalWrap").innerHTML=`
+   <div class="modal-card on" id="bajaModal">
+     <h3>Dar de baja a ${name}</h3>
+     <div class="mfield"><label>Fecha de baja</label><input id="baja-fecha" type="date" value="${toISO(new Date())}"></div>
+     <div class="mfield"><label>Motivo</label><input id="baja-motivo" type="text"></div>
+     <div class="modal-actions">
+       <button class="mcancel" onclick="closeClientModal()">Cancelar</button>
+       <button class="mcreate" style="background:var(--bad);color:#fff" onclick="confirmBaja('${name}')">Dar de baja</button>
+     </div>
+   </div>`;
+  $("#scrim").classList.add("on");
+}
+
+async function confirmBaja(name){
+  const c=C.find(x=>x.n===name); if(!c)return;
+  const fechaRaw=document.getElementById('baja-fecha')?.value;
+  const motivo=(document.getElementById('baja-motivo')?.value||"").trim();
+  const fecha=fechaRaw?new Date(fechaRaw+"T00:00:00"):new Date();
+  c.estado="baja"; c.bajaFecha=fmtDate(fecha); c.bajaMotivo=motivo;
+  await persistClienteOverride(c);
+  closeClientModal();
+  buildQueue(); renderClients(); buildMiniClientes(); buildBoard(); buildPagos(); buildMeso(); updateFinanzas();
+  openDrawer(name);
+}
+
+function openEliminarConfirm(name, ev){
+  if(ev) ev.stopPropagation();
+  $("#modalWrap").innerHTML=`
+   <div class="modal-card on" id="eliminarModal">
+     <h3>Eliminar a ${name}</h3>
+     <p style="font-size:13.5px;color:var(--text-2);line-height:1.6;margin-bottom:20px">Esto borra al cliente de forma permanente — notas, histórico y LTV incluidos. No se puede deshacer. ¿Seguro?</p>
+     <div class="modal-actions">
+       <button class="mcancel" onclick="closeClientModal()">Cancelar</button>
+       <button class="mcreate" style="background:var(--bad);color:#fff" onclick="confirmEliminar('${name}')">Eliminar definitivamente</button>
+     </div>
+   </div>`;
+  $("#scrim").classList.add("on");
+}
+
+async function confirmEliminar(name){
+  const c=C.find(x=>x.n===name); if(!c) return;
+  c.estado="eliminado";
+  await persistClienteOverride(c);
+  closeClientModal();
+  closeDrawer();
+  buildQueue(); renderClients(); buildMiniClientes(); buildBoard(); buildPagos(); buildMeso(); updateFinanzas();
+}
+
+function openReactivarModal(name){
+  $("#modalWrap").innerHTML=`
+   <div class="modal-card on" id="reactivarModal">
+     <h3>Reactivar a ${name}</h3>
+     <div class="mrow2">
+       <div class="mfield"><label>Cuota (€)</label><select id="re-cuota"><option value="" selected disabled></option>${TARIFAS.map(t=>`<option value="${t.valor}">${t.valor} €</option>`).join("")}</select></div>
+       <div class="mfield"><label>Recurrencia</label><select id="re-rec"><option value="" selected disabled></option><option value="Mensual">Mensual</option><option value="Trimestral">Trimestral</option><option value="Semestral">Semestral</option><option value="Anual">Anual</option></select></div>
+     </div>
+     <div class="mfield"><label>Grupo de revisión</label>
+       <select id="re-grupo"><option value="" selected disabled></option><option value="S1">S1 · Sábado A</option><option value="S2">S2 · Sábado B</option><option value="D1">D1 · Domingo A</option><option value="D2">D2 · Domingo B</option></select>
+     </div>
+     <div class="modal-actions">
+       <button class="mcancel" onclick="closeClientModal()">Cancelar</button>
+       <button class="mcreate" onclick="confirmReactivar('${name}')">Reactivar cliente</button>
+     </div>
+   </div>`;
+  $("#scrim").classList.add("on");
+}
+
+async function confirmReactivar(name){
+  const c=C.find(x=>x.n===name); if(!c)return;
+  const cuota=document.getElementById('re-cuota')?.value||"";
+  const rec=document.getElementById('re-rec')?.value||"";
+  const grupo=document.getElementById('re-grupo')?.value||"";
+  if(!cuota||!rec||!grupo) return;
+  const today=new Date();
+  const pagoD={Mensual:30,Trimestral:90,Semestral:180,Anual:365}[rec]||30;
+  const bajaInfo=`Reactivado el ${fmtDate(today)} — baja anterior: ${c.bajaMotivo||'sin motivo'}, el ${c.bajaFecha||'fecha desconocida'}.`;
+  c.estado="activo";
+  c.cuota=`${cuota} €`; c.rec=rec; c.grupo=grupo;
+  c.alta=fmtDate(today); c.perm="0,0";
+  c.pago=fmtDate(addDays(today,pagoD)); c.pagoD=pagoD;
+  c.revD=grupoRevDDefault[grupo];
+  c.meso=fmtDate(today); c.mesoD=14; c.mesoEst="EN CURSO"; c.micros="1 × 7d";
+  c.notas.otros=c.notas.otros||[]; c.notas.otros.push({id:genId(),text:bajaInfo});
+  c.bajaFecha=""; c.bajaMotivo="";
+  await persistClienteOverride(c);
+  await persistNotas();
+  closeClientModal();
+  buildQueue(); renderClients(); buildMiniClientes(); buildBoard(); buildPagos(); buildMeso(); updateFinanzas();
+  openDrawer(name);
+}
+
+const cuotaNum=cuotaStr=>parseFloat(String(cuotaStr).replace(',','.').replace(/[^\d.]/g,''))||0;
+
+async function marcarRevisionHecha(name, ev){
+  if(ev) ev.stopPropagation();
+  const c=C.find(x=>x.n===name); if(!c) return;
+  c.ultimaRevision=fmtDate(new Date());
+  c.revD=14;
+  await persistClienteOverride(c);
+  buildQueue(); renderClients(); buildMiniClientes(); buildBoard();
+  if(currentDrawerName===name) openDrawer(name);
+}
+
+async function marcarCobroHecho(name, ev){
+  if(ev) ev.stopPropagation();
+  const c=C.find(x=>x.n===name); if(!c) return;
+  const today=new Date();
+  const ciclo={Mensual:30,Trimestral:90,Semestral:180,Anual:365}[c.rec]||30;
+  c.pago=fmtDate(addDays(today,ciclo));
+  c.pagoD=ciclo;
+  c.ltv=Math.round((c.ltv||0)+cuotaNum(c.cuota));
+  await persistClienteOverride(c);
+  buildQueue(); renderClients(); buildMiniClientes(); buildPagos(); updateFinanzas();
+  if(currentDrawerName===name) openDrawer(name);
+}
+
+function openMesoModal(name, ev){
+  if(ev) ev.stopPropagation();
+  $("#modalWrap").innerHTML=`
+   <div class="modal-card on" id="mesoModal">
+     <h3>Gestionar mesociclo · ${name}</h3>
+     <div class="mfield"><label>¿Qué quieres hacer?</label>
+       <select id="meso-accion" onchange="toggleMesoFields()">
+         <option value="" selected disabled></option>
+         <option value="ampliar">Añadir microciclos al actual</option>
+         <option value="nuevo">Cerrar y empezar mesociclo nuevo</option>
+       </select>
+     </div>
+     <div id="meso-extra-fields"></div>
+     <div class="modal-actions">
+       <button class="mcancel" onclick="closeClientModal()">Cancelar</button>
+       <button class="mcreate" onclick="confirmMeso('${name}')">Confirmar</button>
+     </div>
+   </div>`;
+  $("#scrim").classList.add("on");
+}
+function toggleMesoFields(){
+  const accion=document.getElementById('meso-accion')?.value;
+  const box=document.getElementById('meso-extra-fields');
+  if(accion==='ampliar'){
+    box.innerHTML=`<div class="mfield"><label>Microciclos a añadir</label><input id="meso-extra-n" type="number" min="1" value="2"></div>`;
+  }else if(accion==='nuevo'){
+    box.innerHTML=`<div class="mrow2">
+       <div class="mfield"><label>Nº microciclos</label><input id="meso-n" type="number" min="1" value="6"></div>
+       <div class="mfield"><label>Días por microciclo</label><input id="meso-dias" type="number" min="1" value="7"></div>
+     </div>`;
+  }else{ box.innerHTML=""; }
+}
+async function confirmMeso(name){
+  const c=C.find(x=>x.n===name); if(!c) return;
+  const accion=document.getElementById('meso-accion')?.value;
+  const today=new Date();
+  if(accion==='ampliar'){
+    const extra=parseInt(document.getElementById('meso-extra-n')?.value)||0;
+    if(extra<=0) return;
+    const m=c.micros.match(/(\d+)\s*×\s*(\d+)d/);
+    const curN=m?parseInt(m[1]):1, dias=m?parseInt(m[2]):7;
+    c.micros=`${curN+extra} × ${dias}d`;
+    c.mesoD=c.mesoD+extra*dias;
+    c.meso=fmtDate(addDays(today,c.mesoD));
+    c.mesoEst="EN CURSO";
+  }else if(accion==='nuevo'){
+    const n=parseInt(document.getElementById('meso-n')?.value)||6;
+    const dias=parseInt(document.getElementById('meso-dias')?.value)||7;
+    c.micros=`${n} × ${dias}d`;
+    c.mesoD=n*dias;
+    c.meso=fmtDate(addDays(today,c.mesoD));
+    c.mesoEst="EN CURSO";
+  }else{ return; }
+  await persistClienteOverride(c);
+  closeClientModal();
+  buildQueue(); renderClients(); buildMiniClientes(); buildMeso();
+  if(currentDrawerName===name) openDrawer(name);
+}
+
+async function persistLeads(){
+  try{ await window.storage.set('leads', JSON.stringify(LEADS), false); }
+  catch(e){ console.error('No se pudieron guardar los leads',e); }
+}
+async function loadLeads(){
+  try{
+    const res=await window.storage.get('leads');
+    if(res && res.value) LEADS=JSON.parse(res.value);
+  }catch(e){ /* aún no hay leads guardados */ }
+}
+
+function setLeadFilter(b){ document.querySelectorAll('#lead-chips .chip').forEach(x=>x.classList.remove('on')); b.classList.add('on'); leadFilter=b.dataset.f; buildLeadsBoard(); }
+
+function buildLeadsBoard(){
+  const q=($("#lead-search")?.value||"").toLowerCase();
+  const all=LEADS.filter(l=>l.nombre.toLowerCase().includes(q));
+  if(leadFilter==="historico"){
+    const hist=all.filter(l=>l.etapa==="cliente"||l.etapa==="descartado");
+    $("#leads-board").innerHTML=hist.length?hist.map(l=>`
+       <div class="lead-hist-row" onclick="openLeadModal('${l.id}')">
+         <span class="lc-n">${l.nombre}</span>
+         <span class="tag" style="background:${l.etapa==='cliente'?'var(--ok-bg)':'var(--bad-bg)'};color:${l.etapa==='cliente'?'var(--ok)':'var(--bad)'}">${l.etapa==='cliente'?'Convertido a cliente':'Descartado'}</span>
+       </div>`).join(""):`<div style="text-align:center;color:var(--text-dim);padding:34px">Sin histórico todavía</div>`;
+    return;
+  }
+  const activos=all.filter(l=>l.etapa==="nuevo"||l.etapa==="audio"||l.etapa==="llamada_agendada"||l.etapa==="llamada_hecha");
+  $("#leads-board").innerHTML=`<div class="leads-board">${ETAPAS_ORDEN.map(et=>{
+    const items=activos.filter(l=>l.etapa===et);
+    const cfg=ETAPAS[et];
+    return `<div class="lead-col">
+      <div class="lead-col-h">${cfg.label}<span class="cnt">${items.length}</span></div>
+      <div class="lead-col-b">${items.map(l=>`
+        <div class="lead-card" onclick="openLeadModal('${l.id}')">
+          <div class="lc-n">${l.nombre}</div>
+          ${l.contacto?`<div class="lc-m">${l.contacto}${l.fuente?' · '+l.fuente:''}</div>`:(l.fuente?`<div class="lc-m">${l.fuente}</div>`:'')}
+          ${l.nota?`<div class="lc-note">${l.nota}</div>`:''}
+          <div class="lead-actions">
+            ${cfg.next?`<button class="la-next" onclick="event.stopPropagation();avanzarLead('${l.id}')">Avanzar →</button>`:''}
+            <button class="la-cliente" onclick="event.stopPropagation();convertirLead('${l.id}')">✓ Cliente</button>
+            <button class="la-descartar" onclick="event.stopPropagation();descartarLead('${l.id}')">✕</button>
+          </div>
+        </div>`).join("")||''}</div>
+    </div>`;
+  }).join("")}</div>`;
+}
+
+function openLeadModal(id){
+  const l=id?LEADS.find(x=>x.id===id):null;
+  $("#modalWrap").innerHTML=`
+   <div class="modal-card on" id="leadModal">
+     <h3>${l?'Editar lead':'Nuevo lead'}</h3>
+     <div class="mfield"><label>Nombre</label><input id="lead-nombre" type="text" value="${l?l.nombre:''}"></div>
+     <div class="mrow2">
+       <div class="mfield"><label>Contacto</label><input id="lead-contacto" type="text" placeholder="Teléfono / Instagram" value="${l?l.contacto||'':''}"></div>
+       <div class="mfield"><label>Fuente</label><input id="lead-fuente" type="text" placeholder="Instagram, recomendación…" value="${l?l.fuente||'':''}"></div>
+     </div>
+     <div class="mfield"><label>Nota</label><input id="lead-nota" type="text" value="${l?l.nota||'':''}"></div>
+     <div class="modal-actions">
+       <button class="mcancel" onclick="closeClientModal()">Cancelar</button>
+       <button class="mcreate" onclick="saveLead(${l?`'${l.id}'`:'null'})">${l?'Guardar':'Crear lead'}</button>
+     </div>
+     ${l?`<button class="ne-btn del" style="width:100%;margin-top:10px" onclick="eliminarLead('${l.id}')">Eliminar lead</button>`:''}
+   </div>`;
+  $("#scrim").classList.add("on");
+  setTimeout(()=>document.getElementById('lead-nombre')?.focus(),10);
+}
+
+async function saveLead(id){
+  const nombre=(document.getElementById('lead-nombre')?.value||"").trim();
+  const contacto=(document.getElementById('lead-contacto')?.value||"").trim();
+  const fuente=(document.getElementById('lead-fuente')?.value||"").trim();
+  const nota=(document.getElementById('lead-nota')?.value||"").trim();
+  if(!nombre) return;
+  if(id){
+    const l=LEADS.find(x=>x.id===id);
+    if(l){ l.nombre=nombre; l.contacto=contacto; l.fuente=fuente; l.nota=nota; }
+  }else{
+    LEADS.push({id:genId(), nombre, contacto, fuente, nota, etapa:"nuevo", fechaCreado:fmtDate(new Date())});
+  }
+  await persistLeads();
+  closeClientModal();
+  buildLeadsBoard();
+}
+
+async function avanzarLead(id){
+  const l=LEADS.find(x=>x.id===id); if(!l) return;
+  const next=ETAPAS[l.etapa]?.next;
+  if(next) l.etapa=next;
+  await persistLeads();
+  buildLeadsBoard();
+}
+
+async function descartarLead(id){
+  const l=LEADS.find(x=>x.id===id); if(!l) return;
+  l.etapa="descartado";
+  await persistLeads();
+  buildLeadsBoard();
+}
+
+async function eliminarLead(id){
+  LEADS=LEADS.filter(l=>l.id!==id);
+  await persistLeads();
+  closeClientModal();
+  buildLeadsBoard();
+}
+
+function convertirLead(id){
+  convertingLeadId=id;
+  openClientModal();
+}
+
+function openClientModal(){
+  const leadPrefill=convertingLeadId?LEADS.find(l=>l.id===convertingLeadId):null;
+  $("#modalWrap").innerHTML=`
+   <div class="modal-card on" id="clientModal">
+     <h3>${leadPrefill?'Convertir lead a cliente':'Nuevo cliente'}</h3>
+     <div class="mfield"><label>Nombre</label><input id="nc-nombre" type="text" value="${leadPrefill?leadPrefill.nombre:''}"></div>
+     <div class="mrow2">
+       <div class="mfield"><label>Cuota (€)</label><select id="nc-cuota"><option value="" selected disabled></option>${TARIFAS.map(t=>`<option value="${t.valor}">${t.valor} €</option>`).join("")}</select></div>
+       <div class="mfield"><label>Recurrencia</label><select id="nc-rec"><option value="" selected disabled></option><option value="Mensual">Mensual</option><option value="Trimestral">Trimestral</option><option value="Semestral">Semestral</option><option value="Anual">Anual</option></select></div>
+     </div>
+     <div class="mfield"><label>Grupo de revisión</label>
+       <select id="nc-grupo"><option value="" selected disabled></option><option value="S1">S1 · Sábado A</option><option value="S2">S2 · Sábado B</option><option value="D1">D1 · Domingo A</option><option value="D2">D2 · Domingo B</option></select>
+     </div>
+     <div class="modal-actions">
+       <button class="mcancel" onclick="closeClientModal()">Cancelar</button>
+       <button class="mcreate" onclick="createClient()">Crear cliente</button>
+     </div>
+   </div>`;
+  $("#scrim").classList.add("on");
+  setTimeout(()=>document.getElementById('nc-nombre')?.focus(),10);
+}
+function closeClientModal(){ $("#modalWrap").innerHTML=""; $("#scrim").classList.remove("on"); convertingLeadId=null; }
+
+async function createClient(){
+  const nombre=(document.getElementById('nc-nombre')?.value||"").trim();
+  const cuota=document.getElementById('nc-cuota')?.value||"";
+  const rec=document.getElementById('nc-rec')?.value||"";
+  const grupo=document.getElementById('nc-grupo')?.value||"";
+  if(!nombre||!cuota||!rec||!grupo) return;
+  const partes=nombre.split(" ");
+  const ini=(partes[0][0]+partes[partes.length-1][0]).toUpperCase();
+  const today=new Date();
+  const pagoD={Mensual:30,Trimestral:90,Semestral:180,Anual:365}[rec]||30;
+  const nuevo={
+    n:nombre, ini, alta:fmtDate(today), cuota:`${cuota} €`, rec,
+    pago:fmtDate(addDays(today,pagoD)), pagoD,
+    grupo, revD:grupoRevDDefault[grupo],
+    meso:fmtDate(today), mesoD:14, mesoEst:"EN CURSO", micros:"1 × 7d",
+    ltv:0, perm:"0,0", fase:0, notas:{}, estado:"activo"
+  };
+  normalizeNotas(nuevo);
+  if(convertingLeadId){
+    const lead=LEADS.find(l=>l.id===convertingLeadId);
+    if(lead){
+      lead.etapa="cliente";
+      if(lead.nota) nuevo.notas.otros.push({id:genId(), text:`Origen: lead (${lead.fuente||'sin fuente'}). Nota previa: ${lead.nota}`});
+      await persistLeads();
+    }
+    convertingLeadId=null;
+  }
+  C.push(nuevo); EXTRA_CLIENTES.push(nuevo);
+  try{ await window.storage.set('clientes_nuevos', JSON.stringify(EXTRA_CLIENTES), false); }
+  catch(e){ console.error('No se pudo guardar el cliente nuevo',e); }
+  closeClientModal();
+  buildQueue(); renderClients(); buildMiniClientes(); buildBoard(); buildPagos(); buildMeso(); updateFinanzas(); buildLeadsBoard();
+}
+
+function openDrawer(name){
+  const c=C.find(x=>x.n===name); if(!c)return;
+  currentDrawerName=name;
+  const baja=c.estado==="baja";
+  const f=(l,v)=>`<div class="dfield"><div class="fl">${l}</div><div class="fv">${v}</div></div>`;
+  $("#drawer").innerHTML=`
+   <div class="dr-h">
+     <button class="close" onclick="closeDrawer()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+     <div class="dav">${c.ini}</div>
+     <div class="dn">${c.n}</div>
+     <div class="dmeta"><span class="grp">${c.grupo}</span>${baja?`<span class="tag" style="background:var(--bad-bg);color:var(--bad)"><span class="dot"></span>Baja</span>`:`<span class="tag s-ok"><span class="dot"></span>Activo</span>`}<span class="tag" style="background:var(--panel-3);color:var(--text-2)">${c.fase?'1ª fase ✓':'1ª fase pendiente'}</span></div>
+   </div>
+   <div class="dr-b">
+     ${baja?`<div class="note" style="margin-bottom:22px"><svg viewBox="0 0 24 24"><path d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span>De baja desde ${c.bajaFecha||'fecha desconocida'}${c.bajaMotivo?` — Motivo: ${c.bajaMotivo}`:''}</span></div>`:''}
+     ${buildNotesBlock(c)}
+     <div class="dblock"><div class="dbt">Mesociclo</div><div class="dgrid">${f("Estructura",c.micros)}${f("Cierra",c.meso)}${f("Días restantes",(c.mesoD<0?'–'+Math.abs(c.mesoD):c.mesoD)+" d")}${f("Estado",mesoTag(c))}</div>${!baja?`<button class="dblock-action" onclick="openMesoModal('${c.n}')">Gestionar mesociclo</button>`:''}</div>
+     <div class="dblock"><div class="dbt">Revisión</div><div class="dgrid">${f("Grupo",grupos[c.grupo].d+" ("+c.grupo+")")}${f("Próxima",grupos[c.grupo].dt)}${f("Estado",revTag(c.revD))}${f("Permanencia",c.perm+" meses")}</div>${!baja?`<button class="dblock-action" onclick="marcarRevisionHecha('${c.n}')">Marcar revisión hecha</button>`:''}</div>
+     <div class="dblock"><div class="dbt">Pago</div><div class="dgrid">${f("Cuota",c.cuota)}${f("Recurrencia",c.rec)}${f("Próximo cobro",c.pago)}${f("Estado",pagoTag(c.pagoD))}</div>${!baja?`<button class="dblock-action" onclick="marcarCobroHecho('${c.n}')">Marcar cobro cobrado</button>`:''}</div>
+     <div class="dblock"><div class="dbt">Valor</div><div class="dgrid">${f("Alta",c.alta)}${f("LTV acumulado",c.ltv+" €")}</div></div>
+     <div class="dblock">
+       ${baja
+         ?`<button class="ne-btn save" style="width:100%;padding:11px;margin-bottom:8px" onclick="openReactivarModal('${c.n}')">Reactivar cliente</button>
+           <button class="ne-btn del" style="width:100%;padding:11px;margin-left:0" onclick="openEliminarConfirm('${c.n}')">Eliminar definitivamente</button>`
+         :`<button class="ne-btn del" style="width:100%;padding:11px;margin-left:0" onclick="openBajaModal('${c.n}')">Dar de baja</button>`}
+     </div>
+   </div>`;
+  $("#scrim").classList.add("on"); $("#drawer").classList.add("on");
+  if(editingNote) setTimeout(()=>{const ta=document.getElementById('ne-text'); if(ta){ta.focus();ta.setSelectionRange(ta.value.length,ta.value.length);}},10);
+}
+function closeDrawer(){$("#scrim").classList.remove("on");$("#drawer").classList.remove("on");}
+document.addEventListener('keydown',e=>{if(e.key==="Escape"){closeDrawer();closeClientModal();}});
+
+const titles={hoy:"Inicio",leads:"Leads",clientes:"Clientes",revisiones:"Revisiones",pagos:"Pagos",meso:"Mesociclos",tarifas:"Tarifas",metricas:"Dashboard"};
+document.querySelectorAll('.nav-item').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');
+  const v=b.dataset.v;
+  document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));
+  $("#v-"+v).classList.add('on');
+  $("#vtitle").textContent=titles[v];
+  $("#vtitle").style.display = v==="hoy" ? "none" : "";
+  $("#vdate").classList.toggle("big", v==="hoy");
+  document.getElementById('side').classList.remove('open');
+});
+
+document.addEventListener('click', e=>{
+  const side=document.getElementById('side');
+  if(side.classList.contains('open') && !side.contains(e.target) && !e.target.closest('.menu-btn')){
+    side.classList.remove('open');
+  }
+});
+
+async function loadNotas(){
+  try{
+    const res=await window.storage.get('notas_data');
+    if(res && res.value){
+      const data=JSON.parse(res.value);
+      C.forEach(c=>{ if(data[c.n]) c.notas=data[c.n]; });
+      C.forEach(normalizeNotas);
+    }
+  }catch(e){ /* aún no hay notas guardadas */ }
+}
+
+async function loadExtraClientes(){
+  try{
+    const res=await window.storage.get('clientes_nuevos');
+    if(res && res.value){
+      const data=JSON.parse(res.value);
+      data.forEach(cl=>{ normalizeNotas(cl); C.push(cl); EXTRA_CLIENTES.push(cl); });
+    }
+  }catch(e){ /* aún no hay clientes nuevos */ }
+}
+
+async function loadTarifas(){
+  try{
+    const res=await window.storage.get('tarifas');
+    if(res && res.value) TARIFAS=JSON.parse(res.value);
+  }catch(e){ /* aún no hay tarifas guardadas, se usan las por defecto */ }
+}
+
+async function loadClienteOverrides(){
+  try{
+    const res=await window.storage.get('clientes_overrides');
+    if(res && res.value){
+      const map=JSON.parse(res.value);
+      C.forEach(c=>{ if(map[c.n]) Object.assign(c, map[c.n]); });
+    }
+  }catch(e){ /* aún no hay cambios guardados */ }
+}
+
+(async function init(){
+  await loadExtraClientes();
+  await loadNotas();
+  await loadTarifas();
+  await loadClienteOverrides();
+  await loadLeads();
+  buildQueue();renderClients();buildMiniClientes();buildBoard();buildPagos();buildMeso();buildMetrics();buildTarifas(); updateFinanzas(); buildLeadsBoard();
+})();
+</script>
+</body>
+</html>

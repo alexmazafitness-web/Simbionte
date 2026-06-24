@@ -7,12 +7,52 @@ body {
   --background: #141414;
   --foreground: #f5f2ec;
   --gold: #c9a96e;
+
+  /* Identidad MARCA — paneles, líneas y semántica (ok/warn/bad) */
+  --panel: #1a1a1a;
+  --panel-2: #1f1f1f;
+  --panel-3: #242424;
+  --line: rgba(201, 169, 110, 0.14);
+  --line-soft: rgba(237, 230, 214, 0.07);
+  --gold-bright: #e2c892;
+  --gold-dim: rgba(201, 169, 110, 0.5);
+  --text-2: #b9b2a4;
+  --text-dim: #7d776c;
+  --ok: #74c69d;
+  --warn: #d9a441;
+  --bad: #d9624a;
+  --ok-bg: rgba(116, 198, 157, 0.1);
+  --warn-bg: rgba(217, 164, 65, 0.1);
+  --bad-bg: rgba(217, 98, 74, 0.12);
+
+  /* Paletas por área */
+  --meso: #243b55;
+  --nutri: #2a4a38;
+  --seguimiento: #000000;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-gold: var(--gold);
+  --color-panel: var(--panel);
+  --color-panel-2: var(--panel-2);
+  --color-panel-3: var(--panel-3);
+  --color-line: var(--line);
+  --color-line-soft: var(--line-soft);
+  --color-gold-bright: var(--gold-bright);
+  --color-gold-dim: var(--gold-dim);
+  --color-text-2: var(--text-2);
+  --color-text-dim: var(--text-dim);
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  --color-bad: var(--bad);
+  --color-ok-bg: var(--ok-bg);
+  --color-warn-bg: var(--warn-bg);
+  --color-bad-bg: var(--bad-bg);
+  --color-meso: var(--meso);
+  --color-nutri: var(--nutri);
+  --color-seguimiento: var(--seguimiento);
   --font-sans: var(--font-dm-sans);
   --font-heading: var(--font-schibsted);
   --font-display: var(--font-bebas);

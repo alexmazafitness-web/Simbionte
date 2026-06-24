@@ -1,0 +1,66 @@
+import { CATEGORIAS, type Categoria, type Recurrencia } from "./constants";
+
+// Tipos y helpers puros, sin dependencias de servidor (next/headers) —
+// este módulo lo importan también componentes cliente.
+
+export type EstadoCliente = "activo" | "baja" | "eliminado";
+export type EstadoMesociclo = "EN_CURSO" | "ACTUALIZAR" | "CON_RETRASO";
+
+export type NotaItem = {
+  id: string;
+  texto: string;
+  categoria: Categoria;
+  fecha: string;
+};
+
+export type MesocicloVM = {
+  id: string;
+  numeroMicrociclos: number;
+  diasMicrociclo: number;
+  fechaFin: string | null;
+  diasRestantes: number | null;
+  estado: EstadoMesociclo;
+};
+
+export type ClienteVM = {
+  id: string;
+  nombre: string;
+  iniciales: string;
+  estado: EstadoCliente;
+  grupoId: string | null;
+  grupoCodigo: string | null;
+  grupoNombre: string | null;
+  fechaAlta: string | null;
+  permanencia: string;
+  faseCompletada: boolean;
+  bajaFecha: string | null;
+  bajaMotivo: string | null;
+  ltvAcumulado: number;
+  cuota: number | null;
+  recurrencia: Recurrencia | null;
+  proximoPago: string | null;
+  pagoD: number | null;
+  proximaRevision: string | null;
+  revD: number | null;
+  mesociclo: MesocicloVM | null;
+  notas: Record<Categoria, NotaItem[]>;
+};
+
+export function estadoMesociclo(diasRestantes: number | null): EstadoMesociclo {
+  if (diasRestantes === null) return "EN_CURSO";
+  if (diasRestantes < 0) return "CON_RETRASO";
+  if (diasRestantes <= 7) return "ACTUALIZAR";
+  return "EN_CURSO";
+}
+
+export function vacioPorCategoria(): Record<Categoria, NotaItem[]> {
+  return { meso: [], nutricion: [], seguimiento: [], otros: [] };
+}
+
+export function hasNotas(c: ClienteVM): boolean {
+  return CATEGORIAS.some((cat) => c.notas[cat].length > 0);
+}
+
+export function clientesActivos(clientes: ClienteVM[]): ClienteVM[] {
+  return clientes.filter((c) => c.estado === "activo");
+}
