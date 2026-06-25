@@ -1,12 +1,7 @@
-import { clientesActivos, type ClienteVM } from "@/lib/coaching/clientes";
-import { MESES_CICLO, OBJETIVO_MRR } from "@/lib/coaching/constants";
+import { calcularMRR, clientesActivos, type ClienteVM } from "@/lib/coaching/clientes";
+import { OBJETIVO_MRR } from "@/lib/coaching/constants";
 import { fmtDateCorta } from "@/lib/coaching/format";
 import { PagoPill } from "./statusPills";
-
-function precioMensual(c: ClienteVM): number {
-  if (!c.cuota || !c.recurrencia) return 0;
-  return c.cuota / MESES_CICLO[c.recurrencia];
-}
 
 function KpiCard({
   label,
@@ -37,7 +32,7 @@ function KpiCard({
 
 export function PagosView({ clientes }: { clientes: ClienteVM[] }) {
   const activos = clientesActivos(clientes);
-  const mrrExacto = activos.reduce((s, c) => s + precioMensual(c), 0);
+  const mrrExacto = calcularMRR(clientes);
   const mrrRedondo = Math.round(mrrExacto);
 
   const vencidos = activos.filter((c) => c.pagoD !== null && c.pagoD < 0);

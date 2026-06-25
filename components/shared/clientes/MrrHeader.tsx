@@ -1,14 +1,8 @@
-import { clientesActivos, type ClienteVM } from "@/lib/coaching/clientes";
-import { MESES_CICLO, OBJETIVO_MRR } from "@/lib/coaching/constants";
-
-function precioMensual(c: ClienteVM): number {
-  if (!c.cuota || !c.recurrencia) return 0;
-  return c.cuota / MESES_CICLO[c.recurrencia];
-}
+import { calcularMRR, type ClienteVM } from "@/lib/coaching/clientes";
+import { OBJETIVO_MRR } from "@/lib/coaching/constants";
 
 export function MrrHeader({ clientes }: { clientes: ClienteVM[] }) {
-  const activos = clientesActivos(clientes);
-  const mrrExacto = activos.reduce((s, c) => s + precioMensual(c), 0);
+  const mrrExacto = calcularMRR(clientes);
   const mrrRedondo = Math.round(mrrExacto);
   const pct = Math.min(100, Math.round((mrrExacto / OBJETIVO_MRR) * 100));
 

@@ -148,9 +148,11 @@ export function ActionQueue({
 }: {
   clientes: ClienteVM[];
   onOpenDrawer: (id: string) => void;
-  onMarcarRevision: (id: string) => void;
-  onMarcarCobro: (id: string) => void;
-  onAbrirMeso: (id: string) => void;
+  // Si se omiten, la cola se muestra en modo solo lectura (sin botones de
+  // acción) — usado en la portada "Hoy", que solo agrega datos, no muta.
+  onMarcarRevision?: (id: string) => void;
+  onMarcarCobro?: (id: string) => void;
+  onAbrirMeso?: (id: string) => void;
 }) {
   const A = clientesActivos(clientes);
   const conNotas = A.filter(hasNotas);
@@ -208,7 +210,7 @@ export function ActionQueue({
                 {Math.abs(c.mesociclo?.diasRestantes ?? 0)}d
               </Pill>
             }
-            action={<GearButton onClick={() => onAbrirMeso(c.id)} />}
+            action={onAbrirMeso && <GearButton onClick={() => onAbrirMeso(c.id)} />}
             onOpenDrawer={onOpenDrawer}
           />
         ))}
@@ -226,7 +228,7 @@ export function ActionQueue({
             cliente={c}
             meta={`Grupo ${c.grupoCodigo ?? "—"}`}
             pill={<Pill variant="bad">{Math.abs(c.revD ?? 0)}d</Pill>}
-            action={<CheckButton title="Marcar revisión hecha" onClick={() => onMarcarRevision(c.id)} />}
+            action={onMarcarRevision && <CheckButton title="Marcar revisión hecha" onClick={() => onMarcarRevision(c.id)} />}
             onOpenDrawer={onOpenDrawer}
           />
         ))}
@@ -250,7 +252,7 @@ export function ActionQueue({
                 <Pill variant="warn">{c.pagoD}d</Pill>
               )
             }
-            action={<CheckButton title="Marcar cobro cobrado" onClick={() => onMarcarCobro(c.id)} />}
+            action={onMarcarCobro && <CheckButton title="Marcar cobro cobrado" onClick={() => onMarcarCobro(c.id)} />}
             onOpenDrawer={onOpenDrawer}
           />
         ))}

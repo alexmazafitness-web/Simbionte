@@ -2,6 +2,8 @@
 
 Sistema operativo personal de Alex Maza. Next.js + Supabase, un único proyecto con dos mundos de datos separados: `personal` (vida) y `coaching` (negocio de fitness). PWA instalable en móvil/escritorio.
 
+> 📐 **Documento de arquitectura completo:** `docs/arquitectura-simbionte.md` — esquema de datos detallado, mapa de navegación, los "puentes" de sinergia entre módulos (§6) y el plan de fases. Consultarlo antes de empezar cualquier fase nueva.
+
 ## Stack
 - Next.js (App Router) + TypeScript
 - Supabase (Postgres + Auth + RLS) — auth por magic-link, un solo usuario por ahora

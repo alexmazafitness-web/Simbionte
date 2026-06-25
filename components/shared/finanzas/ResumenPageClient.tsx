@@ -13,12 +13,14 @@ export function ResumenPageClient({
   crypto,
   deudas,
   objetivos,
+  mrrCoaching,
 }: {
   transacciones: TransaccionVM[];
   inversiones: InversionVM[];
   crypto: CryptoVM[];
   deudas: DeudaVM[];
   objetivos: ObjetivoVM[];
+  mrrCoaching: number;
 }) {
   const [periodo, setPeriodo] = useState<Periodo>("este_mes");
 
@@ -80,6 +82,7 @@ export function ResumenPageClient({
         <MetricCard label="Crypto" value={fmtEUR(totalCry)} color="amber" sub="Portfolio crypto" />
         <MetricCard label="Ahorro acumulado" value={fmtEUR(totalObj)} color="green" sub="Objetivos activos" />
         <MetricCard label="Deuda pendiente" value={fmtEUR(totalDeuda)} color="red" sub="Total a amortizar" />
+        <MetricCard label="Ingreso recurrente del negocio" value={fmtEUR(mrrCoaching)} color="gold" sub="MRR de Coaching" />
       </div>
 
       <div className="mb-7 rounded-2xl border border-line-soft bg-panel p-5">

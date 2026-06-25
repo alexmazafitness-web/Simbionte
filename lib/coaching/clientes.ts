@@ -1,4 +1,4 @@
-import { CATEGORIAS, type Categoria, type Recurrencia } from "./constants";
+import { CATEGORIAS, MESES_CICLO, type Categoria, type Recurrencia } from "./constants";
 
 // Tipos y helpers puros, sin dependencias de servidor (next/headers) —
 // este módulo lo importan también componentes cliente.
@@ -63,4 +63,16 @@ export function hasNotas(c: ClienteVM): boolean {
 
 export function clientesActivos(clientes: ClienteVM[]): ClienteVM[] {
   return clientes.filter((c) => c.estado === "activo");
+}
+
+// Equivalente mensual de la cuota de un cliente, según su recurrencia
+// (Mensual/Trimestral/Semestral/Anual). 0 si no tiene suscripción activa.
+export function precioMensual(c: ClienteVM): number {
+  if (!c.cuota || !c.recurrencia) return 0;
+  return c.cuota / MESES_CICLO[c.recurrencia];
+}
+
+// MRR exacto (con decimales) sumado sobre los clientes activos.
+export function calcularMRR(clientes: ClienteVM[]): number {
+  return clientesActivos(clientes).reduce((s, c) => s + precioMensual(c), 0);
 }

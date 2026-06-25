@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { CATEGORIAS, type Categoria, type Recurrencia } from "./constants";
 import { diffDiasDesdeHoy, iniciales, permanenciaMeses } from "./format";
-import { estadoMesociclo, vacioPorCategoria, type ClienteVM, type EstadoCliente } from "./clientes";
+import { calcularMRR, estadoMesociclo, vacioPorCategoria, type ClienteVM, type EstadoCliente } from "./clientes";
 
 // Sólo para Server Components / Server Actions: importa next/headers vía
 // lib/supabase/server.ts y por tanto nunca debe importarse desde un
@@ -110,4 +110,22 @@ export async function listClientes(): Promise<ClienteVM[]> {
 
   if (error) throw error;
   return (data as unknown as ClienteRow[]).map(shapeCliente);
+}
+
+// Puente explícito Clientes → Finanzas (ver docs/arquitectura-simbionte.md §6):
+// el MRR de coaching alimenta el "ingreso recurrente" de Finanzas personal.
+// Devuelve solo el número — Finanzas no necesita conocer ClienteVM ni nada
+// de la lógica de clientes, solo el resultado ya calculado.
+//
+// Los puentes deben ser "opcionales y desconectables" (§6): un fallo leyendo
+// coaching.clientes (red, permisos, RLS...) no debe tirar abajo la página de
+// Finanzas, así que aquí se atrapa y se degrada a 0 en vez de propagar.
+export async function obtenerMRRActual(): Promise<number> {
+  try {
+    const clientes = await listClientes();
+    return Math.round(calcularMRR(clientes));
+  } catch (error) {
+    console.error("[obtenerMRRActual] no se pudo leer coaching.clientes:", error);
+    return 0;
+  }
 }
