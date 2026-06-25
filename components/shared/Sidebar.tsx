@@ -9,7 +9,20 @@ type NavGroup = { label: string; links: NavLink[] };
 const GROUPS: NavGroup[] = [
   { label: "Inicio", links: [{ label: "Hoy", href: "/" }] },
   { label: "Captación", links: [{ label: "Leads", href: "/coaching/leads" }] },
-  { label: "Personal", links: [] },
+  {
+    label: "Personal",
+    links: [
+      { label: "Mi día", href: "/personal/cerebro" },
+      { label: "Tareas", href: "/personal/cerebro/tareas" },
+      { label: "Ideas", href: "/personal/cerebro/ideas" },
+      { label: "Recordatorios", href: "/personal/cerebro/recordatorios" },
+      { label: "El Norte", href: "/personal/cerebro/norte" },
+      { label: "Calendario", href: "/personal/cerebro/calendario" },
+      { label: "Knowledge", href: "/personal/cerebro/knowledge" },
+      { label: "Infra", href: "/personal/cerebro/infra" },
+      { label: "Revisión", href: "/personal/cerebro/revision" },
+    ],
+  },
   {
     label: "Coaching",
     links: [
