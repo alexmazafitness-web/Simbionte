@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Script — Nastia Iglesias</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --gold: #C9A96E;
+    --gold-dim: rgba(201,169,110,0.13);
+    --gold-border: rgba(201,169,110,0.28);
+    --bg: #0d0d0d;
+    --bg-card: #141414;
+    --bg-card2: #1a1a1a;
+    --border: rgba(255,255,255,0.07);
+    --text: #f0ece4;
+    --text-muted: #888;
+    --text-dim: #444;
+    --warn-bg: rgba(239,154,39,0.1);
+    --warn: #e8a838;
+    --ok-bg: rgba(74,180,110,0.1);
+    --ok: #5bc878;
+    --r: 10px; --r-sm: 6px;
+  }
+  html { background: var(--bg); color: var(--text); font-family: -apple-system,'Segoe UI',sans-serif; font-size: 15px; line-height: 1.6; }
+  body { min-height: 100vh; }
+  .app { display: grid; grid-template-columns: 250px 1fr; min-height: 100vh; }
+  .sidebar { background: var(--bg-card); border-right: 1px solid var(--border); padding: 1.5rem 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; display: flex; flex-direction: column; }
+  .sb-brand { padding: 0 1.25rem 1.25rem; border-bottom: 1px solid var(--border); margin-bottom: 0.75rem; }
+  .sb-brand .b1 { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); }
+  .sb-brand .b2 { font-size: 18px; font-weight: 700; color: var(--text); margin-top: 3px; }
+  .sb-brand .b3 { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 0.55rem 1.25rem; cursor: pointer; border-left: 2px solid transparent; color: var(--text-muted); font-size: 13px; transition: all 0.15s; }
+  .nav-item:hover { background: rgba(255,255,255,0.03); color: var(--text); }
+  .nav-item.active { border-left-color: var(--gold); background: var(--gold-dim); color: var(--text); }
+  .nav-item .nn { width: 22px; height: 22px; border-radius: 50%; border: 1px solid currentColor; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0; }
+  .nav-item.active .nn { background: var(--gold); border-color: var(--gold); color: #000; }
+  .nav-item .nl { font-weight: 500; flex: 1; }
+  .nav-item .nt { font-size: 10px; color: var(--text-dim); }
+  .sb-footer { margin-top: auto; padding: 1.25rem; border-top: 1px solid var(--border); }
+  .pb-wrap { background: rgba(255,255,255,0.05); border-radius: 99px; height: 3px; margin-top: 6px; }
+  .pb { background: var(--gold); height: 3px; border-radius: 99px; transition: width 0.3s; }
+  .pb-label { font-size: 11px; color: var(--text-muted); }
+  .main { padding: 2rem 2.5rem 4rem; max-width: 760px; }
+  .phase { display: none; }
+  .phase.active { display: block; }
+  .ph-eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); margin-bottom: 5px; }
+  .ph-title { font-size: 24px; font-weight: 700; line-height: 1.2; margin-bottom: 4px; }
+  .ph-meta { font-size: 13px; color: var(--text-muted); margin-bottom: 1.5rem; }
+  .obj-box { background: var(--gold-dim); border: 1px solid var(--gold-border); border-radius: var(--r); padding: 0.875rem 1.1rem; margin-bottom: 1.5rem; }
+  .obj-box .ol { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); margin-bottom: 5px; }
+  .obj-box p { font-size: 13px; color: #c8b99a; line-height: 1.7; }
+  .lead-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--r); padding: 1.1rem; margin-bottom: 1.5rem; display: grid; grid-template-columns: 1fr 1fr; gap: 0.875rem; }
+  .lf label { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim); display: block; margin-bottom: 3px; }
+  .lf span { font-size: 14px; color: var(--text); }
+  .lf.full { grid-column: 1/-1; }
+  .score-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+  .dots { display: flex; gap: 3px; }
+  .dot { width: 16px; height: 5px; border-radius: 3px; background: #222; }
+  .dot.on { background: var(--gold); }
+  .score-n { font-size: 13px; font-weight: 700; color: var(--gold); }
+  .badges { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 1.25rem; }
+  .badge { font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 99px; }
+  .badge-ok { background: var(--ok-bg); color: var(--ok); border: 1px solid rgba(74,180,110,0.2); }
+  .badge-warn { background: var(--warn-bg); color: var(--warn); border: 1px solid rgba(239,154,39,0.2); }
+  .badge-gold { background: var(--gold-dim); color: var(--gold); border: 1px solid var(--gold-border); }
+  .diag { background: var(--gold-dim); border: 1px solid var(--gold-border); border-radius: var(--r); padding: 1.1rem; margin-bottom: 1.5rem; }
+  .diag .dl { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); margin-bottom: 0.75rem; }
+  .diag-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+  .di label { font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 3px; }
+  .di p { font-size: 13px; color: #c8b99a; line-height: 1.6; }
+  .di.full { grid-column: 1/-1; }
+  .det-hl { background: rgba(201,169,110,0.1); border-left: 3px solid var(--gold); border-radius: 0 var(--r-sm) var(--r-sm) 0; padding: 0.5rem 0.75rem; font-size: 13px; color: var(--gold); font-style: italic; line-height: 1.6; }
+  .sl { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); margin: 1.25rem 0 0.6rem; }
+  .sb { background: var(--bg-card2); border: 1px solid var(--border); border-radius: var(--r); padding: 0.875rem 1.1rem; margin-bottom: 0.6rem; }
+  .sb.hl { border-color: var(--gold-border); }
+  .sb .sp { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); margin-bottom: 7px; }
+  .sb p { font-size: 14px; color: var(--text); line-height: 1.8; }
+  .sb .note { font-size: 12px; color: var(--text-muted); margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); font-style: italic; line-height: 1.6; }
+  .warn-box { background: var(--warn-bg); border: 1px solid rgba(239,154,39,0.2); border-radius: var(--r); padding: 0.75rem 1.1rem; margin-top: 1rem; }
+  .warn-box .wl { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--warn); margin-bottom: 5px; }
+  .warn-box p { font-size: 13px; color: var(--warn); line-height: 1.7; }
+  .alerta-box { background: rgba(239,100,100,0.08); border: 1px solid rgba(239,100,100,0.2); border-radius: var(--r); padding: 0.75rem 1.1rem; margin-bottom: 1rem; }
+  .alerta-box .al { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #e87070; margin-bottom: 5px; }
+  .alerta-box p { font-size: 13px; color: #e87070; line-height: 1.7; }
+  .divider { height: 1px; background: var(--border); margin: 1.25rem 0; }
+  .obj-list { display: flex; flex-direction: column; gap: 0.5rem; }
+  .oi { border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+  .ot { width: 100%; background: var(--bg-card2); border: none; cursor: pointer; padding: 0.75rem 1.1rem; display: flex; align-items: center; justify-content: space-between; gap: 10px; text-align: left; }
+  .ot:hover { background: rgba(255,255,255,0.03); }
+  .ot .otitle { font-size: 14px; font-weight: 500; color: var(--text); }
+  .ot .otag { font-size: 11px; background: rgba(255,255,255,0.05); color: var(--text-muted); padding: 2px 8px; border-radius: 99px; white-space: nowrap; }
+  .ot .chev { color: var(--text-dim); font-size: 18px; transition: transform 0.2s; flex-shrink: 0; }
+  .oi.open .chev { transform: rotate(90deg); }
+  .ob { display: none; padding: 0 1.1rem 1.1rem; background: var(--bg-card2); border-top: 1px solid var(--border); }
+  .oi.open .ob { display: block; }
+  .rm { font-size: 12px; color: var(--text-muted); background: rgba(255,255,255,0.03); border-radius: var(--r-sm); padding: 0.5rem 0.75rem; margin: 0.6rem 0; line-height: 1.6; }
+  .notas { background: #0a0a0a; border: 1px solid var(--border); border-radius: var(--r); padding: 1.1rem; margin-top: 1.5rem; }
+  .nota { display: flex; gap: 10px; font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-bottom: 0.5rem; }
+  .nota::before { content: '→'; color: var(--gold); flex-shrink: 0; }
+  .nav-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 2.5rem; padding-top: 1.25rem; border-top: 1px solid var(--border); }
+  .btn { padding: 0.55rem 1.1rem; border-radius: var(--r-sm); border: 1px solid var(--border); background: transparent; color: var(--text); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+  .btn:hover { background: rgba(255,255,255,0.04); }
+  .btn:disabled { opacity: 0.2; cursor: not-allowed; }
+  .btn.primary { background: var(--gold); border-color: var(--gold); color: #000; font-weight: 600; }
+  .btn.primary:hover { background: #d4b07a; }
+  .nav-c { font-size: 12px; color: var(--text-muted); }
+  @media (max-width: 650px) {
+    .app { grid-template-columns: 1fr; }
+    .sidebar { position: static; height: auto; flex-direction: row; overflow-x: auto; padding: 0.75rem 0; }
+    .sb-brand, .sb-footer { display: none; }
+    .nav-item { flex-direction: column; gap: 3px; padding: 0.5rem 0.875rem; border-left: none; border-bottom: 2px solid transparent; font-size: 11px; white-space: nowrap; }
+    .nav-item.active { border-left: none; border-bottom-color: var(--gold); }
+    .nt { display: none; }
+    .main { padding: 1.25rem; }
+    .lead-card, .diag-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+<nav class="sidebar">
+  <div class="sb-brand">
+    <div class="b1">Alex Maza Fitness</div>
+    <div class="b2">Nastia Iglesias</div>
+    <div class="b3">Script de llamada · 35 años</div>
+  </div>
+  <div class="nav-item active" onclick="go(0)"><span class="nn">0</span><span class="nl">Pre-llamada</span></div>
+  <div class="nav-item" onclick="go(1)"><span class="nn">1</span><span class="nl">Apertura</span><span class="nt">0–3'</span></div>
+  <div class="nav-item" onclick="go(2)"><span class="nn">2</span><span class="nl">Descubrimiento</span><span class="nt">3–12'</span></div>
+  <div class="nav-item" onclick="go(3)"><span class="nn">3</span><span class="nl">Amplificación</span><span class="nt">12–20'</span></div>
+  <div class="nav-item" onclick="go(4)"><span class="nn">4</span><span class="nl">Visión</span><span class="nt">20–25'</span></div>
+  <div class="nav-item" onclick="go(5)"><span class="nn">5</span><span class="nl">Prescripción</span><span class="nt">25–33'</span></div>
+  <div class="nav-item" onclick="go(6)"><span class="nn">6</span><span class="nl">Precio</span><span class="nt">33–35'</span></div>
+  <div class="nav-item" onclick="go(7)"><span class="nn">7</span><span class="nl">Objeciones</span><span class="nt">35–42'</span></div>
+  <div class="nav-item" onclick="go(8)"><span class="nn">8</span><span class="nl">Cierre</span><span class="nt">42–45'</span></div>
+  <div class="sb-footer">
+    <div class="pb-label" id="pbl">Fase 1 de 9</div>
+    <div class="pb-wrap"><div class="pb" id="pb" style="width:11%"></div></div>
+  </div>
+</nav>
+
+<main class="main">
+
+<!-- FASE 0 -->
+<div class="phase active" id="p0">
+  <div class="ph-eyebrow">Fase 0 · Preparación</div>
+  <div class="ph-title">Pre-llamada</div>
+  <div class="ph-meta">Lead real · Formulario recibido el 13/06/2026</div>
+
+  <div class="alerta-box">
+    <div class="al">⚠ Alertas antes de la llamada</div>
+    <p><strong>Menos de 1 año entrenando</strong> — perfil diferente al avatar principal. No encaja el caso Adil directamente.<br>
+    <strong>Mujer, 35 años</strong> — ajustar tono y ejemplos. No asumir motivaciones típicas del avatar masculino.<br>
+    <strong>Sin intentos previos estructurados</strong> — punto de partida limpio, pero puede tener más resistencia al compromiso.</p>
+  </div>
+
+  <div class="badges">
+    <span class="badge badge-ok">Compromiso 10/10</span>
+    <span class="badge badge-ok">Disposición económica positiva</span>
+    <span class="badge badge-warn">Menos de 1 año entrenando</span>
+  </div>
+
+  <div class="lead-card">
+    <div class="lf"><label>Nombre</label><span>Nastia Iglesias Jiménez</span></div>
+    <div class="lf"><label>Edad</label><span>35 años</span></div>
+    <div class="lf"><label>Tiempo entrenando</label><span>Menos de 1 año</span></div>
+    <div class="lf"><label>Objetivo</label><span>Reducir grasa corporal</span></div>
+    <div class="lf full"><label>Intentos previos</label><span>Nada estructurado · Otro (a explorar en llamada)</span></div>
+    <div class="lf full"><label>Obstáculo declarado</label><span>No especificado en formulario — explorar en llamada</span></div>
+    <div class="lf full"><label>Detonante</label><span>"Quiero adelgazar y estar en forma y alimentarme correctamente"</span></div>
+    <div class="lf full">
+      <label>Compromiso</label>
+      <div class="score-row">
+        <div class="dots" id="dots"></div>
+        <span class="score-n">10/10</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="diag">
+    <div class="dl">Diagnóstico previo</div>
+    <div class="diag-grid">
+      <div class="di full"><label>Perfil</label><p>Mujer de 35 años, menos de 1 año entrenando, sin estructura previa. Alta motivación declarada (10/10). Punto de partida limpio — nunca ha tenido dirección real. El detonante es genérico y hay que profundizar en llamada.</p></div>
+      <div class="di"><label>Dolor principal</label><p>No sabe cómo adelgazar ni alimentarse correctamente. Nunca ha tenido un plan. El esfuerzo aún no ha empezado — el dolor es anticipatorio, no acumulado.</p></div>
+      <div class="di"><label>Objeción más probable</label><p>"¿Esto funciona para mí?" — necesita ver que el servicio se adapta a alguien que empieza desde cero, no a un atleta avanzado.</p></div>
+      <div class="di full"><label>Detonante — profundizar en llamada</label><div class="det-hl">"Quiero adelgazar y estar en forma y alimentarme correctamente" — es el qué, no el por qué. En fase 3 hay que ir a la causa real: ¿qué ha pasado para que lo busque ahora?</div></div>
+    </div>
+  </div>
+
+  <div class="sl">Audio de WhatsApp — antes de la llamada</div>
+  <div class="sb hl">
+    <div class="sp">TÚ (audio ~70s)</div>
+    <p>"Hola Nastia, soy Alex Maza. Acabo de ver tu respuesta al formulario, en el que me indicas que tu objetivo es reducir grasa corporal, estar en forma y aprender a alimentarte correctamente. Bien.<br><br>Te envío este audio porque me gustaría hacer una llamada contigo. La idea es entender bien tu situación y, si creo que puedo ayudarte, te cuento cómo trabajaríamos. Y si no, te lo digo igual de claro.<br><br>La llamada son unos 20-25 minutos. Y antes de que hablemos, quiero que pienses en la siguiente pregunta: ¿qué tendría que pasar en los próximos 6 meses para que dijeras que esto ha valido la pena? No me la tienes que responder — solo tenlo claro tú.<br><br>Aquí te dejo el enlace para agendar cuando mejor te encaje."</p>
+    <div class="note">Nota: ajusta el tono — más cercano y menos "entreno de élite". Nastia empieza desde cero y necesita sentir que el servicio es para ella.</div>
+  </div>
+</div>
+
+<!-- FASE 1 -->
+<div class="phase" id="p1">
+  <div class="ph-eyebrow">Fase 1 · 0–3 min</div>
+  <div class="ph-title">Apertura y marco</div>
+  <div class="ph-meta">Establecer quién dirige. Tú diagnosticas, tú decides.</div>
+  <div class="obj-box"><div class="ol">Objetivo psicológico</div><p>Que sienta que esto es una consulta profesional, no una charla de ventas. Nastia no tiene experiencia previa con entrenadores — necesita entender el marco desde el principio.</p></div>
+  <div class="sl">Guion</div>
+  <div class="sb">
+    <div class="sp">TÚ — apertura</div>
+    <p>"Hola Nastia, ¿qué tal? Bueno, vamos al lío que sé que tienes tu tiempo.<br><br>La idea de la llamada es conocerte un poco, entender bien tu situación, y si veo que puedo ayudarte te cuento cómo lo haríamos. Y si veo que no, te lo digo igual de claro. ¿Te parece?"</p>
+  </div>
+  <div class="sb hl">
+    <div class="sp">TÚ — transición con formulario</div>
+    <p>"Perfecto. Vi tu formulario antes de llamarte — tu objetivo es reducir grasa corporal y aprender a alimentarte bien. Pero cuéntame con tus palabras, ¿qué está pasando ahora mismo y qué te ha llevado a buscar ayuda?"</p>
+    <div class="note">La pregunta final es clave — el detonante del formulario es genérico. Necesitas la versión real en sus palabras.</div>
+  </div>
+</div>
+
+<!-- FASE 2 -->
+<div class="phase" id="p2">
+  <div class="ph-eyebrow">Fase 2 · 3–12 min</div>
+  <div class="ph-title">Descubrimiento</div>
+  <div class="ph-meta">Perfil diferente al avatar habitual — escucha activa doble.</div>
+  <div class="obj-box"><div class="ol">Objetivo psicológico</div><p>Nastia viene de cero — no tiene historial de fracasos acumulados como el avatar habitual. Su dolor es diferente: no es "llevo años sin resultados" sino "nunca he sabido por dónde empezar". Hay que encontrar esa narrativa.</p></div>
+  <div class="sl">Preguntas adaptadas</div>
+  <div class="sb hl">
+    <div class="sp">SITUACIÓN ACTUAL</div>
+    <p>"¿Qué haces ahora mismo en cuanto a ejercicio y alimentación? ¿Tienes alguna rutina o vas un poco a lo que sale?"</p>
+    <div class="note">No preguntes "cuánto tiempo llevas entrenando" — ya sabes que es menos de 1 año y puede ser incómodo. Pregunta por el hábito actual.</div>
+  </div>
+  <div class="sb">
+    <div class="sp">HISTORIAL E INTENTOS</div>
+    <p>"¿Has intentado antes cambiar tu alimentación o ponerte en forma de alguna forma? ¿Qué pasó?"</p>
+    <div class="note">En el formulario marcó "Nada estructurado" y "Otro". Ese "otro" hay que explorarlo — puede ser una dieta, una app, o nada.</div>
+  </div>
+  <div class="sb">
+    <div class="sp">AUTOPERCEPCIÓN</div>
+    <p>"¿Y por qué crees que hasta ahora no has podido arrancar con algo que funcione?"</p>
+  </div>
+  <div class="sb">
+    <div class="sp">REFLEJO</div>
+    <p>"O sea, llevas tiempo queriendo cambiar esto pero sin saber realmente por dónde empezar ni qué hacer… ¿es así?"</p>
+  </div>
+  <div class="warn-box"><div class="wl">Ojo con este perfil</div><p>No asumas que su dolor es físico/estético únicamente. A los 35 años puede haber motivaciones de salud, energía, autoconfianza. Deja que ella lo defina.</p></div>
+</div>
+
+<!-- FASE 3 -->
+<div class="phase" id="p3">
+  <div class="ph-eyebrow">Fase 3 · 12–20 min</div>
+  <div class="ph-title">Amplificación del coste</div>
+  <div class="ph-meta">El detonante real está aquí — el formulario solo da la superficie.</div>
+  <div class="obj-box"><div class="ol">Objetivo psicológico</div><p>Nastia tiene 10/10 de compromiso declarado pero el detonante es vago. Aquí encontramos el "por qué ahora de verdad" — que es siempre más profundo que "quiero adelgazar".</p></div>
+  <div class="sl">Preguntas de profundidad</div>
+  <div class="sb">
+    <div class="sp">IMPACTO EMOCIONAL</div>
+    <p>"¿Y cómo te afecta en el día a día no tener esto resuelto? No solo físicamente — en general."</p>
+  </div>
+  <div class="sb">
+    <div class="sp">CUANTIFICAR</div>
+    <p>"¿Cuánto tiempo llevas queriendo hacer este cambio y sin dar el paso?"</p>
+    <div class="note">Si lleva meses o años pensándolo, eso es tiempo perdido — y ella lo sabe.</div>
+  </div>
+  <div class="sb hl">
+    <div class="sp">DETONANTE REAL — la pregunta más importante con Nastia</div>
+    <p>"Me dices que quieres adelgazar y alimentarte mejor — pero eso lo queremos todos. ¿Qué ha pasado específicamente para que lo busques ahora, esta semana, y no hace seis meses?"</p>
+    <div class="note">Esta respuesta es tu cierre. Guárdala literalmente. Puede ser un evento, una foto, un problema de salud, una fecha importante.</div>
+  </div>
+  <div class="sb">
+    <div class="sp">COSTE DE INACCIÓN</div>
+    <p>"Si sigues exactamente igual que ahora dentro de un año, ¿cómo estás?"</p>
+  </div>
+</div>
+
+<!-- FASE 4 -->
+<div class="phase" id="p4">
+  <div class="ph-eyebrow">Fase 4 · 20–25 min</div>
+  <div class="ph-title">Visión y anclaje</div>
+  <div class="ph-meta">Construir el punto B en sus palabras.</div>
+  <div class="obj-box"><div class="ol">Objetivo psicológico</div><p>Nastia tiene motivación alta pero el punto B no está definido. Aquí lo construimos juntos — y se lo apropiamos a ella, no a nosotros.</p></div>
+  <div class="sl">Guion</div>
+  <div class="sb">
+    <div class="sp">TÚ — visión</div>
+    <p>"Vale, y si esto funcionara de verdad — si en 6 meses tuvieras claro cómo comer, te sintieras bien con tu cuerpo y tuvieras energía — ¿cómo sería eso para ti? ¿Qué cambiaría?"</p>
+  </div>
+  <div class="sb">
+    <div class="sp">TÚ — capa profunda</div>
+    <p>"Y más allá de lo físico, ¿qué significaría eso para ti en tu vida?"</p>
+    <div class="note">Con Nastia esto puede ir a autoconfianza, salud a largo plazo, energía para el día a día. Deja que lo diga ella.</div>
+  </div>
+  <div class="sb hl">
+    <div class="sp">ANCLA DE COMPROMISO</div>
+    <p>"Del 1 al 10, ¿cómo de importante es para ti conseguir esto ahora?" </p>
+    <div class="note">Ya sabemos que puso 10 en el formulario. Si confirma el 10, es tu ancla para objeciones.</div>
+  </div>
+  <div class="divider"></div>
+  <div class="sb hl">
+    <div class="sp">PUENTE AL PITCH</div>
+    <p>"Me alegra escuchar eso. Por todo lo que me has contado — [su detonante real] — lo que te falta no es motivación, está clarísima. Lo que te falta es saber exactamente qué hacer, cómo comer, cómo entrenar, y tener a alguien que lo esté ajustando contigo. Déjame contarte cómo trabajaría contigo."</p>
+  </div>
+</div>
+
+<!-- FASE 5 -->
+<div class="phase" id="p5">
+  <div class="ph-eyebrow">Fase 5 · 25–33 min</div>
+  <div class="ph-title">Prescripción</div>
+  <div class="ph-meta">Pitch adaptado a alguien que empieza desde cero.</div>
+  <div class="obj-box"><div class="ol">Objetivo psicológico</div><p>Nastia no necesita saber que puedes entrenar a atletas avanzados — necesita saber que puedes llevar a alguien desde cero a resultados reales. Cada bloque conecta con su situación específica.</p></div>
+  <div class="sl">3 bloques adaptados</div>
+  <div class="sb">
+    <div class="sp">BLOQUE 1 — Plan desde cero</div>
+    <p>"Lo primero que hacemos es diseñar tu plan desde cero — entrenamiento y nutrición adaptados a ti, a tu vida, a lo que puedes hacer ahora mismo. No una dieta genérica de internet — algo tuyo, que funcione para tu cuerpo y tu ritmo."</p>
+    <div class="note">Conecta con: nunca ha tenido estructura, viene de "nada estructurado".</div>
+  </div>
+  <div class="sb">
+    <div class="sp">BLOQUE 2 — Aprende mientras avanzas</div>
+    <p>"Y no solo te doy el plan — te explico el porqué de cada cosa. Así no dependes de mí para siempre, sino que vas entendiendo cómo funciona tu cuerpo. Cada dos semanas revisamos, ajustamos, y avanzamos juntos."</p>
+    <div class="note">Conecta con: "alimentarme correctamente" — quiere entender, no solo seguir órdenes.</div>
+  </div>
+  <div class="sb">
+    <div class="sp">BLOQUE 3 — Acceso directo</div>
+    <p>"Y tienes acceso directo a mí por WhatsApp para cualquier duda. Si no sabes qué pedir en un restaurante, si un día no puedes entrenar — me escribes y te digo exactamente qué hacer."</p>
+  </div>
+  <div class="warn-box"><div class="wl">No uses el caso Adil aquí</div><p>Adil es un hombre joven que ya entrenaba. Nastia no se identificará. Si tienes algún caso de mujer o de alguien que empezó desde cero, úsalo. Si no, omite la prueba social o descríbela de forma más genérica.</p></div>
+</div>
+
+<!-- FASE 6 -->
+<div class="phase" id="p6">
+  <div class="ph-eyebrow">Fase 6 · 33–35 min</div>
+  <div class="ph-title">Precio</div>
+  <div class="ph-meta">Seguridad total. Sin justificaciones.</div>
+  <div class="obj-box"><div class="ol">Objetivo psicológico</div><p>Nastia tiene disposición económica positiva ("Sí, si me convence"). Ya está convencida si has hecho bien las fases anteriores. El precio es el último paso lógico.</p></div>
+  <div class="sl">Guion</div>
+  <div class="sb">
+    <div class="sp">ANCLAJE</div>
+    <p>"Mira, la mayoría de personas que llevan tiempo queriendo hacer este cambio lo van posponiendo — y pasan meses o años sin avanzar. Lo que yo ofrezco es que en los próximos meses tengas resultados reales, no otro intento más."</p>
+  </div>
+  <div class="sb hl">
+    <div class="sp">OPCIONES</div>
+    <p>"Trabajo de tres formas. La opción mensual son 115€ al mes. La trimestral son 300€ — que es la que más gente elige porque es donde realmente se empieza a ver el cambio, y sale a 100€ al mes. Y si quieres el mayor compromiso, el semestral son 570€."</p>
+  </div>
+  <div class="sb" style="background:var(--warn-bg);border-color:rgba(239,154,39,0.2);">
+    <p style="color:var(--warn);font-size:13px;">Silencio después del precio. No justifiques. No rellenes. El primero que habla pierde.</p>
+  </div>
+</div>
+
+<!-- FASE 7 -->
+<div class="phase" id="p7">
+  <div class="ph-eyebrow">Fase 7 · 35–42 min</div>
+  <div class="ph-title">Objeciones</div>
+  <div class="ph-meta">Preguntar, nunca rebatir.</div>
+  <div class="obj-box"><div class="ol">Objetivo psicológico</div><p>Nastia tiene 10/10 de compromiso y disposición positiva. Su objeción más probable no es precio — es incertidumbre sobre si esto funcionará para alguien como ella.</p></div>
+  <div class="obj-list">
+    <div class="oi open">
+      <button class="ot" onclick="tog(this)"><span class="otitle">"¿Esto funciona para alguien que empieza desde cero?"</span><span class="otag">Más probable</span><span class="chev">›</span></button>
+      <div class="ob">
+        <div class="rm">Inseguridad sobre si el servicio es para ella. No es resistencia al precio — es necesidad de identificación.</div>
+        <div class="sb hl"><div class="sp">TÚ</div><p>"De hecho, los mejores resultados los veo con personas que empiezan sin hábitos previos — porque no hay nada que desaprender. Partimos de cero y construimos bien desde el principio. Es mucho más fácil que corregir años de malos hábitos."</p></div>
+      </div>
+    </div>
+    <div class="oi">
+      <button class="ot" onclick="tog(this)"><span class="otitle">"Me lo tengo que pensar"</span><span class="otag">Frecuente</span><span class="chev">›</span></button>
+      <div class="ob">
+        <div class="rm">Con un 10/10 de compromiso declarado, esta objeción indica que algo no ha quedado claro en la llamada.</div>
+        <div class="sb"><div class="sp">TÚ</div><p>"Claro. ¿Qué es exactamente lo que necesitas pensar?"</p></div>
+        <div class="sb hl"><div class="sp">SI SE QUEDA VAGA</div><p>"Me dijiste que esto era un 10 de importancia para ti. Y me contaste que llevas tiempo queriendo hacer este cambio. ¿Qué haría falta para que lo tuvieras claro hoy?"</p></div>
+      </div>
+    </div>
+    <div class="oi">
+      <button class="ot" onclick="tog(this)"><span class="otitle">"Es caro"</span><span class="otag">Posible</span><span class="chev">›</span></button>
+      <div class="ob">
+        <div class="rm">Tiene disposición positiva pero puede que el precio le parezca alto al no tener referencia previa de este tipo de servicio.</div>
+        <div class="sb hl"><div class="sp">TÚ</div><p>"Lo entiendo. Dime — si el precio no fuera un tema, ¿lo harías?" → Si dice sí: "¿El mensual lo ves más manejable como punto de partida?"</p><div class="note">El mensual existe para esto. Mejor cliente mensual que no cliente.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FASE 8 -->
+<div class="phase" id="p8">
+  <div class="ph-eyebrow">Fase 8 · 42–45 min</div>
+  <div class="ph-title">Cierre</div>
+  <div class="ph-meta">Siguiente paso concreto. Pago dentro de la llamada.</div>
+  <div class="obj-box"><div class="ol">Objetivo psicológico</div><p>Nastia tiene motivación alta y disposición positiva. Si las fases anteriores fueron bien, el cierre es el paso lógico — no hay que empujar, hay que facilitar.</p></div>
+  <div class="sl">Cierre</div>
+  <div class="sb hl">
+    <div class="sp">TÚ</div>
+    <p>"Pues si lo ves claro, lo ponemos en marcha ya. ¿Con qué opción te quedas?"</p>
+  </div>
+  <div class="sb">
+    <div class="sp">DESPUÉS DEL SÍ</div>
+    <p>"Perfecto. Ahora mismo te mando el enlace de pago. En cuanto lo vea hecho, esta semana te mando el formulario de inicio y empezamos a preparar tu plan."</p>
+  </div>
+  <div class="divider"></div>
+  <div class="sb">
+    <div class="sp">SI NO CIERRA EN LLAMADA</div>
+    <p>"No hay problema. ¿Cuándo crees que lo tendrás decidido? El [día concreto] te escribo para ver cómo lo tienes."</p>
+  </div>
+  <div class="notas">
+    <div class="sl" style="margin-top:0">Notas estratégicas</div>
+    <div class="nota">Perfil fuera del avatar habitual — mujer, 35 años, menos de 1 año entrenando. Adapta el lenguaje y los ejemplos.</div>
+    <div class="nota">El detonante del formulario es genérico. La fase 3 es crítica para encontrar el "por qué ahora" real.</div>
+    <div class="nota">No usar caso Adil — no se identifica. Si tienes caso de mujer o principiante, úsalo aquí.</div>
+    <div class="nota">Compromiso 10/10 y disposición positiva — lead caliente. Si objeta, el problema es incertidumbre sobre si funciona para ella, no precio.</div>
+    <div class="nota">Contacto: nastia9138@gmail.com · +34 697 115 683</div>
+  </div>
+</div>
+
+<div class="nav-footer">
+  <button class="btn" id="pb2" onclick="nav(-1)" disabled>← Anterior</button>
+  <span class="nav-c" id="nc">Fase 1 de 9</span>
+  <button class="btn primary" id="nb" onclick="nav(1)">Siguiente →</button>
+</div>
+</main>
+</div>
+
+<script>
+let cur = 0;
+const total = 9;
+const dotsEl = document.getElementById('dots');
+for(let i=1;i<=10;i++){const d=document.createElement('div');d.className='dot'+(i<=10?' on':'');dotsEl.appendChild(d);}
+function go(n){
+  document.querySelectorAll('.phase').forEach((p,i)=>p.classList.toggle('active',i===n));
+  document.querySelectorAll('.nav-item').forEach((b,i)=>b.classList.toggle('active',i===n));
+  cur=n;
+  document.getElementById('pb2').disabled=n===0;
+  document.getElementById('nb').disabled=n===total-1;
+  document.getElementById('nc').textContent='Fase '+(n+1)+' de '+total;
+  document.getElementById('pbl').textContent='Fase '+(n+1)+' de '+total;
+  document.getElementById('pb').style.width=((n+1)/total*100)+'%';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function nav(d){go(Math.max(0,Math.min(total-1,cur+d)));}
+function tog(btn){btn.parentElement.classList.toggle('open');}
+</script>
+</body>
+</html>

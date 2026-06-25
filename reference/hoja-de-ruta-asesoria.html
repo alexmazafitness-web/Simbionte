@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hoja de Ruta · Asesoría 1:1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    color-scheme:dark;
+    --bg:#0E0E11; --bg-2:#16161B; --bg-3:#1E1E25; --bg-4:#26262E;
+    --line:rgba(201,169,110,.16); --line-soft:rgba(255,255,255,.06);
+    --gold:#C9A96E; --gold-soft:rgba(201,169,110,.12); --gold-dim:#8C744A;
+    --text:#ECEAE4; --text-2:#9C988E; --text-3:#67645C;
+    --pend:#7A776E; --curso:#E0A458; --hecho:#8FAE7C;
+    --plata:#8AA0B8;
+    --radius:14px; --ease:cubic-bezier(.4,0,.2,1);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
+  body{background:var(--bg);color:var(--text);font-family:'Schibsted Grotesk',system-ui,sans-serif;
+    line-height:1.5;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;padding:0 0 80px}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:radial-gradient(120% 80% at 50% -10%,rgba(201,169,110,.06),transparent 60%)}
+  .wrap{max-width:880px;margin:0 auto;padding:0 24px;position:relative;z-index:1}
+
+  /* HEADER */
+  header.top{position:sticky;top:0;z-index:30;background:rgba(14,14,17,.84);
+    backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line-soft)}
+  .top-inner{max-width:880px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:18px;justify-content:space-between}
+  .top-left{display:flex;align-items:baseline;gap:9px;flex:none}
+  .eyebrow{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);font-weight:600;white-space:nowrap}
+  .top-sep{color:var(--text-3);font-size:12px}
+  .top-title{font-size:13px;color:var(--text-2);font-weight:500;letter-spacing:.01em;white-space:nowrap}
+  .top-meta{display:flex;align-items:center;gap:12px;flex:1;max-width:280px;margin-left:18px}
+  .hbar-wrap{flex:1;display:flex;align-items:center;gap:10px;min-width:0}
+  .hbar{flex:1;height:6px;background:var(--line-soft);border-radius:99px;overflow:hidden}
+  .hbar i{display:block;height:100%;background:var(--gold);border-radius:99px;transition:width .6s var(--ease)}
+  .bigpct{font-size:15px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:var(--text);flex:none}
+  .bigpct span{font-size:12px;color:var(--text-3);font-weight:500;margin-left:1px}
+  .reset{background:none;border:1px solid var(--line-soft);color:var(--text-3);font:inherit;font-size:10px;
+    letter-spacing:.03em;padding:5px 9px;border-radius:7px;cursor:pointer;transition:all .2s var(--ease);flex:none}
+  .reset:hover{border-color:var(--line);color:var(--text-2)}
+
+  /* INTRO */
+  .hero{padding:40px 0 26px}
+  .hero h1{font-size:clamp(30px,5.5vw,46px);font-weight:800;letter-spacing:-.02em;line-height:1;text-transform:uppercase}
+  .hero h1 em{font-style:normal;color:var(--gold)}
+  .norte{margin-top:14px;max-width:620px;color:var(--text-2);font-size:14.5px;font-weight:300}
+  .norte b{color:var(--text);font-weight:500}
+
+  /* TRACK SWITCH (ciclo cliente / pilar operaciones) */
+  .track-switch{display:flex;gap:10px;margin:20px 0 0;padding-bottom:18px;border-bottom:1px solid var(--line-soft)}
+  .tbtn{flex:1;background:var(--bg-2);border:1px solid var(--line-soft);border-radius:10px;padding:13px 15px;
+    cursor:pointer;text-align:left;transition:all .2s var(--ease);display:flex;flex-direction:column;gap:5px}
+  .tbtn:hover{border-color:var(--line)}
+  .tbtn.active{border-color:var(--gold);background:var(--gold-soft)}
+  .tbtn .tlabel{font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2);font-weight:800;line-height:1}
+  .tbtn.active .tlabel{color:var(--gold)}
+  .tbtn .tname{font-size:11px;font-weight:500;line-height:1.3;color:var(--text-3)}
+  .tbtn.active .tname{color:var(--text-2)}
+
+  /* FILTERS */
+  .filters{display:flex;gap:6px;flex-wrap:wrap;position:sticky;top:73px;z-index:20;
+    padding:11px 0;background:linear-gradient(var(--bg) 70%,transparent)}
+  .chip{background:var(--bg-2);border:1px solid var(--line-soft);color:var(--text-2);font:inherit;font-size:11px;
+    font-weight:500;padding:5px 11px;border-radius:99px;cursor:pointer;transition:all .2s var(--ease);display:flex;align-items:center;gap:5px}
+  .chip:hover{border-color:var(--line);color:var(--text)}
+  .chip.active{background:var(--gold);border-color:var(--gold);color:#13110C;font-weight:600}
+  .chip .c{font-variant-numeric:tabular-nums;opacity:.6} .chip.active .c{opacity:.7}
+
+  /* PHASES / SPINE */
+  .phase{position:relative;padding-left:64px;margin-top:8px}
+  .phase::before{content:"";position:absolute;left:23px;top:0;bottom:0;width:1px;background:var(--line-soft)}
+  .phase:last-of-type::before{bottom:auto;height:34px}
+  .node{position:absolute;left:11px;top:24px;width:25px;height:25px;border-radius:50%;background:var(--bg);
+    border:1px solid var(--line);display:grid;place-items:center;z-index:2;transition:all .4s var(--ease)}
+  .node i{width:7px;height:7px;border-radius:50%;background:var(--text-3);transition:all .4s var(--ease)}
+  .phase.complete .node{border-color:var(--gold);background:var(--gold);box-shadow:0 0 0 4px var(--gold-soft)}
+  .phase.complete .node i{background:#13110C;width:9px;height:9px}
+  .phase.new .node{border-color:var(--plata)}
+  .phase-head{display:flex;align-items:center;gap:16px;padding:22px 0 0;flex-wrap:wrap}
+  .pnum{font-size:42px;font-weight:300;line-height:.9;color:transparent;-webkit-text-stroke:1px var(--gold-dim);
+    letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .phase.complete .pnum{-webkit-text-stroke-color:var(--gold)}
+  .phead-txt{display:flex;flex-direction:column;justify-content:center}
+  .pname{font-size:19px;font-weight:700;letter-spacing:.02em;display:flex;align-items:center;gap:8px}
+  .new-tag{font-size:9.5px;letter-spacing:.1em;color:var(--plata);border:1px solid rgba(138,160,184,.4);
+    background:rgba(138,160,184,.08);border-radius:5px;padding:2px 6px;font-weight:700}
+  .pobj{font-size:13.5px;color:var(--text-2);font-weight:300;padding:10px 0 4px 0;margin-left:0}
+  .pbar-wrap{margin-left:auto;display:flex;align-items:center;gap:10px;min-width:130px}
+  .pbar{flex:1;height:3px;background:var(--line-soft);border-radius:2px;overflow:hidden}
+  .pbar i{display:block;height:100%;background:var(--gold);border-radius:2px;transition:width .6s var(--ease)}
+  .ppct{font-size:12px;color:var(--text-3);font-variant-numeric:tabular-nums;min-width:32px;text-align:right}
+
+  /* ITEMS */
+  .items{display:flex;flex-direction:column;gap:7px;padding:14px 0 12px}
+  .item{background:var(--bg-2);border:1px solid var(--line-soft);border-radius:var(--radius);
+    transition:border-color .25s var(--ease)}
+  .item:hover{border-color:var(--line)}
+  .item-row{display:flex;align-items:flex-start;gap:14px;padding:15px 16px;cursor:pointer;position:relative}
+  .item-main{flex:1;min-width:0}
+  .estado-tag{font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;padding:3px 8px;border-radius:6px;display:inline-block;margin-bottom:7px}
+  .estado-tag.nodef{color:var(--text-3);background:rgba(255,255,255,.05)}
+  .estado-tag.pendiente{color:var(--pend);background:rgba(122,119,110,.12)}
+  .estado-tag.curso{color:var(--curso);background:rgba(224,164,88,.1)}
+  .estado-tag.hecho{color:var(--hecho);background:rgba(143,174,124,.1)}
+  .iname{font-size:15px;font-weight:500;letter-spacing:-.005em;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+  .subcount{font-size:11.5px;color:var(--text-3);font-weight:500;display:inline-flex;align-items:center;gap:4px;
+    border:1px solid var(--line-soft);border-radius:99px;padding:1px 8px}
+  .subcount.allDone{color:var(--hecho);border-color:rgba(143,174,124,.35)}
+  .inote{font-size:13px;color:var(--text-2);margin-top:3px;font-weight:300}
+
+  .controls{flex:none;display:flex;align-items:center;gap:8px}
+  .chev{flex:none;width:22px;height:22px;display:grid;place-items:center;color:var(--text-3);transition:transform .25s var(--ease)}
+  .item.open .chev{transform:rotate(180deg)}
+  .chev svg{width:13px;height:13px}
+
+  .icon-btn{flex:none;width:27px;height:27px;border-radius:7px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);
+    color:#9C988E;cursor:pointer;display:grid;place-items:center;transition:all .2s var(--ease)}
+  .icon-btn:hover{background:var(--bg-3);color:#ECEAE4;border-color:rgba(255,255,255,.18)}
+  .icon-btn.del:hover{color:#D98373;border-color:rgba(217,131,115,.4)}
+  .icon-btn svg{width:12px;height:12px;display:block;stroke:currentColor}
+  .icon-btn:focus-visible{outline:2px solid var(--gold);outline-offset:1px}
+
+  .menu-wrap{position:relative;flex:none}
+  .menu-dots{flex:none;width:27px;height:27px;border-radius:7px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);
+    color:#9C988E;cursor:pointer;display:grid;place-items:center;transition:all .2s var(--ease)}
+  .menu-dots:hover{background:var(--bg-3);color:#ECEAE4;border-color:rgba(255,255,255,.18)}
+  .menu-dots svg{width:14px;height:14px;display:block}
+  .menu-dots:focus-visible{outline:2px solid var(--gold);outline-offset:1px}
+  .menu-pop{position:absolute;right:0;top:calc(100% + 5px);background:var(--bg-3);border:1px solid var(--line-soft);
+    border-radius:9px;min-width:110px;padding:4px;z-index:15;box-shadow:0 12px 28px rgba(0,0,0,.45);display:none}
+  .menu-pop.open{display:block}
+  .menu-item{display:flex !important;flex-direction:row !important;align-items:center !important;gap:7px;width:100%;background:none;border:none;color:var(--text);
+    font:inherit;font-size:12px;font-weight:500;padding:6px 8px;border-radius:6px;cursor:pointer;text-align:left}
+  .menu-item:hover{background:rgba(255,255,255,.06)}
+  .menu-item svg{width:11px !important;height:11px !important;min-width:11px;max-width:11px;flex-shrink:0;color:var(--text-3)}
+  .menu-item.danger{color:#D98373}
+  .menu-item.danger svg{color:#D98373}
+
+  /* ---- accordion body: subtasks ---- */
+  .panel{display:none;border-top:1px solid var(--line-soft);background:var(--bg-3);padding:14px 16px 16px;
+    border-radius:0 0 var(--radius) var(--radius)}
+  .item.open .panel{display:block}
+  .subhead{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-3);font-weight:600;
+    display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+  .sublist{display:flex;flex-direction:column;gap:6px}
+  .sub{display:flex;align-items:center;gap:10px;background:var(--bg-2);border:1px solid var(--line-soft);
+    border-radius:9px;padding:8px 10px}
+  .sub-check{flex:none;width:18px;height:18px;border-radius:5px;border:1.5px solid var(--text-3);cursor:pointer;
+    display:grid;place-items:center;transition:all .18s var(--ease);background:transparent}
+  .sub-check svg{width:11px;height:11px;opacity:0;transition:opacity .15s var(--ease);color:#13110C}
+  .sub.done .sub-check{background:var(--hecho);border-color:var(--hecho)}
+  .sub.done .sub-check svg{opacity:1}
+  .sub-text{flex:1;font-size:13.5px;font-weight:400;background:transparent;border:none;color:var(--text);font-family:inherit;
+    padding:2px 0}
+  .sub.done .sub-text{color:var(--text-3);text-decoration:line-through}
+  .sub-text:focus{outline:none}
+  .sub-del{flex:none;width:24px;height:24px;border-radius:6px;border:none;background:transparent;color:var(--text-3);
+    cursor:pointer;display:grid;place-items:center;transition:all .18s var(--ease)}
+  .sub-del:hover{color:#D98373;background:rgba(217,131,115,.1)}
+  .sub-del svg{width:13px;height:13px}
+  .sub-empty{font-size:12.5px;color:var(--text-3);font-style:italic;padding:6px 2px}
+  .add-sub{margin-top:9px;width:100%;background:transparent;border:1px dashed var(--line-soft);border-radius:9px;
+    color:var(--text-3);font:inherit;font-size:12.5px;font-weight:500;padding:9px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:6px;transition:all .2s var(--ease)}
+  .add-sub:hover{color:var(--gold);border-color:var(--gold);background:var(--gold-soft)}
+  .add-sub svg{width:12px;height:12px}
+
+  /* edit form */
+  .edit{display:flex;flex-direction:column;gap:11px;padding:15px 16px}
+  .edit .efield{display:flex;flex-direction:column;gap:5px}
+  .edit label{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-3);font-weight:600}
+  .edit input,.edit textarea,.edit select{font:inherit;font-size:14px;color:var(--text);background:var(--bg-3);
+    border:1px solid var(--line-soft);border-radius:9px;padding:10px 12px;width:100%}
+  .edit textarea{resize:vertical;min-height:50px;font-size:13.5px}
+  .edit select{appearance:none;-webkit-appearance:none}
+  .edit input:focus,.edit textarea:focus,.edit select:focus{outline:none;border-color:var(--line)}
+  .edit-row{display:flex;gap:10px}
+  .edit-actions{display:flex;gap:9px;margin-top:2px}
+  .btn{font:inherit;font-size:13px;font-weight:600;border-radius:9px;padding:9px 18px;cursor:pointer;border:1px solid;transition:all .2s var(--ease)}
+  .btn.save{background:var(--gold);border-color:var(--gold);color:#13110C}
+  .btn.save:hover{filter:brightness(1.07)}
+  .btn.cancel{background:transparent;border-color:var(--line-soft);color:var(--text-2)}
+  .btn.cancel:hover{border-color:var(--line);color:var(--text)}
+
+  .add-card{width:100%;margin-bottom:30px;background:transparent;border:1px dashed var(--line);border-radius:var(--radius);
+    color:var(--text-3);font:inherit;font-size:13.5px;font-weight:500;padding:13px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s var(--ease)}
+  .add-card:hover{color:var(--gold);border-color:var(--gold);background:var(--gold-soft)}
+  .add-card svg{width:15px;height:15px}
+  .empty{color:var(--text-3);font-size:13.5px;font-weight:300;font-style:italic;padding:4px 2px 10px}
+  .item.hide{display:none}
+
+  /* PRIORITY */
+  .prio{margin-top:40px;padding-top:34px;border-top:1px solid var(--line)}
+  .prio h2{font-size:13px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:6px}
+  .prio .sub2{color:var(--text-2);font-size:14px;font-weight:300;max-width:520px;margin-bottom:24px}
+  .prio-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+  @media(max-width:560px){.prio-grid{grid-template-columns:1fr}}
+  .pcard{background:var(--bg-2);border:1px solid var(--line-soft);border-radius:var(--radius);padding:18px;position:relative;overflow:hidden}
+  .pcard::after{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--gold);opacity:.5}
+  .pcard .rank{font-size:11px;font-weight:700;color:var(--gold);letter-spacing:.1em}
+  .pcard h3{font-size:16px;font-weight:600;margin:6px 0 6px}
+  .pcard p{font-size:13px;color:var(--text-2);font-weight:300;line-height:1.45}
+  .pcard .when{display:inline-block;margin-top:11px;font-size:11px;letter-spacing:.05em;color:var(--text-3);border:1px solid var(--line-soft);border-radius:6px;padding:3px 8px}
+  .rule-note{margin-top:22px;font-size:13.5px;color:var(--text-2);font-weight:300;line-height:1.55}
+  .rule-note b{color:var(--gold);font-weight:600}
+
+  .savebar{display:none;background:rgba(217,131,115,.1);border:1px solid rgba(217,131,115,.35);color:#E6A89A;
+    font-size:12.5px;border-radius:10px;padding:10px 14px;margin-top:18px;align-items:center;gap:10px;justify-content:space-between}
+  .savebar.show{display:flex}
+  .savebar button{font:inherit;font-size:12px;font-weight:600;color:#E6A89A;background:transparent;border:1px solid rgba(217,131,115,.45);
+    border-radius:7px;padding:5px 11px;cursor:pointer}
+  .savebar button:hover{background:rgba(217,131,115,.12)}
+
+  .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(3px);z-index:100;
+    display:flex;align-items:center;justify-content:center;padding:24px}
+  .modal-box{background:var(--bg-2);border:1px solid var(--line);border-radius:14px;padding:22px;max-width:360px;width:100%;
+    box-shadow:0 20px 60px rgba(0,0,0,.5)}
+  .modal-box p{font-size:14.5px;color:var(--text);line-height:1.5;font-weight:400}
+  .modal-actions{display:flex;gap:9px;margin-top:18px;justify-content:flex-end}
+
+  footer.foot{margin-top:46px;padding-top:22px;border-top:1px solid var(--line-soft);display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+  .saved{font-size:12px;color:var(--text-3);display:flex;align-items:center;gap:7px}
+  .saved .sdot{width:6px;height:6px;border-radius:50%;background:var(--hecho)}
+  .brand{font-size:12px;color:var(--text-3);letter-spacing:.04em} .brand b{color:var(--gold);font-weight:600}
+
+  @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+  @media(max-width:560px){
+    .phase{padding-left:48px}.phase::before{left:15px}.node{left:3px}.pnum{font-size:32px}
+    .pbar-wrap{margin-left:0;width:100%;order:3;margin-top:8px}.top-title{display:none}.top-sep{display:none}
+    .item-row{flex-direction:column}.controls{align-self:stretch;justify-content:space-between}
+    .edit-row{flex-direction:column}
+    .track-switch{flex-direction:column}
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <div class="top-left"><span class="eyebrow">Sistema Operativo</span><span class="top-sep">|</span><span class="top-title">Asesoría 1:1</span></div>
+    <div class="top-meta">
+      <div class="hbar-wrap"><div class="hbar"><i id="hbarFill" style="width:0%"></i></div></div>
+      <div class="bigpct"><span id="pctNum">0</span><span>%</span></div>
+      <button class="reset" id="reset">Reiniciar</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <section class="hero">
+    <h1>GROWTH <em>ENGINE</em></h1>
+    <p class="norte">Sistema para escalar a +100 clientes sin fricción</p>
+    <div class="track-switch" id="trackSwitch">
+      <button class="tbtn active" data-track="ciclo">
+        <div class="tlabel">Módulo 1</div>
+        <div class="tname">Ciclo del servicio</div>
+      </button>
+      <button class="tbtn" data-track="ops">
+        <div class="tlabel">Módulo 2</div>
+        <div class="tname">Operaciones y sistemas</div>
+      </button>
+    </div>
+    <div class="savebar" id="savebar">
+      <span>No se ha podido guardar el último cambio. Tus datos siguen en pantalla, pero conviene reintentar.</span>
+      <button id="retrySave">Reintentar guardado</button>
+    </div>
+  </section>
+
+  <div class="filters" id="filters">
+    <button class="chip active" data-f="todos">Todos <span class="c" id="c-todos">0</span></button>
+    <button class="chip" data-f="pendiente">Pendiente <span class="c" id="c-pendiente">0</span></button>
+    <button class="chip" data-f="curso">En curso <span class="c" id="c-curso">0</span></button>
+    <button class="chip" data-f="hecho">Hecho <span class="c" id="c-hecho">0</span></button>
+  </div>
+
+  <main id="phases"></main>
+
+  <section class="prio">
+    <h2>Hoja de ruta priorizada</h2>
+    <p class="sub2">El cierre ya está resuelto. El cuello de botella es el volumen y la entrega aún no manualizada. Por eso el orden importa.</p>
+    <div class="prio-grid">
+      <div class="pcard"><div class="rank">PRIORIDAD 01</div><h3>Volumen</h3><p>Sistema de contenido sostenible + protocolo de setting escrito. Es el único cuello de botella real.</p><span class="when">Entre semana · 1–2 h</span></div>
+      <div class="pcard"><div class="rank">PRIORIDAD 02</div><h3>Manualización</h3><p>Vídeos explicativos + protocolo de entrega invariable MESO/NUTRI/SEGUIMIENTO. Requisito para escalar sin romperte.</p><span class="when">Finde · sprints</span></div>
+      <div class="pcard"><div class="rank">PRIORIDAD 03</div><h3>Automatización</h3><p>Mensajería de onboarding + nutrición de leads tibios. Libera tu tiempo una vez el proceso está estandarizado.</p><span class="when">Finde</span></div>
+      <div class="pcard"><div class="rank">PRIORIDAD 04</div><h3>Medición</h3><p>Panel de métricas y post-mortem de cliente. Sin esto, optimizas a ciegas.</p><span class="when">Finde</span></div>
+      <div class="pcard"><div class="rank">PRIORIDAD 05</div><h3>Expansión</h3><p>Primer producto más allá del 1:1 (grupal o digital). Solo cuando 01–04 estén sólidos.</p><span class="when">Medio plazo</span></div>
+      <div class="pcard"><div class="rank">PRIORIDAD 06</div><h3>SaaS</h3><p>Sprints en app.alexmaza.es. El último paso, no el primero.</p><span class="when">Largo plazo</span></div>
+    </div>
+    <p class="rule-note"><b>Regla de oro:</b> estandarizar → automatizar → medir → escalar. Operaciones avanza en paralelo a todo lo anterior, no después.</p>
+  </section>
+
+  <footer class="foot">
+    <span class="saved"><span class="sdot"></span><span id="savedTxt">Progreso guardado localmente</span></span>
+    <span class="brand">Asesoría <b>1:1</b> · alexmaza.es</span>
+  </footer>
+</div>
+
+<div id="modalRoot"></div>
+
+<script>
+/* Modal de confirmación propio: confirm() nativo puede estar bloqueado en iframes sandboxed (visor de artefactos) */
+function confirmModal(message, confirmLabel){
+  return new Promise(resolve=>{
+    const root=document.getElementById("modalRoot");
+    const backdrop=document.createElement("div");
+    backdrop.className="modal-backdrop";
+    backdrop.innerHTML=`
+      <div class="modal-box">
+        <p>${message}</p>
+        <div class="modal-actions">
+          <button class="btn cancel" id="mCancel">Cancelar</button>
+          <button class="btn save" id="mOk" style="background:#D98373;border-color:#D98373;color:#13110C">${confirmLabel||"Eliminar"}</button>
+        </div>
+      </div>`;
+    root.appendChild(backdrop);
+    function close(val){ root.removeChild(backdrop); resolve(val); }
+    backdrop.addEventListener("click",e=>{ if(e.target===backdrop) close(false); });
+    backdrop.querySelector("#mCancel").addEventListener("click",()=>close(false));
+    backdrop.querySelector("#mOk").addEventListener("click",()=>close(true));
+  });
+}
+
+const STATE_KEY="hoja_ruta_asesoria_v3";
+const ESTADOS=["pendiente","curso","hecho"];
+const W={pendiente:0,curso:.5,hecho:1};
+const LBL={nodef:"No definido",pendiente:"Pendiente",curso:"En curso",hecho:"Hecho"};
+const TIPOS={existe:"Existe",optimizar:"Optimizar",crear:"Crear"};
+
+const PHASE_META={
+  ciclo:[
+    {id:"e1",n:"01",name:"ATRACCIÓN Y CAPTACIÓN",obj:"Generar un flujo constante y predecible de leads cualificados."},
+    {id:"e2",n:"02",name:"LLAMADA DE VENTA",obj:"Convertir oportunidades en clientes mediante un proceso comercial repetible."},
+    {id:"e3",n:"03",name:"ONBOARDING",obj:"Integrar nuevos clientes de forma profesional y sin fricción."},
+    {id:"e4",n:"04",name:"EJECUCIÓN Y GESTIÓN DEL PROGRAMA",obj:"Generar resultados consistentes mediante sistemas y procesos optimizados.",isNew:true},
+    {id:"e5",n:"05",name:"ANÁLISIS Y OPTIMIZACIÓN",obj:"Convertir datos en decisiones que mejoran el sistema de forma continua.",isNew:true},
+    {id:"e6",n:"06",name:"FIDELIZACIÓN Y RETENCIÓN",obj:"Maximizar permanencia, satisfacción y valor de vida del cliente."},
+    {id:"e7",n:"07",name:"EXPANSIÓN DE PRODUCTO",obj:"Diversificar la oferta para crecer en ingresos sin depender solo del 1:1.",isNew:true},
+  ],
+  ops:[
+    {id:"o1",n:"P",name:"OPERACIONES Y SISTEMAS",obj:"Que el sistema sea documentable, auditable y delegable — sostiene a las 7 etapas a la vez.",isNew:true},
+  ]
+};
+
+const DEFAULTS={
+  e1:[
+    {tipo:"existe",name:"Perfil IG/TikTok · bio · highlights · «Empieza aquí»",note:"Auditado y optimizado.",estado:"hecho",subs:[]},
+    {tipo:"existe",name:"Perfil Adil — ancla de contenido + 7 stories",note:"Caso de éxito estructurado.",estado:"hecho",subs:[]},
+    {tipo:"optimizar",name:"Link in bio (alexmaza.es)",note:"Pendiente CSS: unificar acento a #C9A96E.",estado:"curso",subs:[
+      {text:"Sustituir #CBB089 por #C9A96E en CSS",done:false},
+      {text:"Revisar contraste en botones",done:false}]},
+    {tipo:"existe",name:"Formulario de aplicación · Typeform (12 preguntas)",note:"Orden de compromiso psicológico.",estado:"hecho",subs:[]},
+    {tipo:"crear",name:"Sistema de contenido sostenible",note:"Prioridad 1 — ataca el cuello de botella. Output semanal fijo.",estado:"pendiente",subs:[
+      {text:"Definir 4 pilares de contenido",done:false},
+      {text:"Calendario editorial semanal (3-4 piezas)",done:false},
+      {text:"Banco de ideas / heurísticas",done:false}]},
+    {tipo:"crear",name:"Protocolo de setting escrito",note:"Guion + disparadores. Hoy es informal.",estado:"pendiente",subs:[
+      {text:"Listar disparadores (story vista, reel guardado, etc.)",done:false},
+      {text:"Escribir guion de apertura fijo",done:false}]},
+    {tipo:"crear",name:"Lead magnet de captación pasiva",note:"Guía/checklist que alimenta el formulario 24/7.",estado:"pendiente",subs:[]},
+  ],
+  e2:[
+    {tipo:"existe",name:"Audio pre-llamada (WhatsApp)",note:"Voz y estructura fijas; reduce no-shows.",estado:"hecho",subs:[]},
+    {tipo:"existe",name:"Estructura de venta · 9 fases + objeciones",note:"Replicable por cualquiera.",estado:"hecho",subs:[]},
+    {tipo:"existe",name:"Presentación interactiva de la llamada",note:"Profesionalidad + autoridad.",estado:"hecho",subs:[]},
+    {tipo:"existe",name:"Automatización Make · Typeform→API→Gmail/Drive",note:"JSON compacto para evitar timeouts.",estado:"hecho",subs:[]},
+    {tipo:"crear",name:"Playbook de venta entregable",note:"Documentar para poder delegar el cierre.",estado:"pendiente",subs:[]},
+    {tipo:"crear",name:"Seguimiento post-llamada (los «no ahora»)",note:"Nutrición de leads tibios, hoy perdidos.",estado:"pendiente",subs:[]},
+  ],
+  e3:[
+    {tipo:"existe",name:"Cuestionario inicial interactivo",note:"Netlify + Worker + Resend + backup Formspree.",estado:"hecho",subs:[]},
+    {tipo:"optimizar",name:"PDF Condiciones + Protección de Datos",note:"Diseñado; pendiente de optimización.",estado:"curso",subs:[]},
+    {tipo:"optimizar",name:"Chatbot FAQ «Alex 24/7»",note:"Desplegado; integrar Sheet de alimentos.",estado:"curso",subs:[
+      {text:"Conectar Google Sheet de alimentos",done:false},
+      {text:"Probar cálculo de equivalencias calóricas",done:false}]},
+    {tipo:"crear",name:"Calendario/timing de onboarding (D0 → mes 1)",note:"Definido; falta implementarlo.",estado:"pendiente",subs:[
+      {text:"Día 0 — Welcome + condiciones",done:false},
+      {text:"Día 3 — contacto de control",done:false},
+      {text:"Semana 1 — seguimiento preventivo",done:false},
+      {text:"Fin mes 1 — recap",done:false}]},
+    {tipo:"crear",name:"Mensajería automatizada (welcome · D3 · S1)",note:"Hoy es manual.",estado:"pendiente",subs:[]},
+    {tipo:"crear",name:"Vídeos explicativos (MESO/NUTRI/SEGUIMIENTO + entrenar)",note:"Mayor ROI de la etapa y requisito para delegar.",estado:"pendiente",subs:[
+      {text:"Vídeo: cómo usar hoja MESO",done:false},
+      {text:"Vídeo: cómo usar hoja NUTRI",done:false},
+      {text:"Vídeo: cómo usar SEGUIMIENTO",done:false},
+      {text:"Vídeo: cómo entrenar correctamente",done:false}]},
+    {tipo:"crear",name:"Checklist «cliente onboardeado»",note:"Trigger formal hacia la Etapa 4.",estado:"pendiente",subs:[]},
+  ],
+  e4:[
+    {tipo:"existe",name:"Hoja MESO (entrenamiento)",note:"Formato condicional rendimiento/volumen/grupos.",estado:"hecho",subs:[]},
+    {tipo:"existe",name:"Hoja NUTRI + macro-escalado (TDEE)",note:"Apps Script + base de datos de alimentos.",estado:"hecho",subs:[]},
+    {tipo:"existe",name:"Hoja SEGUIMIENTO (progreso)",note:"Ritmo de peso, adherencia.",estado:"hecho",subs:[]},
+    {tipo:"existe",name:"NutriPlan (React)",note:"Recurso de adherencia para el cliente.",estado:"hecho",subs:[]},
+    {tipo:"crear",name:"Protocolo de revisión semanal/quincenal",note:"Cadencia fija de check-in, no reactiva.",estado:"pendiente",subs:[]},
+    {tipo:"crear",name:"Protocolo de soporte y dudas",note:"Qué se responde, cuándo y cómo (sin invadir tu tiempo).",estado:"pendiente",subs:[]},
+    {tipo:"crear",name:"Sistema de checkpoints de progreso",note:"Hitos claros para saber si el cliente avanza.",estado:"pendiente",subs:[]},
+    {tipo:"crear",name:"Protocolo de pivote",note:"Qué hacer cuando algo no funciona — reglas, no improvisación.",estado:"pendiente",subs:[]},
+  ],
+  e5:[
+    {tipo:"crear",name:"Post-mortem de cliente",note:"Qué funcionó y qué no, al cierre de cada programa.",estado:"pendiente",subs:[]},
+    {tipo:"crear",name:"Panel de métricas de negocio",note:"Churn, LTV, tiempo a resultado — visión agregada.",estado:"pendiente",subs:[]},
+    {tipo:"crear",name:"Sistema de detección de cuellos de botella",note:"Dónde se atascan los clientes y por qué.",estado:"pendiente",subs:[]},
+    {tipo:"crear",name:"Ciclo de mejora del proceso",note:"Iterar MESO/NUTRI/onboarding sobre datos, no intuición.",estado:"pendiente",subs:[]},
+  ],
+  e6:[
+    {tipo:"optimizar",name:"Revisiones longitudinales",note:"Falta una cadencia fija (p. ej. quincenal).",estado:"curso",subs:[]},
+    {tipo:"existe",name:"Recursos / plantillas compartidos",note:"Estandarizan calidad al escalar.",estado:"hecho",subs:[]},
+    {tipo:"crear",name:"Sistema de testimonios en hitos",note:"Convierte clientes en captación — cierra el ciclo.",estado:"pendiente",subs:[]},
+  ],
+  e7:[
+    {tipo:"crear",name:"Programa grupal",note:"Mayor margen, menos tiempo por cliente.",estado:"pendiente",subs:[]},
+    {tipo:"crear",name:"Membresía / comunidad",note:"Retención de clientes que aún no están listos para 1:1.",estado:"pendiente",subs:[]},
+    {tipo:"crear",name:"Productos digitales",note:"NutriPlan como app de pago, guías, bootcamps.",estado:"pendiente",subs:[]},
+    {tipo:"crear",name:"Sistema de tiers",note:"Básico / Premium / VIP — distintos niveles de acceso a ti.",estado:"pendiente",subs:[]},
+  ],
+  o1:[
+    {tipo:"crear",name:"Documentación de procesos (playbooks)",note:"Cada protocolo del ciclo, escrito y versionado.",estado:"pendiente",subs:[
+      {text:"Playbook de venta",done:false},
+      {text:"Playbook de onboarding",done:false},
+      {text:"Playbook de entrega MESO/NUTRI",done:false}]},
+    {tipo:"crear",name:"Gestión y auditoría de datos de cliente",note:"Dónde se guardan, quién accede, cómo se protegen.",estado:"pendiente",subs:[]},
+    {tipo:"optimizar",name:"Infraestructura y APIs centralizadas",note:"Netlify, Cloudflare, Make, Resend, Anthropic — hoy dispersos.",estado:"curso",subs:[]},
+    {tipo:"crear",name:"Training de ejecutores",note:"Preparar el sistema para delegar sin perder calidad.",estado:"pendiente",subs:[]},
+  ],
+};
+
+const ICON={
+  edit:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>',
+  del:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>',
+  add:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>',
+  chev:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>',
+  check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>',
+  dots:'<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="12" cy="6" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="12" cy="18" r="1.9"/></svg>'
+};
+
+/* persistence */
+const hasWS=!!(window.storage&&window.storage.get&&window.storage.set);
+async function loadState(){
+  try{
+    if(hasWS){const r=await window.storage.get(STATE_KEY,false);return r&&r.value?JSON.parse(r.value):null;}
+    const v=localStorage.getItem(STATE_KEY);return v?JSON.parse(v):null;
+  }catch(e){return null;}
+}
+let savedTimer;
+let saveInFlight=null, savePending=false;
+function showSaveError(show){
+  document.getElementById("savebar").classList.toggle("show",show);
+}
+async function attemptSave(){
+  const s=JSON.stringify(state);
+  const MAX_TRIES=3;
+  for(let i=0;i<MAX_TRIES;i++){
+    try{
+      if(hasWS){
+        const r=await window.storage.set(STATE_KEY,s,false);
+        if(!r) throw new Error("Storage set returned null");
+      }else{
+        localStorage.setItem(STATE_KEY,s);
+      }
+      return true;
+    }catch(e){
+      console.error(`save attempt ${i+1} failed`,e);
+      if(i<MAX_TRIES-1) await new Promise(r=>setTimeout(r,400*(i+1)));
+    }
+  }
+  return false;
+}
+async function saveState(){
+  if(saveInFlight){ savePending=true; return; }
+  saveInFlight=(async()=>{
+    const ok=await attemptSave();
+    if(ok){
+      showSaveError(false);
+      const el=document.getElementById("savedTxt");el.textContent="Guardado ✓";
+      clearTimeout(savedTimer);savedTimer=setTimeout(()=>{el.textContent="Progreso guardado localmente";},1400);
+    }else{
+      showSaveError(true);
+    }
+    saveInFlight=null;
+    if(savePending){ savePending=false; saveState(); }
+  })();
+  return saveInFlight;
+}
+document.getElementById("retrySave").addEventListener("click",()=>saveState());
+function uid(p){return (p||"it_")+Date.now().toString(36)+Math.random().toString(36).slice(2,5);}
+function seed(){
+  const ph={};
+  Object.values(PHASE_META).flat().forEach(p=>{
+    ph[p.id]=DEFAULTS[p.id].map(it=>Object.assign({id:uid("it_")},it,{subs:(it.subs||[]).map(s=>Object.assign({id:uid("sb_")},s))}));
+  });
+  return {v:3,phases:ph};
+}
+
+let state=null, track="ciclo", filter="todos", editingId=null, newId=null, openIds=new Set();
+const esc=s=>(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+const phasesInTrack=()=>PHASE_META[track];
+const allItemsInTrack=()=>phasesInTrack().flatMap(p=>state.phases[p.id]);
+const allItemsGlobal=()=>Object.values(PHASE_META).flat().flatMap(p=>state.phases[p.id]);
+const findItem=id=>{for(const p of Object.values(PHASE_META).flat()){const it=state.phases[p.id].find(x=>x.id===id);if(it)return {it,pid:p.id};}return null;};
+
+function itemEffectiveWeight(it){
+  if(it.subs&&it.subs.length){return it.subs.filter(s=>s.done).length/it.subs.length;}
+  return 0; // sin subtareas = No definido, no aporta progreso
+}
+function derivedEstado(it){
+  if(!it.subs||!it.subs.length) return "nodef";
+  const done=it.subs.filter(s=>s.done).length;
+  if(done===0) return "pendiente";
+  if(done===it.subs.length) return "hecho";
+  return "curso";
+}
+const pctOf=pid=>{const a=state.phases[pid];return a.length?Math.round(a.reduce((s,it)=>s+itemEffectiveWeight(it),0)/a.length*100):0;};
+
+/* render */
+function render(){
+  const root=document.getElementById("phases");root.innerHTML="";
+  phasesInTrack().forEach(p=>{
+    const items=state.phases[p.id];const pct=pctOf(p.id);
+    const sec=document.createElement("section");
+    sec.className="phase"+(pct===100&&items.length?" complete":"")+(p.isNew?" new":"");sec.dataset.pid=p.id;
+    sec.innerHTML=`
+      <div class="node"><i></i></div>
+      <div class="phase-head">
+        <div class="pnum">${p.n}</div>
+        <div class="phead-txt"><div class="pname">${p.name}${p.isNew?'<span class="new-tag">NUEVA</span>':''}</div></div>
+        <div class="pbar-wrap"><div class="pbar"><i style="width:${pct}%"></i></div><div class="ppct">${pct}%</div></div>
+      </div>
+      <div class="pobj">${p.obj}</div>
+      <div class="items"></div>
+      <button class="add-card" data-add="${p.id}">${ICON.add} Añadir tarjeta</button>`;
+    const list=sec.querySelector(".items");
+    if(!items.length) list.innerHTML='<div class="empty">Sin tarjetas en esta fase todavía.</div>';
+    items.forEach(it=>list.appendChild(it.id===editingId?editCard(it):viewCard(it,p.id)));
+    root.appendChild(sec);
+  });
+  updateSummary();
+}
+
+function viewCard(it,pid){
+  const e=derivedEstado(it);
+  const hasSubs=!!(it.subs&&it.subs.length);
+  const visible=filter==="todos"||e===filter;
+  const isOpen=openIds.has(it.id);
+  const subDone=(it.subs||[]).filter(s=>s.done).length;
+  const subTotal=(it.subs||[]).length;
+  const el=document.createElement("div");
+  el.className="item"+(visible?"":" hide")+(isOpen?" open":"");el.dataset.id=it.id;
+  el.innerHTML=`
+    <div class="item-row" data-toggle="1">
+      <div class="item-main">
+        <span class="estado-tag ${e}">${LBL[e]}</span>
+        <div class="iname">${esc(it.name)||"<span style='color:var(--text-3)'>(sin título)</span>"}
+          ${subTotal?`<span class="subcount${subDone===subTotal?' allDone':''}">${subDone}/${subTotal}</span>`:""}
+        </div>
+        ${it.note?`<div class="inote">${esc(it.note)}</div>`:""}
+      </div>
+      <div class="controls">
+        <div class="menu-wrap">
+          <button class="menu-dots" aria-label="Más opciones" aria-haspopup="true">${ICON.dots}</button>
+          <div class="menu-pop">
+            <button class="menu-item edit">${ICON.edit}Editar</button>
+            <button class="menu-item danger del">${ICON.del}Eliminar</button>
+          </div>
+        </div>
+        <span class="chev">${ICON.chev}</span>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="subhead"><span>Subtareas · definen el estado</span></div>
+      <div class="sublist"></div>
+      <button class="add-sub">${ICON.add} Añadir subtarea</button>
+    </div>`;
+
+  // toggle accordion (ignore clicks on interactive controls)
+  el.querySelector(".item-row").addEventListener("click",ev=>{
+    if(ev.target.closest(".menu-wrap")) return;
+    if(isOpen) openIds.delete(it.id); else openIds.add(it.id);
+    render();
+  });
+  const menuDots=el.querySelector(".menu-dots");
+  const menuPop=el.querySelector(".menu-pop");
+  menuDots.addEventListener("click",ev=>{
+    ev.stopPropagation();
+    document.querySelectorAll(".menu-pop.open").forEach(m=>{if(m!==menuPop)m.classList.remove("open");});
+    menuPop.classList.toggle("open");
+  });
+  document.addEventListener("click",function closeMenu(ev){
+    if(!menuPop.contains(ev.target)&&ev.target!==menuDots){menuPop.classList.remove("open");}
+  });
+  el.querySelector(".menu-item.edit").addEventListener("click",ev=>{
+    ev.stopPropagation();menuPop.classList.remove("open");editingId=it.id;newId=null;render();
+  });
+  el.querySelector(".menu-item.del").addEventListener("click",async ev=>{
+    ev.stopPropagation();menuPop.classList.remove("open");
+    const ok=await confirmModal("¿Eliminar esta tarjeta y sus subtareas?","Eliminar tarjeta");
+    if(!ok)return;
+    state.phases[pid]=state.phases[pid].filter(x=>x.id!==it.id);saveState();render();
+  });
+
+  // subtasks
+  const sublist=el.querySelector(".sublist");
+  if(!it.subs||!it.subs.length){
+    sublist.innerHTML='<div class="sub-empty">Sin subtareas. Añade una para desglosar esta tarjeta.</div>';
+  }else{
+    it.subs.forEach(sb=>{
+      const row=document.createElement("div");
+      row.className="sub"+(sb.done?" done":"");
+      row.innerHTML=`<button class="sub-check" aria-label="Marcar completada">${ICON.check}</button>
+        <input class="sub-text" type="text" value="${esc(sb.text)}" placeholder="Describe la subtarea...">
+        <button class="sub-del" aria-label="Eliminar subtarea">${ICON.del}</button>`;
+      row.querySelector(".sub-check").addEventListener("click",()=>{
+        sb.done=!sb.done;it.estado=derivedEstado(it);saveState();render();
+      });
+      const txt=row.querySelector(".sub-text");
+      let t;
+      txt.addEventListener("input",()=>{sb.text=txt.value;clearTimeout(t);t=setTimeout(saveState,400);});
+      txt.addEventListener("click",ev=>ev.stopPropagation());
+      row.querySelector(".sub-del").addEventListener("click",()=>{
+        it.subs=it.subs.filter(x=>x.id!==sb.id);it.estado=derivedEstado(it);saveState();render();
+      });
+      sublist.appendChild(row);
+    });
+  }
+  el.querySelector(".add-sub").addEventListener("click",ev=>{
+    ev.stopPropagation();
+    if(!it.subs) it.subs=[];
+    const nb={id:uid("sb_"),text:"",done:false};
+    it.subs.push(nb);it.estado=derivedEstado(it);openIds.add(it.id);saveState();render();
+    setTimeout(()=>{
+      const node=document.querySelector(`.item[data-id="${it.id}"] .sub:last-child .sub-text`);
+      if(node) node.focus();
+    },30);
+  });
+  return el;
+}
+
+function editCard(it){
+  const el=document.createElement("div");el.className="item open";el.dataset.id=it.id;
+  el.innerHTML=`
+    <div class="edit">
+      <div class="efield"><label>Título</label><input class="f-name" type="text" value="${esc(it.name)}" placeholder="Nombre de la tarjeta"></div>
+      <div class="efield"><label>Descripción</label><textarea class="f-note" placeholder="Nota, próximos pasos, contexto…">${esc(it.note)}</textarea></div>
+      <div class="efield"><label>Estado</label>
+        <div style="font-size:13px;color:var(--text-2);padding:2px 0">Se calcula automáticamente según las subtareas — añádelas o márcalas para cambiarlo.</div>
+      </div>
+      <div class="edit-actions">
+        <button class="btn save">Guardar</button>
+        <button class="btn cancel">Cancelar</button>
+      </div>
+    </div>`;
+  const nameI=el.querySelector(".f-name");
+  setTimeout(()=>nameI.focus(),30);
+  el.querySelector(".save").addEventListener("click",()=>{
+    const nm=nameI.value.trim();
+    if(!nm){
+      nameI.style.borderColor="#D98373";
+      nameI.placeholder="Este campo es obligatorio";
+      nameI.focus();
+      return;
+    }
+    it.name=nm;it.note=el.querySelector(".f-note").value.trim();
+    editingId=null;newId=null;saveState();render();
+  });
+  el.querySelector(".cancel").addEventListener("click",()=>{
+    if(newId===it.id){const f=findItem(it.id);if(f)state.phases[f.pid]=state.phases[f.pid].filter(x=>x.id!==it.id);saveState();}
+    editingId=null;newId=null;render();
+  });
+  return el;
+}
+
+function updatePhaseVisual(pid){
+  const sec=document.querySelector(`.phase[data-pid="${pid}"]`);if(!sec)return;
+  const pct=pctOf(pid);
+  sec.querySelector(".pbar i").style.width=pct+"%";
+  sec.querySelector(".ppct").textContent=pct+"%";
+  sec.classList.toggle("complete",pct===100&&state.phases[pid].length>0);
+}
+function updateSummary(){
+  const all=allItemsGlobal();const total=all.length;
+  const sum=all.reduce((s,it)=>s+itemEffectiveWeight(it),0);
+  const pct=total?Math.round(sum/total*100):0;
+  document.getElementById("pctNum").textContent=pct;
+  document.getElementById("hbarFill").style.width=pct+"%";
+  const cnt={nodef:0,pendiente:0,curso:0,hecho:0};
+  all.forEach(it=>{ cnt[derivedEstado(it)]++; });
+  document.getElementById("c-todos").textContent=total;
+  document.getElementById("c-pendiente").textContent=cnt.pendiente;
+  document.getElementById("c-curso").textContent=cnt.curso;
+  document.getElementById("c-hecho").textContent=cnt.hecho;
+}
+
+/* add card */
+document.getElementById("phases").addEventListener("click",e=>{
+  const b=e.target.closest("[data-add]");if(!b)return;
+  const pid=b.dataset.add;const it={id:uid("it_"),tipo:"crear",name:"",note:"",estado:"pendiente",subs:[]};
+  state.phases[pid].push(it);editingId=it.id;newId=it.id;saveState();render();
+  const node=document.querySelector(`.item[data-id="${it.id}"]`);if(node)node.scrollIntoView({behavior:"smooth",block:"center"});
+});
+document.getElementById("filters").addEventListener("click",e=>{
+  const b=e.target.closest(".chip");if(!b)return;filter=b.dataset.f;
+  document.querySelectorAll(".chip").forEach(c=>c.classList.toggle("active",c===b));render();
+});
+document.getElementById("trackSwitch").addEventListener("click",e=>{
+  const b=e.target.closest(".tbtn");if(!b)return;track=b.dataset.track;
+  document.querySelectorAll(".tbtn").forEach(c=>c.classList.toggle("active",c===b));
+  editingId=null;newId=null;render();
+});
+document.getElementById("reset").addEventListener("click",async()=>{
+  const ok=await confirmModal("¿Reiniciar a las tarjetas, subtareas y estados originales? Se perderán tus cambios.","Reiniciar");
+  if(!ok)return;
+  state=seed();editingId=null;newId=null;openIds=new Set();await saveState();render();
+});
+
+(async function init(){state=await loadState();if(!state||!state.phases)state=seed();render();})();
+</script>
+</body>
+</html>

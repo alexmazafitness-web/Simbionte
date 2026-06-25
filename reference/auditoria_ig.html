@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema · @_alexmaza</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
+
+  :root{
+    --bg: #0E0E0D;
+    --panel: #161513;
+    --panel-2: #1C1B18;
+    --line: #2A2823;
+    --gold: #C9A96E;
+    --gold-dim: #8C7650;
+    --text: #EDEAE2;
+    --text-dim: #9A958A;
+    --red: #C75C4A;
+    --green: #7C9A78;
+    --radius: 2px;
+  }
+
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; -webkit-font-smoothing:antialiased;}
+  body{min-height:100vh; padding-bottom:80px;}
+
+  h1,h2,h3,.display{font-family:'Bebas Neue',sans-serif; letter-spacing:.04em; font-weight:400;}
+
+  ::selection{background:var(--gold); color:#0E0E0D;}
+
+  a{color:var(--gold); text-decoration:none;}
+
+  /* ---------- Top bar ---------- */
+  .topbar{
+    position:sticky; top:0; z-index:50;
+    background:rgba(14,14,13,.92); backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+    padding:14px 20px;
+    display:flex; align-items:center; justify-content:space-between;
+    gap:12px;
+  }
+  .brand{display:flex; align-items:baseline; gap:8px;}
+  .brand .mark{font-family:'Bebas Neue'; font-size:20px; letter-spacing:.08em;}
+  .brand .at{color:var(--gold); font-size:13px; font-family:'DM Sans'; letter-spacing:.02em;}
+  .progress-wrap{display:flex; align-items:center; gap:10px; flex:1; max-width:280px;}
+  .progress-track{flex:1; height:3px; background:var(--line); border-radius:2px; overflow:hidden;}
+  .progress-fill{height:100%; background:var(--gold); width:0%; transition:width .4s ease;}
+  .progress-num{font-size:11px; color:var(--text-dim); white-space:nowrap; font-variant-numeric:tabular-nums;}
+
+  /* ---------- Hero ---------- */
+  .hero{
+    padding:64px 20px 40px;
+    max-width:980px; margin:0 auto;
+    border-bottom:1px solid var(--line);
+  }
+  .eyebrow{
+    color:var(--gold-dim); font-size:11px; letter-spacing:.18em; text-transform:uppercase;
+    margin-bottom:18px; display:flex; align-items:center; gap:10px;
+  }
+  .eyebrow::before{content:''; width:24px; height:1px; background:var(--gold-dim);}
+  .hero h1{font-size:clamp(38px,7vw,72px); line-height:1; margin-bottom:18px;}
+  .hero h1 span{color:var(--gold);}
+  .hero p{color:var(--text-dim); font-size:16px; max-width:540px; line-height:1.6;}
+
+  .stat-row{display:flex; gap:36px; margin-top:36px; flex-wrap:wrap;}
+  .stat{}
+  .stat .num{font-family:'Bebas Neue'; font-size:34px; color:var(--gold); line-height:1;}
+  .stat .lbl{font-size:11px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.08em; margin-top:4px;}
+
+  /* ---------- Nav tabs ---------- */
+  .tabs{
+    max-width:980px; margin:0 auto;
+    display:flex; gap:2px; padding:24px 20px 0;
+    overflow-x:auto; scrollbar-width:none;
+  }
+  .tabs::-webkit-scrollbar{display:none;}
+  .tab{
+    background:none; border:1px solid var(--line); color:var(--text-dim);
+    padding:10px 16px; font-size:12px; letter-spacing:.04em; text-transform:uppercase;
+    cursor:pointer; white-space:nowrap; font-family:'DM Sans'; font-weight:500;
+    transition:all .2s ease; position:relative;
+  }
+  .tab:hover{color:var(--text); border-color:var(--gold-dim);}
+  .tab.active{color:#0E0E0D; background:var(--gold); border-color:var(--gold);}
+  .tab .count{
+    display:inline-block; margin-left:6px; font-size:10px;
+    opacity:.75;
+  }
+
+  /* ---------- Sections ---------- */
+  .section{max-width:980px; margin:0 auto; padding:40px 20px 20px; display:none;}
+  .section.active{display:block; animation:fadeIn .35s ease;}
+  @keyframes fadeIn{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+
+  .section-head{margin-bottom:28px;}
+  .section-head h2{font-size:30px; margin-bottom:8px;}
+  .section-head p{color:var(--text-dim); font-size:14px; max-width:560px; line-height:1.55;}
+
+  /* ---------- Diagnosis callout ---------- */
+  .callout{
+    border:1px solid var(--gold-dim); border-left:3px solid var(--gold);
+    padding:18px 20px; margin-bottom:32px; background:rgba(201,169,110,.05);
+    font-size:14px; line-height:1.6;
+  }
+  .callout b{color:var(--gold);}
+
+  /* ---------- Funnel viz ---------- */
+  .funnel{
+    display:flex; flex-direction:column; gap:1px; margin:28px 0 36px;
+    border:1px solid var(--line);
+  }
+  .funnel-row{
+    display:grid; grid-template-columns:120px 1fr 90px;
+    align-items:center; gap:14px; padding:14px 18px;
+    background:var(--panel); border-bottom:1px solid var(--line);
+  }
+  .funnel-row:last-child{border-bottom:none;}
+  .funnel-row .flabel{font-size:11px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.05em;}
+  .funnel-bar-track{height:8px; background:var(--line); position:relative; overflow:hidden;}
+  .funnel-bar-fill{height:100%; background:linear-gradient(90deg,var(--gold-dim),var(--gold));}
+  .funnel-row .fval{font-family:'Bebas Neue'; font-size:18px; text-align:right; color:var(--text);}
+  .funnel-row.leak .fval{color:var(--red);}
+
+  /* ---------- Checklist items ---------- */
+  .item{
+    border:1px solid var(--line); background:var(--panel);
+    margin-bottom:10px; transition:border-color .2s ease;
+  }
+  .item:hover{border-color:var(--gold-dim);}
+  .item.done{opacity:.55;}
+  .item-head{
+    display:flex; align-items:flex-start; gap:14px;
+    padding:16px 18px; cursor:pointer;
+  }
+  .check{
+    width:20px; height:20px; min-width:20px; border:1.5px solid var(--text-dim);
+    margin-top:2px; display:flex; align-items:center; justify-content:center;
+    transition:all .15s ease; cursor:pointer;
+  }
+  .check.checked{background:var(--gold); border-color:var(--gold);}
+  .check.checked::after{content:'✓'; color:#0E0E0D; font-size:12px; font-weight:700;}
+  .item-body{flex:1;}
+  .item-title{font-size:14.5px; font-weight:600; margin-bottom:3px;}
+  .item.done .item-title{text-decoration:line-through; text-decoration-color:var(--text-dim);}
+  .item-sub{font-size:12.5px; color:var(--text-dim); line-height:1.5;}
+  .item-tag{
+    font-size:9.5px; text-transform:uppercase; letter-spacing:.06em;
+    padding:2px 7px; border:1px solid var(--gold-dim); color:var(--gold);
+    white-space:nowrap; margin-left:8px; flex-shrink:0;
+  }
+  .item-detail{
+    padding:0 18px 18px 52px; font-size:13px; color:var(--text-dim);
+    line-height:1.65; display:none; border-top:1px solid var(--line); margin-top:0; padding-top:14px;
+  }
+  .item-detail.open{display:block;}
+  .item-detail .quote{
+    display:block; color:var(--text); font-style:italic; margin:8px 0;
+    padding-left:12px; border-left:2px solid var(--gold-dim);
+  }
+  .expand-toggle{
+    background:none; border:none; color:var(--text-dim); cursor:pointer;
+    font-size:11px; padding:4px; flex-shrink:0; align-self:flex-start;
+  }
+
+  /* ---------- Bio status card ---------- */
+  .bio-card{
+    border:1px solid var(--gold); background:var(--panel-2);
+    padding:24px; margin-bottom:28px;
+  }
+  .bio-card .bio-label{font-size:10px; text-transform:uppercase; letter-spacing:.1em; color:var(--gold); margin-bottom:10px;}
+  .bio-card .bio-text{font-size:16px; line-height:1.7;}
+  .bio-card .bio-text .accent{color:var(--gold);}
+
+  /* ---------- Highlights grid ---------- */
+  .hl-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:14px; margin-bottom:8px;}
+  .hl-card{
+    border:1px solid var(--line); background:var(--panel); padding:18px;
+    cursor:pointer; transition:border-color .2s ease;
+  }
+  .hl-card:hover{border-color:var(--gold-dim);}
+  .hl-card.expanded{border-color:var(--gold);}
+  .hl-top{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;}
+  .hl-num{font-family:'Bebas Neue'; font-size:13px; color:var(--gold-dim);}
+  .hl-status{font-size:9.5px; text-transform:uppercase; letter-spacing:.06em; padding:2px 7px;}
+  .hl-status.live{color:var(--green); border:1px solid var(--green);}
+  .hl-status.pending{color:var(--text-dim); border:1px solid var(--line);}
+  .hl-name{font-size:17px; font-weight:600; margin-bottom:4px;}
+  .hl-desc{font-size:12.5px; color:var(--text-dim); line-height:1.5;}
+  .hl-stories{
+    margin-top:14px; padding-top:14px; border-top:1px solid var(--line);
+    display:none; font-size:12.5px; line-height:1.6;
+  }
+  .hl-card.expanded .hl-stories{display:block;}
+  .hl-story{margin-bottom:10px; padding-left:12px; border-left:2px solid var(--gold-dim);}
+  .hl-story b{color:var(--text); display:block; font-size:11px; text-transform:uppercase; letter-spacing:.04em; margin-bottom:2px; color:var(--gold);}
+
+  /* ---------- Calendar ---------- */
+  .week-block{margin-bottom:36px;}
+  .week-head{
+    display:flex; align-items:baseline; gap:10px; margin-bottom:14px;
+    padding-bottom:10px; border-bottom:1px solid var(--line);
+  }
+  .week-head h3{font-size:22px;}
+  .week-head span{font-size:12px; color:var(--text-dim);}
+  .day-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:6px;}
+  @media (max-width:760px){.day-grid{grid-template-columns:repeat(2,1fr);}}
+  .day-card{
+    border:1px solid var(--line); background:var(--panel); padding:10px; min-height:120px;
+    font-size:11.5px; display:flex; flex-direction:column; gap:6px;
+  }
+  .day-card.rest{align-items:center; justify-content:center; color:var(--text-dim); font-style:italic;}
+  .day-name{font-size:10px; text-transform:uppercase; color:var(--text-dim); letter-spacing:.04em;}
+  .day-fmt{display:inline-block; font-size:9px; padding:1px 5px; text-transform:uppercase; letter-spacing:.04em; width:fit-content;}
+  .day-fmt.reel{color:#D2A269; border:1px solid #D2A269;}
+  .day-fmt.story{color:#7FA3C9; border:1px solid #7FA3C9;}
+  .day-fmt.post{color:#B19CD9; border:1px solid #B19CD9;}
+  .day-title{font-weight:600; line-height:1.3; color:var(--text); font-size:12px;}
+
+  /* ---------- Principles list ---------- */
+  .principle{
+    display:grid; grid-template-columns:32px 1fr; gap:14px;
+    padding:16px 0; border-bottom:1px solid var(--line);
+  }
+  .principle:last-child{border-bottom:none;}
+  .principle .pnum{font-family:'Bebas Neue'; font-size:20px; color:var(--gold-dim);}
+  .principle h4{font-size:14.5px; margin-bottom:4px;}
+  .principle p{font-size:13px; color:var(--text-dim); line-height:1.6;}
+
+  /* ---------- Footer note ---------- */
+  .footnote{
+    text-align:center; color:var(--text-dim); font-size:11px; padding:40px 20px 10px;
+    letter-spacing:.03em;
+  }
+
+  .reset-btn{
+    background:none; border:1px solid var(--line); color:var(--text-dim);
+    font-size:10px; padding:6px 12px; cursor:pointer; letter-spacing:.04em;
+    text-transform:uppercase; font-family:'DM Sans';
+  }
+  .reset-btn:hover{border-color:var(--red); color:var(--red);}
+
+  .loading-state{color:var(--text-dim); font-size:13px; padding:20px; text-align:center;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <span class="mark">SISTEMA</span>
+    <span class="at">@_alexmaza</span>
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <span class="progress-num" id="progressNum">0/0</span>
+  </div>
+  <button class="reset-btn" id="resetBtn">Reiniciar</button>
+</div>
+
+<div class="hero">
+  <div class="eyebrow">Diagnóstico de cuenta</div>
+  <h1>El tráfico ya<br>lo <span>tienes</span>.</h1>
+  <p>62.800 visualizaciones al mes y 669 seguidores. El problema nunca fue el alcance: es la conversión. Este es el plan para tapar cada fuga, en orden de impacto.</p>
+  <div class="stat-row">
+    <div class="stat"><div class="num">62,8K</div><div class="lbl">Vistas / mes</div></div>
+    <div class="stat"><div class="num">0,05%</div><div class="lbl">Conversión actual</div></div>
+    <div class="stat"><div class="num">1-2%</div><div class="lbl">Objetivo sano</div></div>
+    <div class="stat"><div class="num">~10</div><div class="lbl">Clientes/mes meta</div></div>
+  </div>
+</div>
+
+<div class="tabs" id="tabs">
+  <button class="tab active" data-tab="diagnostico">Diagnóstico</button>
+  <button class="tab" data-tab="perfil">Perfil <span class="count" id="cPerfil"></span></button>
+  <button class="tab" data-tab="destacados">Destacados <span class="count" id="cDest"></span></button>
+  <button class="tab" data-tab="calendario">Calendario</button>
+  <button class="tab" data-tab="principios">Principios</button>
+</div>
+
+<!-- DIAGNÓSTICO -->
+<section class="section active" id="sec-diagnostico">
+  <div class="section-head">
+    <h2>Dónde se fuga el cliente</h2>
+    <p>Tu reel de la cinta inclinada alcanzó 6.164 cuentas. Solo 3 se hicieron seguidoras. El embudo no falla en la entrada, falla justo después.</p>
+  </div>
+
+  <div class="callout">
+    <b>Lectura clave:</b> con 62.800 visualizaciones/mes, llegar a 5.000€ exige convertir en cliente solo el <b>0,018%</b> de quien te ve. No necesitas más alcance — necesitas que la gente que ya te ve se quede.
+  </div>
+
+  <div class="funnel">
+    <div class="funnel-row">
+      <span class="flabel">Visualizaciones</span>
+      <div class="funnel-bar-track"><div class="funnel-bar-fill" style="width:100%"></div></div>
+      <span class="fval">62.800</span>
+    </div>
+    <div class="funnel-row">
+      <span class="flabel">Llegan al perfil</span>
+      <div class="funnel-bar-track"><div class="funnel-bar-fill" style="width:65%"></div></div>
+      <span class="fval">~40K</span>
+    </div>
+    <div class="funnel-row leak">
+      <span class="flabel">Se hacen seguidores</span>
+      <div class="funnel-bar-track"><div class="funnel-bar-fill" style="width:1%"></div></div>
+      <span class="fval">~170</span>
+    </div>
+    <div class="funnel-row leak">
+      <span class="flabel">Escriben por DM</span>
+      <div class="funnel-bar-track"><div class="funnel-bar-fill" style="width:0.3%"></div></div>
+      <span class="fval">~10-15</span>
+    </div>
+  </div>
+
+  <div class="section-head" style="margin-top:8px;">
+    <h2 style="font-size:22px;">Las tres fugas, en orden de impacto</h2>
+  </div>
+
+  <div class="item">
+    <div class="item-head">
+      <div class="check" data-key="diag-bio"></div>
+      <div class="item-body">
+        <div class="item-title">Bio sin diferenciar <span class="item-tag">Resuelto</span></div>
+        <div class="item-sub">"Gana músculo y pierde grasa sin perder el tiempo" — lo dicen 50.000 cuentas. No frena el scroll del visitante.</div>
+      </div>
+      <button class="expand-toggle" data-expand="diag-bio">VER ▾</button>
+    </div>
+    <div class="item-detail" id="detail-diag-bio">
+      Bio actual aprobada: <span class="quote">🇪🇸 | Entrenador Online<br>🎯 | Te ayudo a verte como un atleta, sin perder el tiempo y con un plan definido 👇</span>
+      Nombre indexable: <b>Alex Maza | Entrenador Online 🇪🇸</b> — buscable y sin redundancia con la bio.
+    </div>
+  </div>
+
+  <div class="item">
+    <div class="item-head">
+      <div class="check" data-key="diag-destacados"></div>
+      <div class="item-body">
+        <div class="item-title">Destacados que no venden <span class="item-tag">En curso</span></div>
+        <div class="item-sub">"ETTO" (bicis), una cruz morada y un coche no comunican nada de tu servicio. Cada visita interesada que los mira, se va sin entender qué haces.</div>
+      </div>
+      <button class="expand-toggle" data-expand="diag-destacados">VER ▾</button>
+    </div>
+    <div class="item-detail" id="detail-diag-destacados">
+      Estructura definitiva: <b>Empieza aquí → Transformaciones → Qué dicen → El proceso → Sobre mí</b>. Cada uno responde una pregunta de venta concreta. Ver pestaña Destacados para el detalle story por story.
+    </div>
+  </div>
+
+  <div class="item">
+    <div class="item-head">
+      <div class="check" data-key="diag-feed"></div>
+      <div class="item-body">
+        <div class="item-title">Feed sin prueba social <span class="item-tag">Pendiente</span></div>
+        <div class="item-sub">15 publicaciones, ninguna muestra un cliente, un resultado o un testimonio. El feed dice "cuenta de tips de fitness", no "coach con clientes reales".</div>
+      </div>
+      <button class="expand-toggle" data-expand="diag-feed">VER ▾</button>
+    </div>
+    <div class="item-detail" id="detail-diag-feed">
+      Acción: fijar 3 publicaciones arriba — mejor reel educativo, un caso de cliente (cuando haya material), y un carrusel tipo "empieza aquí". Intercalar 1 pieza de cliente cada 3-4 reels educativos.
+    </div>
+  </div>
+</section>
+
+<!-- PERFIL -->
+<section class="section" id="sec-perfil">
+  <div class="section-head">
+    <h2>El perfil</h2>
+    <p>Lo que ve cualquiera antes de decidir seguirte o escribirte. Bio, nombre y posicionamiento, ya cerrados.</p>
+  </div>
+
+  <div class="bio-card">
+    <div class="bio-label">Nombre (campo indexable)</div>
+    <div class="bio-text">Alex Maza | Entrenador Online <span class="accent">🇪🇸</span></div>
+  </div>
+
+  <div class="bio-card">
+    <div class="bio-label">Bio</div>
+    <div class="bio-text">
+      👨‍💻 | Te ayudo a verte como un atleta<br>
+      <span class="accent">🎯</span> | Sin perder el tiempo y con un plan definido 👇<br>
+      🔗 alexmaza.es
+    </div>
+  </div>
+
+  <div class="item">
+    <div class="item-head">
+      <div class="check checked" data-key="perfil-bio"></div>
+      <div class="item-body">
+        <div class="item-title">Bio reescrita y aprobada</div>
+        <div class="item-sub">Promesa concreta + objeción rota ("sin perder el tiempo, con un plan definido") + CTA claro.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="item">
+    <div class="item-head">
+      <div class="check" data-key="perfil-seguidos"></div>
+      <div class="item-body">
+        <div class="item-title">Bajar "seguidos" por debajo de 100</div>
+        <div class="item-sub">183 actuales. Reduce para reforzar autoridad visual de cuenta profesional.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="item">
+    <div class="item-head">
+      <div class="check" data-key="perfil-pin"></div>
+      <div class="item-body">
+        <div class="item-title">Fijar 3 publicaciones de bienvenida</div>
+        <div class="item-sub">Reel educativo top + carrusel "empieza aquí" + caso de cliente (cuando exista material).</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="item">
+    <div class="item-head">
+      <div class="check" data-key="perfil-titulacion"></div>
+      <div class="item-body">
+        <div class="item-title">No usar "dietista" hasta tener el título</div>
+        <div class="item-sub">Profesión regulada en España. "Entrenamiento y nutrición" describe el servicio sin riesgo de intrusismo. Revisar cuando termines la formación.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DESTACADOS -->
+<section class="section" id="sec-destacados">
+  <div class="section-head">
+    <h2>Los 5 destacados</h2>
+    <p>Cada uno responde una pregunta concreta del visitante. Sin tips sueltos: cada pieza empuja hacia el DM o construye la confianza que lleva ahí.</p>
+  </div>
+
+  <div class="hl-grid" id="hlGrid">
+
+    <div class="hl-card" data-hl="empieza">
+      <div class="hl-top"><span class="hl-num">01</span><span class="hl-status live">En montaje</span></div>
+      <div class="hl-name">Empieza aquí</div>
+      <div class="hl-desc">Conversión pura. Lleva al visitante desde el gancho hasta el DM con la palabra clave "PLAN".</div>
+      <div class="hl-stories">
+        <div class="hl-story"><b>1 · Gancho</b>Hay una razón por la que entrenas y no avanzas. Te explico cuál es ➡️</div>
+        <div class="hl-story"><b>2 · Diagnóstico</b>No avanzas porque nadie te ha dicho qué hacer EXACTAMENTE. Así de simple.</div>
+        <div class="hl-story"><b>3 · Consecuencias</b>¿Qué pasa cuando NO sabes qué hacer? → esfuerzo de más / tiempo perdido / físico igual.</div>
+        <div class="hl-story"><b>4 · Solución + CTA</b>Todo cambia cuando sabes exactamente qué hacer. Escríbeme "PLAN" por DM y vemos qué necesitas para avanzar.</div>
+      </div>
+    </div>
+
+    <div class="hl-card" data-hl="proceso">
+      <div class="hl-top"><span class="hl-num">02</span><span class="hl-status live">En montaje</span></div>
+      <div class="hl-name">El proceso</div>
+      <div class="hl-desc">Qué recibe exactamente el cliente. Mix de vídeo (tú hablando) e imagen (recursos reales).</div>
+      <div class="hl-stories">
+        <div class="hl-story"><b>1 · Punto de partida</b> [Vídeo] Antes de cualquier plan, te conozco: objetivos, historial, material, limitaciones. Formulario rápido, plan 100% tuyo.</div>
+        <div class="hl-story"><b>2 · Tu planificación</b> [Imagen Sheets] Tu plan de entreno y alimentación, adaptado a ti desde el primer día.</div>
+        <div class="hl-story"><b>3 · El día a día</b> [Vídeo] Comunicación por WhatsApp, seguimiento continuo, no desaparezco una vez que empiezas.</div>
+        <div class="hl-story"><b>4 · Revisiones cada 2 semanas</b> [Imagen métricas] Analizamos progreso — fotos, peso, perímetros — y ajustamos lo necesario.</div>
+        <div class="hl-story"><b>5 · Corrección de ejercicios</b> [Vídeo] Me mandas vídeos, te corrijo la ejecución. Mejores resultados, menos riesgo de lesión.</div>
+        <div class="hl-story"><b>6 · El resultado</b> [Imagen] Esto es lo que cambia cuando entrenas y comes con un plan hecho para ti.</div>
+      </div>
+    </div>
+
+    <div class="hl-card" data-hl="sobremi">
+      <div class="hl-top"><span class="hl-num">03</span><span class="hl-status pending">Pendiente</span></div>
+      <div class="hl-name">Sobre mí</div>
+      <div class="hl-desc">Historia, formación en curso, y lifestyle como complemento — nunca protagonista.</div>
+      <div class="hl-stories">
+        <div class="hl-story"><b>Contenido a definir</b>Por qué te dedicas a esto, tu propia relación con el entreno, que estás formándote en nutrición. El lifestyle entra aquí, integrado, no como destacado aparte.</div>
+      </div>
+    </div>
+
+    <div class="hl-card" data-hl="transformaciones">
+      <div class="hl-top"><span class="hl-num">04</span><span class="hl-status pending">Depende de material</span></div>
+      <div class="hl-name">Transformaciones</div>
+      <div class="hl-desc">Antes/después reales. La prueba más potente que existe — requiere permiso explícito de cada cliente.</div>
+      <div class="hl-stories">
+        <div class="hl-story"><b>Material necesario</b>De los ~20 clientes, identificar quiénes autorizan mostrar cara. Alternativa sin permiso: fotos de cuello para abajo o solo cifras.</div>
+      </div>
+    </div>
+
+    <div class="hl-card" data-hl="quedicen">
+      <div class="hl-top"><span class="hl-num">05</span><span class="hl-status pending">Depende de material</span></div>
+      <div class="hl-name">Qué dicen</div>
+      <div class="hl-desc">Capturas de mensajes y audios. Más fácil de reunir que el antes/después — se puede anonimizar.</div>
+      <div class="hl-stories">
+        <div class="hl-story"><b>Material necesario</b>Revisar conversaciones de WhatsApp con clientes satisfechos. Tapar nombre/foto si no autorizan identidad visible.</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- CALENDARIO -->
+<section class="section" id="sec-calendario">
+  <div class="section-head">
+    <h2>Calendario de contenido · Mes 1</h2>
+    <p>Ángulo Adil: alguien que ya entrena, ya se esfuerza, pero está perdido entre información contradictoria. Reels para alcance frío, Stories para calentar, carruseles para autoridad.</p>
+  </div>
+
+  <div class="week-block">
+    <div class="week-head"><h3>Semana 1</h3><span>Nombrar el dolor y al enemigo (la desinformación)</span></div>
+    <div class="day-grid">
+      <div class="day-card"><span class="day-name">Lun</span><span class="day-fmt reel">Reel</span><span class="day-title">"Llevas años entrenando y no avanzas"</span></div>
+      <div class="day-card"><span class="day-name">Mar</span><span class="day-fmt story">Story</span><span class="day-title">Encuesta de dolor: ¿entrenas sin saber si lo haces bien?</span></div>
+      <div class="day-card"><span class="day-name">Mié</span><span class="day-fmt post">Carrusel</span><span class="day-title">5 mitos del fitness que te frenan</span></div>
+      <div class="day-card"><span class="day-name">Jue</span><span class="day-fmt reel">Reel</span><span class="day-title">El error nº1 de quien ya entrena</span></div>
+      <div class="day-card"><span class="day-name">Vie</span><span class="day-fmt story">Story</span><span class="day-title">Caja de preguntas: tu mayor duda</span></div>
+      <div class="day-card rest">Descanso</div>
+      <div class="day-card"><span class="day-name">Dom</span><span class="day-fmt story">Story</span><span class="day-title">Reflexión + adelanto del caso real</span></div>
+    </div>
+  </div>
+
+  <div class="week-block">
+    <div class="week-head"><h3>Semana 2</h3><span>La prueba — caso Adil</span></div>
+    <div class="day-grid">
+      <div class="day-card"><span class="day-name">Lun</span><span class="day-fmt story">Story</span><span class="day-title">Secuencia Adil 1-3: Hook + Problema</span></div>
+      <div class="day-card"><span class="day-name">Mar</span><span class="day-fmt reel">Reel</span><span class="day-title">"Ya entrenaba hace años. Le faltaba esto."</span></div>
+      <div class="day-card"><span class="day-name">Mié</span><span class="day-fmt story">Story</span><span class="day-title">Secuencia Adil 4-5: Diagnóstico + Solución</span></div>
+      <div class="day-card"><span class="day-name">Jue</span><span class="day-fmt post">Carrusel</span><span class="day-title">El método detrás de Adil</span></div>
+      <div class="day-card"><span class="day-name">Vie</span><span class="day-fmt story">Story</span><span class="day-title">Secuencia Adil 6-7: Testimonio + CTA suave</span></div>
+      <div class="day-card"><span class="day-name">Sáb</span><span class="day-fmt story">Story</span><span class="day-title">Responde dudas de la secuencia</span></div>
+      <div class="day-card"><span class="day-name">Dom</span><span class="day-fmt reel">Reel</span><span class="day-title">Por qué los que ya entrenan son mis mejores casos</span></div>
+    </div>
+  </div>
+
+  <div class="week-block">
+    <div class="week-head"><h3>Semana 3</h3><span>Autoridad + primera oferta clara</span></div>
+    <div class="day-grid">
+      <div class="day-card"><span class="day-name">Lun</span><span class="day-fmt reel">Reel</span><span class="day-title">3 señales de que entrenas sin dirección</span></div>
+      <div class="day-card"><span class="day-name">Mar</span><span class="day-fmt story">Story</span><span class="day-title">Detrás de cámaras / tu día</span></div>
+      <div class="day-card"><span class="day-name">Mié</span><span class="day-fmt post">Carrusel</span><span class="day-title">Cómo saber si tu plan funciona</span></div>
+      <div class="day-card"><span class="day-name">Jue</span><span class="day-fmt reel">Reel</span><span class="day-title">Mini-caso o resultado de otro cliente</span></div>
+      <div class="day-card"><span class="day-name">Vie</span><span class="day-fmt story">Story</span><span class="day-title">OFERTA: abro X plazas — escribe "ADIL"</span></div>
+      <div class="day-card"><span class="day-name">Sáb</span><span class="day-fmt story">Story</span><span class="day-title">Prueba social en vivo (DMs con permiso)</span></div>
+      <div class="day-card"><span class="day-name">Dom</span><span class="day-fmt story">Story</span><span class="day-title">Último aviso de plazas + recap</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- PRINCIPIOS -->
+<section class="section" id="sec-principios">
+  <div class="section-head">
+    <h2>Principios que no se negocian</h2>
+    <p>Lo que sostiene todo lo anterior cuando ya no estés revisando cada pieza.</p>
+  </div>
+
+  <div class="principle">
+    <span class="pnum">01</span>
+    <div><h4>Habla de ellos, no de ti</h4><p>Cada frase que dice "yo hago / yo sé / yo llevo" se reescribe en "tú consigues / tú dejas de / tú por fin". El sujeto manda.</p></div>
+  </div>
+  <div class="principle">
+    <span class="pnum">02</span>
+    <div><h4>Sin tips sueltos en destacados</h4><p>El feed ya hace ese trabajo a escala. Un destacado de "tips" retiene, no convierte, y te devuelve a "cuenta de consejos gratis".</p></div>
+  </div>
+  <div class="principle">
+    <span class="pnum">03</span>
+    <div><h4>CTA siempre al DM, nunca al formulario</h4><p>El link de bio es un salto demasiado grande para alguien recién llegado. El cuestionario es el segundo paso, no el primero.</p></div>
+  </div>
+  <div class="principle">
+    <span class="pnum">04</span>
+    <div><h4>Una palabra clave por destacado</h4><p>"PLAN" en Empieza aquí. Te dice de dónde viene cada DM y filtra mejor que un CTA genérico.</p></div>
+  </div>
+  <div class="principle">
+    <span class="pnum">05</span>
+    <div><h4>Consistencia &gt; perfección</h4><p>El reel 30 será mejor que el 1, pero solo si publicas los 29 del medio. No pierdas una semana puliendo una sola story.</p></div>
+  </div>
+  <div class="principle">
+    <span class="pnum">06</span>
+    <div><h4>Mide DMs, guardados y compartidos — no likes</h4><p>Son las señales que de verdad anticipan un cliente. Al cierre de cada semana, identifica qué pieza trajo más conversaciones y dobla esa dirección.</p></div>
+  </div>
+</section>
+
+<div class="footnote">Sistema de trabajo · @_alexmaza · el progreso se guarda automáticamente en este dispositivo</div>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'alexmaza_ig_checklist_v1';
+  let state = {};
+
+  function load(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      state = raw ? JSON.parse(raw) : {};
+    }catch(e){ state = {}; }
+  }
+  function save(){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
+  }
+
+  function applyChecks(){
+    document.querySelectorAll('.check').forEach(el=>{
+      const key = el.dataset.key;
+      if(!key) return;
+      if(state[key]){
+        el.classList.add('checked');
+        el.closest('.item').classList.add('done');
+      }
+    });
+    updateProgress();
+  }
+
+  function updateProgress(){
+    const checks = document.querySelectorAll('.check[data-key]');
+    const total = checks.length;
+    let done = 0;
+    checks.forEach(c=>{ if(state[c.dataset.key]) done++; });
+    const pct = total ? Math.round((done/total)*100) : 0;
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressNum').textContent = done + '/' + total;
+  }
+
+  document.querySelectorAll('.check[data-key]').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const key = el.dataset.key;
+      state[key] = !state[key];
+      el.classList.toggle('checked');
+      el.closest('.item').classList.toggle('done');
+      save();
+      updateProgress();
+    });
+  });
+
+  // expand item detail
+  document.querySelectorAll('.expand-toggle').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      const key = btn.dataset.expand;
+      const detail = document.getElementById('detail-' + key);
+      if(detail){
+        detail.classList.toggle('open');
+        btn.textContent = detail.classList.contains('open') ? 'OCULTAR ▴' : 'VER ▾';
+      }
+    });
+  });
+
+  // highlight cards expand
+  document.querySelectorAll('.hl-card').forEach(card=>{
+    card.addEventListener('click', ()=>{
+      card.classList.toggle('expanded');
+    });
+  });
+
+  // tabs
+  document.querySelectorAll('.tab').forEach(tab=>{
+    tab.addEventListener('click', ()=>{
+      document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+      document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('sec-' + tab.dataset.tab).classList.add('active');
+    });
+  });
+
+  // reset
+  document.getElementById('resetBtn').addEventListener('click', ()=>{
+    if(confirm('¿Reiniciar todo el progreso marcado?')){
+      state = {};
+      save();
+      document.querySelectorAll('.check').forEach(el=>{
+        el.classList.remove('checked');
+        el.closest('.item').classList.remove('done');
+      });
+      updateProgress();
+    }
+  });
+
+  load();
+  applyChecks();
+})();
+</script>
+
+</body>
+</html>
