@@ -21,6 +21,12 @@ const GROUPS: NavGroup[] = [
       { label: "Knowledge", href: "/personal/cerebro/knowledge" },
       { label: "Infra", href: "/personal/cerebro/infra" },
       { label: "Revisión", href: "/personal/cerebro/revision" },
+      { label: "Finanzas", href: "/personal/finanzas" },
+      { label: "Transacciones", href: "/personal/finanzas/transacciones" },
+      { label: "Inversiones", href: "/personal/finanzas/inversiones" },
+      { label: "Crypto", href: "/personal/finanzas/crypto" },
+      { label: "Ahorro", href: "/personal/finanzas/ahorro" },
+      { label: "Deudas", href: "/personal/finanzas/deudas" },
     ],
   },
   {
