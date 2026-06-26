@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Modal } from "@/components/ui/Modal";
 import { ExportarDatosButton } from "./ExportarDatosButton";
 import { createClient } from "@/lib/supabase/client";
@@ -30,7 +29,6 @@ export function AjustesModal({
   email: string | null;
   onNameSaved?: (name: string) => void;
 }) {
-  const router = useRouter();
   const [seccion, setSeccion] = useState<Seccion>("general");
 
   const [localName, setLocalName] = useState(name ?? "");
@@ -87,7 +85,6 @@ export function AjustesModal({
       setLocalName(trimmed);
       onNameSaved?.(trimmed);
       setEditing(false);
-      router.refresh();
     } catch (err) {
       console.error("[guardarNombre] catch:", err);
       setSaveError(err instanceof Error ? err.message : "Error desconocido");
