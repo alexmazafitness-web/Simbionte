@@ -69,10 +69,7 @@ const ICONS = {
 };
 
 const QUICK_LINKS: QuickLink[] = [
-  { label: "Hoy", href: "/", icon: "sun" },
   { label: "Mi día", href: "/personal/cerebro", icon: "checkCircle" },
-  { label: "Clientes", href: "/coaching/clientes", icon: "users" },
-  { label: "Leads", href: "/coaching/leads", icon: "funnel" },
 ];
 
 const GROUPS: NavGroup[] = [
