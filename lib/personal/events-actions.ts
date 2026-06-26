@@ -75,3 +75,35 @@ export async function desmarcarFecha(id: string) {
   if (error) throw error;
   revalidatePath(PATH);
 }
+
+export type EventoUnicoInput = {
+  title: string;
+  startAt: string; // ISO
+  endAt: string | null;
+  type: Front;
+  notes: string;
+};
+
+// Evento de fecha única — usa start_at/end_at en vez de start_min/end_min+recur.
+// Es el mecanismo que reutiliza el puente Leads → Calendario.
+export async function crearEventoUnico(input: EventoUnicoInput) {
+  const supabase = await createClient();
+  const ownerId = await requireUserId(supabase);
+  const { error } = await supabase.schema("personal").from("events").insert({
+    owner_id: ownerId,
+    title: input.title,
+    start_at: input.startAt,
+    end_at: input.endAt,
+    event_type: input.type,
+    description: input.notes || null,
+  });
+  if (error) throw error;
+  revalidatePath(PATH);
+}
+
+export async function eliminarEventoUnico(id: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.schema("personal").from("events").delete().eq("id", id);
+  if (error) throw error;
+  revalidatePath(PATH);
+}

@@ -76,3 +76,16 @@ export function precioMensual(c: ClienteVM): number {
 export function calcularMRR(clientes: ClienteVM[]): number {
   return clientesActivos(clientes).reduce((s, c) => s + precioMensual(c), 0);
 }
+
+// Puente Cerebro ⇄ Clientes (docs/arquitectura-simbionte.md §6): título de la
+// tarea que se crea a partir de una nota. Es una copia puntual del texto en
+// el momento de pulsar el botón, no un resumen vivo — si la nota cambia
+// después, la tarea ya creada no se actualiza.
+export function notaToTituloTarea(texto: string): string {
+  const limpio = texto.trim();
+  if (limpio.length <= 80) return limpio;
+  const cortado = limpio.slice(0, 80);
+  const ultimoEspacio = cortado.lastIndexOf(" ");
+  const base = ultimoEspacio > 40 ? cortado.slice(0, ultimoEspacio) : cortado;
+  return `${base}…`;
+}

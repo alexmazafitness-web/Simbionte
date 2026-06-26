@@ -16,3 +16,15 @@ export type MarkedDateVM = {
   date: string;
   note: string | null;
 };
+
+// Evento de fecha única (no recurrente) — distinto de los bloques semanales
+// de arriba. Usa las columnas start_at/end_at de personal.events, que
+// existen desde la Fase 0 pero no se usaban hasta este puente.
+export type EventoUnicoVM = {
+  id: string;
+  title: string;
+  startAt: string; // timestamptz ISO
+  endAt: string | null;
+  type: Front;
+  notes: string | null;
+};

@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import type { Front } from "./constants";
 import type { RecurRule } from "./recurrence";
-import type { EventBlockVM, MarkedDateVM } from "./events";
+import type { EventBlockVM, EventoUnicoVM, MarkedDateVM } from "./events";
 
 type EventRow = {
   id: string;
@@ -19,6 +19,7 @@ export async function listEvents(): Promise<EventBlockVM[]> {
     .schema("personal")
     .from("events")
     .select("id, title, start_min, end_min, event_type, description, recur")
+    .not("start_min", "is", null)
     .order("start_min");
 
   if (error) throw error;
@@ -30,6 +31,35 @@ export async function listEvents(): Promise<EventBlockVM[]> {
     type: row.event_type,
     notes: row.description,
     recur: row.recur,
+  }));
+}
+
+type EventoUnicoRow = {
+  id: string;
+  title: string;
+  start_at: string;
+  end_at: string | null;
+  event_type: Front;
+  description: string | null;
+};
+
+export async function listEventosUnicos(): Promise<EventoUnicoVM[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .schema("personal")
+    .from("events")
+    .select("id, title, start_at, end_at, event_type, description")
+    .not("start_at", "is", null)
+    .order("start_at");
+
+  if (error) throw error;
+  return (data as EventoUnicoRow[]).map((row) => ({
+    id: row.id,
+    title: row.title,
+    startAt: row.start_at,
+    endAt: row.end_at,
+    type: row.event_type,
+    notes: row.description,
   }));
 }
 

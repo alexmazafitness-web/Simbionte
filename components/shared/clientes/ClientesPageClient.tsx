@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import type { ClienteVM } from "@/lib/coaching/clientes";
+import { notaToTituloTarea, type ClienteVM } from "@/lib/coaching/clientes";
 import type { Categoria } from "@/lib/coaching/constants";
 import type { GrupoRevision } from "@/lib/coaching/grupos";
 import type { Tarifa } from "@/lib/coaching/tarifas";
@@ -17,6 +17,9 @@ import {
   marcarRevisionHecha,
   reactivarCliente,
 } from "@/lib/coaching/clientes-actions";
+// Puente Cerebro ⇄ Clientes (docs/arquitectura-simbionte.md §6): se llama
+// directamente a la acción de Tareas de Personal, sin tabla intermedia ni FK.
+import { crearTarea } from "@/lib/personal/tasks-actions";
 import { MrrHeader } from "./MrrHeader";
 import { ActionQueue } from "./ActionQueue";
 import { ClientesTable, type ClienteFiltro } from "./ClientesTable";
@@ -109,6 +112,9 @@ export function ClientesPageClient({
               )
             }
             onDeleteNote={(notaId) => run(() => eliminarNota(notaId), () => setEditingNote(null))}
+            onCrearTareaDesdeNota={(texto) =>
+              crearTarea({ title: notaToTituloTarea(texto), front: "coaching", isPriority: false, date: null, recur: null })
+            }
             onMarcarRevision={() => run(() => marcarRevisionHecha(drawerCliente.id))}
             onMarcarCobro={() => run(() => marcarCobroHecho(drawerCliente.id))}
             onAbrirMeso={() => setModal({ type: "meso", clienteId: drawerCliente.id })}

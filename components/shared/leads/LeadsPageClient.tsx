@@ -3,23 +3,26 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { Lead } from "@/lib/coaching/leads";
-import { avanzarLead, crearLead, descartarLead, editarLead, eliminarLead } from "@/lib/coaching/leads-actions";
+import { agendarLlamada, avanzarLead, crearLead, descartarLead, editarLead, eliminarLead } from "@/lib/coaching/leads-actions";
 import { Chip } from "@/components/ui/Chip";
 import { SearchInput } from "@/components/ui/SearchInput";
 import { LeadsBoard } from "./LeadsBoard";
 import { LeadModal } from "./LeadModal";
+import { AgendarLlamadaModal } from "./AgendarLlamadaModal";
 
 export function LeadsPageClient({ leads }: { leads: Lead[] }) {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [filtro, setFiltro] = useState<"activos" | "historico">("activos");
   const [modalLeadId, setModalLeadId] = useState<string | null | "__new__">(null);
+  const [agendandoLeadId, setAgendandoLeadId] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   const q = search.toLowerCase();
   const filtered = leads.filter((l) => l.nombre.toLowerCase().includes(q));
   const modalLead = modalLeadId && modalLeadId !== "__new__" ? leads.find((l) => l.id === modalLeadId) ?? null : null;
   const modalOpen = modalLeadId !== null;
+  const leadAgendando = leads.find((l) => l.id === agendandoLeadId) ?? null;
 
   function run(action: () => Promise<unknown>, onDone?: () => void) {
     startTransition(async () => {
@@ -60,7 +63,14 @@ export function LeadsPageClient({ leads }: { leads: Lead[] }) {
         onOpenLead={setModalLeadId}
         onAvanzar={(id) => {
           const lead = leads.find((l) => l.id === id);
-          if (lead) run(() => avanzarLead(id, lead.etapa));
+          if (!lead) return;
+          // Puente Leads → Calendario: esta transición concreta pide fecha/hora
+          // antes de avanzar — el resto de etapas avanzan con un solo clic.
+          if (lead.etapa === "audio") {
+            setAgendandoLeadId(id);
+            return;
+          }
+          run(() => avanzarLead(id, lead.etapa));
         }}
         onConvertir={(id) => {
           const lead = leads.find((l) => l.id === id);
@@ -79,6 +89,21 @@ export function LeadsPageClient({ leads }: { leads: Lead[] }) {
         }
         onDelete={modalLead ? () => run(() => eliminarLead(modalLead.id), () => setModalLeadId(null)) : undefined}
       />
+
+      {leadAgendando && (
+        <AgendarLlamadaModal
+          open={!!leadAgendando}
+          onClose={() => setAgendandoLeadId(null)}
+          nombreLead={leadAgendando.nombre}
+          pending={pending}
+          onSubmit={(fecha, hora) =>
+            run(
+              () => agendarLlamada(leadAgendando.id, leadAgendando.nombre, leadAgendando.contacto ?? "", fecha, hora),
+              () => setAgendandoLeadId(null),
+            )
+          }
+        />
+      )}
     </div>
   );
 }

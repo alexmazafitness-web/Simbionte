@@ -16,6 +16,34 @@ const CAT_TAG_CLASS: Record<Categoria, string> = {
   otros: "bg-panel-3 text-text-2",
 };
 
+// Puente Cerebro ⇄ Clientes: copia el texto de la nota a una tarea nueva en
+// personal.tasks (front:'coaching'). Estado local solo para el check visual
+// transitorio — no hay vínculo vivo entre la nota y la tarea creada.
+function CrearTareaButton({ onCrear }: { onCrear: () => Promise<void> }) {
+  const [estado, setEstado] = useState<"idle" | "pending" | "hecho">("idle");
+
+  async function handleClick() {
+    setEstado("pending");
+    await onCrear();
+    setEstado("hecho");
+    setTimeout(() => setEstado("idle"), 2000);
+  }
+
+  return (
+    <button
+      type="button"
+      disabled={estado === "pending"}
+      onClick={handleClick}
+      title="Crear tarea a partir de esta nota"
+      className={`shrink-0 rounded-md px-1.5 py-0.5 text-[11px] font-medium transition disabled:opacity-50 ${
+        estado === "hecho" ? "text-ok" : "text-text-dim hover:bg-[rgba(201,169,110,.12)] hover:text-gold-bright"
+      }`}
+    >
+      {estado === "hecho" ? "✓ Creada" : "→ Tarea"}
+    </button>
+  );
+}
+
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="rounded-lg bg-panel-2 px-3.5 py-3">
@@ -89,6 +117,7 @@ function NotasBlock({
   onCancelEditNote,
   onSaveNote,
   onDeleteNote,
+  onCrearTareaDesdeNota,
 }: {
   cliente: ClienteVM;
   editingNote: EditingNote;
@@ -97,6 +126,7 @@ function NotasBlock({
   onCancelEditNote: () => void;
   onSaveNote: (categoria: Categoria, notaId: string | null, texto: string) => void;
   onDeleteNote: (notaId: string) => void;
+  onCrearTareaDesdeNota: (texto: string) => Promise<void>;
 }) {
   return (
     <div className="mb-6">
@@ -122,8 +152,9 @@ function NotasBlock({
                   onDelete={() => onDeleteNote(nota.id)}
                 />
               ) : (
-                <div key={nota.id} className="mb-1.5 flex items-start justify-between gap-2.5 rounded-lg bg-panel-2 px-2.5 py-2">
+                <div key={nota.id} className="mb-1.5 flex items-start justify-between gap-2 rounded-lg bg-panel-2 px-2.5 py-2">
                   <div className="flex-1 text-[13px] leading-relaxed text-text-2">{nota.texto}</div>
+                  <CrearTareaButton onCrear={() => onCrearTareaDesdeNota(nota.texto)} />
                   <button
                     type="button"
                     onClick={() => onStartEditNote(cat, nota.id)}
@@ -158,6 +189,7 @@ export function ClienteDrawer({
   onCancelEditNote,
   onSaveNote,
   onDeleteNote,
+  onCrearTareaDesdeNota,
   onMarcarRevision,
   onMarcarCobro,
   onAbrirMeso,
@@ -173,6 +205,7 @@ export function ClienteDrawer({
   onCancelEditNote: () => void;
   onSaveNote: (categoria: Categoria, notaId: string | null, texto: string) => void;
   onDeleteNote: (notaId: string) => void;
+  onCrearTareaDesdeNota: (texto: string) => Promise<void>;
   onMarcarRevision: () => void;
   onMarcarCobro: () => void;
   onAbrirMeso: () => void;
@@ -228,6 +261,7 @@ export function ClienteDrawer({
           onCancelEditNote={onCancelEditNote}
           onSaveNote={onSaveNote}
           onDeleteNote={onDeleteNote}
+          onCrearTareaDesdeNota={onCrearTareaDesdeNota}
         />
 
         <Block

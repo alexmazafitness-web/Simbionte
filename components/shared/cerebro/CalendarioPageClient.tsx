@@ -4,15 +4,31 @@ import { useState, useTransition } from "react";
 import { DAYS_SH } from "@/lib/personal/constants";
 import { addDaysISO, fmtDateCorta, minToStr, mondayOfWeek } from "@/lib/personal/format";
 import { recurOccursOn } from "@/lib/personal/recurrence";
-import type { EventBlockVM, MarkedDateVM } from "@/lib/personal/events";
-import { crearBloque, desmarcarFecha, editarBloque, eliminarBloque, marcarFecha, type BloqueInput } from "@/lib/personal/events-actions";
+import type { EventBlockVM, EventoUnicoVM, MarkedDateVM } from "@/lib/personal/events";
+import {
+  crearBloque,
+  desmarcarFecha,
+  editarBloque,
+  eliminarBloque,
+  eliminarEventoUnico,
+  marcarFecha,
+  type BloqueInput,
+} from "@/lib/personal/events-actions";
 import { FrontChip } from "./FrontChip";
 import { BloqueModal } from "./BloqueModal";
 import { MarcarFechaModal } from "./MarcarFechaModal";
 
 const ORDEN_SEMANA = [1, 2, 3, 4, 5, 6, 0];
 
-export function CalendarioPageClient({ events, marks }: { events: EventBlockVM[]; marks: MarkedDateVM[] }) {
+export function CalendarioPageClient({
+  events,
+  marks,
+  eventosUnicos,
+}: {
+  events: EventBlockVM[];
+  marks: MarkedDateVM[];
+  eventosUnicos: EventoUnicoVM[];
+}) {
   const [modal, setModal] = useState<null | "nuevo" | string>(null);
   const [marcarOpen, setMarcarOpen] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -89,6 +105,32 @@ export function CalendarioPageClient({ events, marks }: { events: EventBlockVM[]
             </div>
           );
         })}
+      </div>
+
+      <div className="mt-10">
+        <div className="mb-4 flex items-center gap-2.5 text-[10px] tracking-[0.24em] text-gold-dim uppercase">
+          Próximos eventos
+          <span className="h-px flex-1 bg-line" />
+        </div>
+        <div className="flex flex-col gap-2">
+          {eventosUnicos.length === 0 && <p className="text-sm text-text-dim">Sin eventos puntuales próximos.</p>}
+          {eventosUnicos.map((ev) => {
+            const fecha = new Date(ev.startAt);
+            return (
+              <div key={ev.id} className="flex items-center gap-3 rounded-lg border border-line-soft bg-panel px-4 py-2.5">
+                <div className="min-w-[110px]">
+                  <div className="font-heading text-sm font-bold text-gold">{fmtDateCorta(fecha.toISOString().slice(0, 10))}</div>
+                  <div className="text-[11px] text-text-dim">{fecha.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}</div>
+                </div>
+                <span className="flex-1 text-sm text-text-2">{ev.title}</span>
+                <FrontChip front={ev.type} />
+                <button type="button" onClick={() => run(() => eliminarEventoUnico(ev.id))} className="px-1.5 text-text-dim hover:text-bad">
+                  ✕
+                </button>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       <div className="mt-10">
