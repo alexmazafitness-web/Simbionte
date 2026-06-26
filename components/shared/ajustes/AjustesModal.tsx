@@ -35,17 +35,17 @@ export function AjustesModal({
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
   const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   function startEdit() {
     setDraft(localName);
-    setSaveError(false);
+    setSaveError(null);
     setEditing(true);
   }
 
   function cancelEdit() {
     setEditing(false);
-    setSaveError(false);
+    setSaveError(null);
   }
 
   async function handleSave() {
@@ -55,20 +55,21 @@ export function AjustesModal({
       return;
     }
     setSaving(true);
-    setSaveError(false);
+    setSaveError(null);
     try {
       const supabase = createClient();
       const { error } = await supabase.auth.updateUser({ data: { name: trimmed } });
       if (error) {
-        console.error("[guardarNombre]", error.message, error.status);
-        throw error;
+        console.error("[guardarNombre] Supabase error:", error);
+        setSaveError(`${error.status ?? ""} ${error.message}`.trim());
+        return;
       }
       setLocalName(trimmed);
       setEditing(false);
       router.refresh();
     } catch (err) {
       console.error("[guardarNombre] catch:", err);
-      setSaveError(true);
+      setSaveError(err instanceof Error ? err.message : "Error desconocido");
     } finally {
       setSaving(false);
     }
@@ -148,7 +149,7 @@ export function AjustesModal({
                       </button>
                     </div>
                   )}
-                  {saveError && <p className="mt-1 text-[11.5px] text-bad">No se pudo guardar. Inténtalo de nuevo.</p>}
+                  {saveError && <p className="mt-1 text-[11.5px] text-bad">Error: {saveError}</p>}
                   <div className="truncate text-[12.5px] text-text-dim">{email ?? "—"}</div>
                 </div>
               </div>
