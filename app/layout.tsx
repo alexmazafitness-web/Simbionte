@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Bebas_Neue, Schibsted_Grotesk, DM_Sans } from "next/font/google";
 import { Sidebar } from "@/components/shared/Sidebar";
 import { ServiceWorkerRegister } from "@/components/shared/ServiceWorkerRegister";
+import { createClient } from "@/lib/supabase/server";
 import "./globals.css";
 
 const bebasNeue = Bebas_Neue({
@@ -35,11 +36,17 @@ export const viewport: Viewport = {
   colorScheme: "dark",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getUser();
+  // auth.users no guarda un nombre todavía (solo email, via magic-link) —
+  // se usa de los metadatos si algún día se añade, "Alex" como fallback fijo.
+  const displayName = data.user ? (data.user.user_metadata?.name as string | undefined) ?? "Alex" : null;
+
   return (
     <html
       lang="es"
@@ -51,7 +58,7 @@ export default function RootLayout({
         className="flex h-full min-h-screen bg-[#141414] text-neutral-100"
       >
         <ServiceWorkerRegister />
-        <Sidebar />
+        <Sidebar name={displayName} email={data.user?.email ?? null} />
         <main className="flex-1 overflow-y-auto">{children}</main>
       </body>
     </html>
