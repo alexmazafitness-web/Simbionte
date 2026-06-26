@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Bebas_Neue, Schibsted_Grotesk, DM_Sans } from "next/font/google";
 import { Sidebar } from "@/components/shared/Sidebar";
 import { ServiceWorkerRegister } from "@/components/shared/ServiceWorkerRegister";
+import { AuthProvider } from "@/components/shared/AuthProvider";
 import { createClient } from "@/lib/supabase/server";
 import "./globals.css";
 
@@ -57,9 +58,11 @@ export default async function RootLayout({
         style={{ colorScheme: "dark" }}
         className="flex h-full min-h-screen bg-[#141414] text-neutral-100"
       >
-        <ServiceWorkerRegister />
-        <Sidebar name={displayName} email={data.user?.email ?? null} />
-        <main className="flex-1 overflow-y-auto">{children}</main>
+        <AuthProvider>
+          <ServiceWorkerRegister />
+          <Sidebar name={displayName} email={data.user?.email ?? null} />
+          <main className="flex-1 overflow-y-auto">{children}</main>
+        </AuthProvider>
       </body>
     </html>
   );
