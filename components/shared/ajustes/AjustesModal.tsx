@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Modal } from "@/components/ui/Modal";
 import { ExportarDatosButton } from "./ExportarDatosButton";
-import { actualizarNombre } from "@/lib/ajustes/ajustes-actions";
+import { createClient } from "@/lib/supabase/client";
 
 type Seccion = "general";
 
@@ -57,11 +57,17 @@ export function AjustesModal({
     setSaving(true);
     setSaveError(false);
     try {
-      await actualizarNombre(trimmed);
+      const supabase = createClient();
+      const { error } = await supabase.auth.updateUser({ data: { name: trimmed } });
+      if (error) {
+        console.error("[guardarNombre]", error.message, error.status);
+        throw error;
+      }
       setLocalName(trimmed);
       setEditing(false);
       router.refresh();
-    } catch {
+    } catch (err) {
+      console.error("[guardarNombre] catch:", err);
       setSaveError(true);
     } finally {
       setSaving(false);
@@ -95,7 +101,7 @@ export function AjustesModal({
               {/* Avatar + nombre + email */}
               <div className="mb-6 flex items-center gap-3.5">
                 <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#C9A96E] to-[#9a7c47] text-lg font-bold text-[#1a1208]">
-                  {localName ? localName[0]!.toUpperCase() : "?"}
+                  {(localName || email || "A")[0]!.toUpperCase()}
                 </span>
                 <div className="min-w-0 flex-1">
                   {editing ? (
