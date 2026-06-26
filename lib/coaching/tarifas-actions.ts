@@ -3,26 +3,27 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireUserId } from "@/lib/supabase/auth";
+import type { Recurrencia } from "./constants";
 
 const PATH = "/coaching/clientes/tarifas";
 
-export async function crearTarifa(precio: number) {
+export async function crearTarifa(precio: number, recurrencia: Recurrencia) {
   const supabase = await createClient();
   const ownerId = await requireUserId(supabase);
   const { error } = await supabase
     .schema("coaching")
     .from("tarifas")
-    .insert({ owner_id: ownerId, nombre: `${precio} €`, precio });
+    .insert({ owner_id: ownerId, nombre: `${precio} €`, precio, recurrencia });
   if (error) throw error;
   revalidatePath(PATH);
 }
 
-export async function editarTarifa(id: string, precio: number) {
+export async function editarTarifa(id: string, precio: number, recurrencia: Recurrencia) {
   const supabase = await createClient();
   const { error } = await supabase
     .schema("coaching")
     .from("tarifas")
-    .update({ nombre: `${precio} €`, precio })
+    .update({ nombre: `${precio} €`, precio, recurrencia })
     .eq("id", id);
   if (error) throw error;
   revalidatePath(PATH);

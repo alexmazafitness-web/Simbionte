@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Modal } from "@/components/ui/Modal";
-import { RECURRENCIAS, type Recurrencia } from "@/lib/coaching/constants";
+import type { Recurrencia } from "@/lib/coaching/constants";
 import { todayISO } from "@/lib/coaching/format";
 import type { GestionMesocicloInput } from "@/lib/coaching/clientes-actions";
 import type { GrupoRevision } from "@/lib/coaching/grupos";
@@ -17,6 +17,21 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <label className="mb-1.5 block text-[11px] tracking-wide text-text-dim uppercase">{label}</label>
       {children}
     </div>
+  );
+}
+
+// Cada tarifa ya lleva su recurrencia fija (115€→Mensual, etc.) — un solo
+// desplegable selecciona ambas a la vez en vez de pedirlas por separado.
+function TarifaSelect({ tarifas, value, onChange }: { tarifas: Tarifa[]; value: string; onChange: (tarifaId: string) => void }) {
+  return (
+    <select className={inputClass} value={value} onChange={(e) => onChange(e.target.value)}>
+      <option value="" disabled></option>
+      {tarifas.map((t) => (
+        <option key={t.id} value={t.id}>
+          {t.precio} € · {t.recurrencia}
+        </option>
+      ))}
+    </select>
   );
 }
 
@@ -57,16 +72,16 @@ export function NuevoClienteModal({
   onSubmit: (input: { nombre: string; cuota: number; recurrencia: Recurrencia; grupoCodigo: string }) => void;
 }) {
   const [nombre, setNombre] = useState(leadNombre ?? "");
-  const [cuota, setCuota] = useState("");
-  const [recurrencia, setRecurrencia] = useState("");
+  const [tarifaId, setTarifaId] = useState("");
   const [grupoCodigo, setGrupoCodigo] = useState("");
 
   if (!open) return null;
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!nombre.trim() || !cuota || !recurrencia || !grupoCodigo) return;
-    onSubmit({ nombre: nombre.trim(), cuota: Number(cuota), recurrencia: recurrencia as Recurrencia, grupoCodigo });
+    const tarifa = tarifas.find((t) => t.id === tarifaId);
+    if (!nombre.trim() || !tarifa || !grupoCodigo) return;
+    onSubmit({ nombre: nombre.trim(), cuota: tarifa.precio, recurrencia: tarifa.recurrencia, grupoCodigo });
   }
 
   return (
@@ -75,28 +90,9 @@ export function NuevoClienteModal({
         <Field label="Nombre">
           <input className={inputClass} value={nombre} onChange={(e) => setNombre(e.target.value)} autoFocus />
         </Field>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Cuota (€)">
-            <select className={inputClass} value={cuota} onChange={(e) => setCuota(e.target.value)}>
-              <option value="" disabled></option>
-              {tarifas.map((t) => (
-                <option key={t.id} value={t.precio}>
-                  {t.precio} €
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Recurrencia">
-            <select className={inputClass} value={recurrencia} onChange={(e) => setRecurrencia(e.target.value)}>
-              <option value="" disabled></option>
-              {RECURRENCIAS.map((r) => (
-                <option key={r} value={r}>
-                  {r}
-                </option>
-              ))}
-            </select>
-          </Field>
-        </div>
+        <Field label="Tarifa">
+          <TarifaSelect tarifas={tarifas} value={tarifaId} onChange={setTarifaId} />
+        </Field>
         <Field label="Grupo de revisión">
           <select className={inputClass} value={grupoCodigo} onChange={(e) => setGrupoCodigo(e.target.value)}>
             <option value="" disabled></option>
@@ -130,43 +126,24 @@ export function ReactivarModal({
   pending: boolean;
   onSubmit: (input: { cuota: number; recurrencia: Recurrencia; grupoCodigo: string }) => void;
 }) {
-  const [cuota, setCuota] = useState("");
-  const [recurrencia, setRecurrencia] = useState("");
+  const [tarifaId, setTarifaId] = useState("");
   const [grupoCodigo, setGrupoCodigo] = useState("");
 
   if (!open) return null;
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!cuota || !recurrencia || !grupoCodigo) return;
-    onSubmit({ cuota: Number(cuota), recurrencia: recurrencia as Recurrencia, grupoCodigo });
+    const tarifa = tarifas.find((t) => t.id === tarifaId);
+    if (!tarifa || !grupoCodigo) return;
+    onSubmit({ cuota: tarifa.precio, recurrencia: tarifa.recurrencia, grupoCodigo });
   }
 
   return (
     <Modal open={open} onClose={onClose} title={`Reactivar a ${nombre}`}>
       <form onSubmit={handleSubmit}>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Cuota (€)">
-            <select className={inputClass} value={cuota} onChange={(e) => setCuota(e.target.value)}>
-              <option value="" disabled></option>
-              {tarifas.map((t) => (
-                <option key={t.id} value={t.precio}>
-                  {t.precio} €
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Recurrencia">
-            <select className={inputClass} value={recurrencia} onChange={(e) => setRecurrencia(e.target.value)}>
-              <option value="" disabled></option>
-              {RECURRENCIAS.map((r) => (
-                <option key={r} value={r}>
-                  {r}
-                </option>
-              ))}
-            </select>
-          </Field>
-        </div>
+        <Field label="Tarifa">
+          <TarifaSelect tarifas={tarifas} value={tarifaId} onChange={setTarifaId} />
+        </Field>
         <Field label="Grupo de revisión">
           <select className={inputClass} value={grupoCodigo} onChange={(e) => setGrupoCodigo(e.target.value)}>
             <option value="" disabled></option>

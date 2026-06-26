@@ -1,23 +1,27 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { RECURRENCIAS, type Recurrencia } from "@/lib/coaching/constants";
 import type { Tarifa } from "@/lib/coaching/tarifas";
 import { crearTarifa, editarTarifa, eliminarTarifa } from "@/lib/coaching/tarifas-actions";
 
 function TarifaEditCard({
-  initialValue,
+  initialPrecio,
+  initialRecurrencia,
   onSave,
   onCancel,
   onDelete,
   pending,
 }: {
-  initialValue: number | "";
-  onSave: (precio: number) => void;
+  initialPrecio: number | "";
+  initialRecurrencia: Recurrencia | "";
+  onSave: (precio: number, recurrencia: Recurrencia) => void;
   onCancel: () => void;
   onDelete?: () => void;
   pending: boolean;
 }) {
-  const [valor, setValor] = useState(String(initialValue));
+  const [valor, setValor] = useState(String(initialPrecio));
+  const [recurrencia, setRecurrencia] = useState<Recurrencia | "">(initialRecurrencia);
 
   return (
     <div className="rounded-xl border border-line-soft bg-panel p-4">
@@ -30,13 +34,27 @@ function TarifaEditCard({
         onChange={(e) => setValor(e.target.value)}
         className="mb-2 w-full rounded-lg border border-gold-dim bg-panel-2 px-2.5 py-2 text-sm outline-none"
       />
+      <select
+        value={recurrencia}
+        onChange={(e) => setRecurrencia(e.target.value as Recurrencia)}
+        className="mb-2 w-full rounded-lg border border-gold-dim bg-panel-2 px-2.5 py-2 text-sm outline-none"
+      >
+        <option value="" disabled>
+          Recurrencia…
+        </option>
+        {RECURRENCIAS.map((r) => (
+          <option key={r} value={r}>
+            {r}
+          </option>
+        ))}
+      </select>
       <div className="flex gap-2">
         <button
           type="button"
           disabled={pending}
           onClick={() => {
             const n = Math.max(0, Math.round(Number(valor) || 0));
-            if (n) onSave(n);
+            if (n && recurrencia) onSave(n, recurrencia);
           }}
           className="rounded-md bg-panel-2 px-2.5 py-1 text-[11.5px] font-semibold text-text-dim hover:text-foreground"
         >
@@ -79,9 +97,10 @@ export function TarifasPageClient({ tarifas }: { tarifas: Tarifa[] }) {
           editingId === t.id ? (
             <TarifaEditCard
               key={t.id}
-              initialValue={t.precio}
+              initialPrecio={t.precio}
+              initialRecurrencia={t.recurrencia}
               pending={pending}
-              onSave={(precio) => run(() => editarTarifa(t.id, precio))}
+              onSave={(precio, recurrencia) => run(() => editarTarifa(t.id, precio, recurrencia))}
               onCancel={() => setEditingId(null)}
               onDelete={() => run(() => eliminarTarifa(t.id))}
             />
@@ -91,6 +110,7 @@ export function TarifasPageClient({ tarifas }: { tarifas: Tarifa[] }) {
                 {t.precio}
                 <span className="ml-0.5 text-[15px] text-text-dim">€</span>
               </div>
+              <div className="mt-1 text-[11.5px] text-text-dim">{t.recurrencia}</div>
               <div className="mt-2.5 flex gap-2">
                 <button type="button" onClick={() => setEditingId(t.id)} className="rounded-md bg-panel-2 px-2.5 py-1 text-[11.5px] font-semibold text-text-dim hover:text-foreground">
                   Editar
@@ -104,7 +124,13 @@ export function TarifasPageClient({ tarifas }: { tarifas: Tarifa[] }) {
         )}
 
         {editingId === "__new__" ? (
-          <TarifaEditCard initialValue="" pending={pending} onSave={(precio) => run(() => crearTarifa(precio))} onCancel={() => setEditingId(null)} />
+          <TarifaEditCard
+            initialPrecio=""
+            initialRecurrencia=""
+            pending={pending}
+            onSave={(precio, recurrencia) => run(() => crearTarifa(precio, recurrencia))}
+            onCancel={() => setEditingId(null)}
+          />
         ) : (
           <button
             type="button"
