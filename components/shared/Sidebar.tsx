@@ -116,9 +116,11 @@ function Icon({ name, className }: { name: keyof typeof ICONS; className?: strin
   return <span className={`block h-[18px] w-[18px] shrink-0 ${className ?? ""}`}>{ICONS[name]}</span>;
 }
 
-export function Sidebar({ name, email }: { name: string | null; email: string | null }) {
+export function Sidebar({ name: initialName, email }: { name: string | null; email: string | null }) {
   const pathname = usePathname();
   const router = useRouter();
+
+  const [name, setName] = useState(initialName);
 
   const [expanded, setExpanded] = useState<Set<string>>(
     () => new Set(GROUPS.filter((g) => g.links.some((l) => l.href === pathname)).map((g) => g.label)),
@@ -278,7 +280,7 @@ export function Sidebar({ name, email }: { name: string | null; email: string | 
   return (
     <div className={`relative flex-shrink-0 ${collapsed ? "w-16" : "w-56"}`}>
       <aside className="flex h-full w-full flex-col border-r border-white/10 bg-[#141414] px-3 py-6">{renderContent()}</aside>
-      <AjustesModal open={ajustesOpen} onClose={() => setAjustesOpen(false)} name={name} email={email} />
+      <AjustesModal open={ajustesOpen} onClose={() => setAjustesOpen(false)} name={name} email={email} onNameSaved={setName} />
     </div>
   );
 }

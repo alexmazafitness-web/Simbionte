@@ -22,11 +22,13 @@ export function AjustesModal({
   onClose,
   name,
   email,
+  onNameSaved,
 }: {
   open: boolean;
   onClose: () => void;
   name: string | null;
   email: string | null;
+  onNameSaved?: (name: string) => void;
 }) {
   const router = useRouter();
   const [seccion, setSeccion] = useState<Seccion>("general");
@@ -83,6 +85,7 @@ export function AjustesModal({
       }
 
       setLocalName(trimmed);
+      onNameSaved?.(trimmed);
       setEditing(false);
       router.refresh();
     } catch (err) {
