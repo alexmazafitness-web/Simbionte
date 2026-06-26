@@ -58,12 +58,30 @@ export function AjustesModal({
     setSaveError(null);
     try {
       const supabase = createClient();
+
+      // 1. Comprobar si hay sesión activa en el browser client
+      const { data: sessionData } = await supabase.auth.getSession();
+      console.log("[guardarNombre] sesión actual:", sessionData.session);
+
+      if (!sessionData.session) {
+        // 2. Sin sesión — intentar refrescar usando el refresh token en cookies
+        console.log("[guardarNombre] sin sesión, intentando refreshSession...");
+        const { error: refreshError } = await supabase.auth.refreshSession();
+        if (refreshError) {
+          console.error("[guardarNombre] refreshSession falló:", refreshError);
+          setSaveError("La sesión ha caducado. Por favor, cierra sesión y vuelve a iniciar sesión.");
+          return;
+        }
+      }
+
+      // 3. Actualizar nombre con sesión válida (original o recién refrescada)
       const { error } = await supabase.auth.updateUser({ data: { name: trimmed } });
       if (error) {
-        console.error("[guardarNombre] Supabase error:", error);
+        console.error("[guardarNombre] updateUser error:", error);
         setSaveError(`${error.status ?? ""} ${error.message}`.trim());
         return;
       }
+
       setLocalName(trimmed);
       setEditing(false);
       router.refresh();
