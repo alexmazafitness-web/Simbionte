@@ -28,6 +28,10 @@ export function fmtDateCorta(iso: string | null): string {
 }
 
 export function iniciales(nombre: string): string {
+  if (nombre.includes(", ")) {
+    const [apellidos, nom] = nombre.split(", ", 2);
+    return ((nom?.[0] ?? "") + (apellidos?.[0] ?? "")).toUpperCase();
+  }
   const partes = nombre.trim().split(/\s+/);
   if (partes.length === 1) return partes[0].slice(0, 2).toUpperCase();
   return (partes[0][0] + partes[partes.length - 1][0]).toUpperCase();

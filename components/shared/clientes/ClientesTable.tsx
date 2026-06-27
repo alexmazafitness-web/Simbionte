@@ -7,6 +7,7 @@ import { SearchInput } from "@/components/ui/SearchInput";
 import { MesoPill, PagoPill, RevisionPill } from "./statusPills";
 
 export type ClienteFiltro = "all" | "pago" | "meso" | "nota" | "baja";
+export type ClienteOrden = "antiguedad" | "alfabetico";
 
 const FILTROS: { value: ClienteFiltro; label: string }[] = [
   { value: "all", label: "Todos" },
@@ -26,6 +27,8 @@ export function ClientesTable({
   onSearchChange,
   filtro,
   onFiltroChange,
+  orden,
+  onOrdenChange,
   onOpenDrawer,
   onNuevoCliente,
 }: {
@@ -34,6 +37,8 @@ export function ClientesTable({
   onSearchChange: (v: string) => void;
   filtro: ClienteFiltro;
   onFiltroChange: (f: ClienteFiltro) => void;
+  orden: ClienteOrden;
+  onOrdenChange: (o: ClienteOrden) => void;
   onOpenDrawer: (id: string) => void;
   onNuevoCliente: () => void;
 }) {
@@ -49,6 +54,12 @@ export function ClientesTable({
     if (filtro === "nota") list = list.filter(hasNotas);
   }
 
+  if (orden === "antiguedad") {
+    list = [...list].sort((a, b) => (a.fechaAlta ?? "").localeCompare(b.fechaAlta ?? ""));
+  } else {
+    list = [...list].sort((a, b) => a.nombre.localeCompare(b.nombre, "es", { sensitivity: "base" }));
+  }
+
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-center gap-3">
@@ -60,13 +71,36 @@ export function ClientesTable({
             </Chip>
           ))}
         </div>
-        <button
-          type="button"
-          onClick={onNuevoCliente}
-          className="ml-auto rounded-lg bg-gold px-4 py-2.5 text-[12.5px] font-bold text-[#1a1208] transition hover:bg-gold-bright"
-        >
-          + Nuevo cliente
-        </button>
+        <div className="ml-auto flex items-center gap-3">
+          <div className="flex overflow-hidden rounded-md border border-line text-[11px]">
+            <button
+              type="button"
+              onClick={() => onOrdenChange("antiguedad")}
+              className={`px-2.5 py-1.5 transition ${
+                orden === "antiguedad" ? "bg-panel-3 text-foreground" : "text-text-dim hover:text-text-2"
+              }`}
+            >
+              Antigüedad
+            </button>
+            <div className="w-px self-stretch bg-line" />
+            <button
+              type="button"
+              onClick={() => onOrdenChange("alfabetico")}
+              className={`px-2.5 py-1.5 transition ${
+                orden === "alfabetico" ? "bg-panel-3 text-foreground" : "text-text-dim hover:text-text-2"
+              }`}
+            >
+              Alfabético
+            </button>
+          </div>
+          <button
+            type="button"
+            onClick={onNuevoCliente}
+            className="rounded-lg bg-gold px-4 py-2.5 text-[12.5px] font-bold text-[#1a1208] transition hover:bg-gold-bright"
+          >
+            + Nuevo cliente
+          </button>
+        </div>
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-line-soft bg-panel">

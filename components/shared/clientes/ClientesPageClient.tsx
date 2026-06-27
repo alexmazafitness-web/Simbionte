@@ -22,7 +22,7 @@ import {
 import { crearTarea } from "@/lib/personal/tasks-actions";
 import { MrrHeader } from "./MrrHeader";
 import { ActionQueue } from "./ActionQueue";
-import { ClientesTable, type ClienteFiltro } from "./ClientesTable";
+import { ClientesTable, type ClienteFiltro, type ClienteOrden } from "./ClientesTable";
 import { Drawer } from "@/components/ui/Drawer";
 import { ClienteDrawer, type EditingNote } from "./ClienteDrawer";
 import { BajaModal, EliminarConfirmModal, MesoModal, NuevoClienteModal, ReactivarModal } from "./ClienteModals";
@@ -50,6 +50,7 @@ export function ClientesPageClient({
   const [modal, setModal] = useState<ModalState>(leadPrefill ? { type: "nuevo" } : null);
   const [search, setSearch] = useState("");
   const [filtro, setFiltro] = useState<ClienteFiltro>("all");
+  const [orden, setOrden] = useState<ClienteOrden>("antiguedad");
   const [editingNote, setEditingNote] = useState<EditingNote>(null);
   const [pending, startTransition] = useTransition();
 
@@ -92,6 +93,8 @@ export function ClientesPageClient({
         onSearchChange={setSearch}
         filtro={filtro}
         onFiltroChange={setFiltro}
+        orden={orden}
+        onOrdenChange={setOrden}
         onOpenDrawer={setDrawerClienteId}
         onNuevoCliente={() => setModal({ type: "nuevo" })}
       />
