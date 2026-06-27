@@ -221,7 +221,7 @@ export function Sidebar({
                         return (
                           <div key={sub.id}>
                             <div
-                              className={`cursor-default select-none pl-8 pb-0.5 text-[9px] font-bold tracking-[0.25em] text-neutral-700 uppercase ${
+                              className={`cursor-default select-none pb-0.5 pl-8 text-[9.5px] font-bold uppercase tracking-widest text-neutral-600 ${
                                 cIdx === 0 ? "pt-2" : "mt-2 border-t border-white/[0.06] pt-3"
                               }`}
                             >
@@ -250,20 +250,17 @@ export function Sidebar({
                         );
                       }
 
-                      // ── Direct item (no subsection) ──
+                      // ── Direct item (no subsection) — shown as subsection label ──
                       const { item } = child;
                       return (
-                        <Link
+                        <div
                           key={item.id}
-                          href={item.ruta}
-                          className={`block rounded px-2 py-1.5 pl-8 text-[12.5px] transition ${
-                            pathname === item.ruta
-                              ? "bg-[rgba(201,169,110,.14)] font-medium text-[#E2C892]"
-                              : "text-neutral-400 hover:bg-neutral-900 hover:text-neutral-100"
+                          className={`cursor-default select-none pb-0.5 pl-8 text-[9.5px] font-bold uppercase tracking-widest text-neutral-600 ${
+                            cIdx === 0 ? "pt-2" : "mt-2 border-t border-white/[0.06] pt-3"
                           }`}
                         >
                           {item.nombre}
-                        </Link>
+                        </div>
                       );
                     })}
                   </div>
