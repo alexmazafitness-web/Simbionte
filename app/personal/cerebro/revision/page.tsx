@@ -1,7 +1,23 @@
-import { getRevision } from "@/lib/personal/meta-queries";
+import { getDatosRevisionSemanal, getRevisionActual, getHistorialRevisiones } from "@/lib/personal/revision-queries";
+import { getWeekBounds } from "@/lib/personal/revision";
 import { RevisionPageClient } from "@/components/shared/cerebro/RevisionPageClient";
 
 export default async function RevisionPage() {
-  const revision = await getRevision();
-  return <RevisionPageClient revision={revision} />;
+  const { inicio, fin } = getWeekBounds();
+
+  const [datosAuto, revisionActual, historial] = await Promise.all([
+    getDatosRevisionSemanal(),
+    getRevisionActual(),
+    getHistorialRevisiones(6),
+  ]);
+
+  return (
+    <RevisionPageClient
+      datosAuto={datosAuto}
+      revisionActual={revisionActual}
+      historial={historial}
+      semanaInicio={inicio}
+      semanaFin={fin}
+    />
+  );
 }
