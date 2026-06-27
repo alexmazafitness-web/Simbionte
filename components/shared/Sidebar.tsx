@@ -220,31 +220,39 @@ export function Sidebar({
 
                         return (
                           <div key={sub.id}>
-                            <div
-                              className={`cursor-default select-none pb-0.5 pl-8 text-[9.5px] font-bold uppercase tracking-widest text-neutral-600 ${
+                            <button
+                              type="button"
+                              onClick={() => toggle(sub.id)}
+                              className={`flex w-full items-center gap-1 pr-2 pb-0.5 pl-8 text-[9.5px] font-bold uppercase tracking-widest text-neutral-600 hover:text-neutral-400 ${
                                 cIdx === 0 ? "pt-2" : "mt-2 border-t border-white/[0.06] pt-3"
                               }`}
                             >
-                              {sub.nombre}
-                            </div>
-                            {!hasLinks ? (
-                              <p className="py-1 pl-12 text-[12px] italic text-neutral-700">Próximamente</p>
-                            ) : (
-                              <div className="flex flex-col gap-0.5">
-                                {subItems.map((item) => (
-                                  <Link
-                                    key={item.id}
-                                    href={item.ruta}
-                                    className={`block rounded py-1.5 pl-12 pr-2 text-[12.5px] transition ${
-                                      pathname === item.ruta
-                                        ? "bg-[rgba(201,169,110,.14)] font-medium text-[#E2C892]"
-                                        : "text-neutral-400 hover:bg-neutral-900 hover:text-neutral-100"
-                                    }`}
-                                  >
-                                    {item.nombre}
-                                  </Link>
-                                ))}
-                              </div>
+                              <span className="flex-1 text-left">{sub.nombre}</span>
+                              <Icon
+                                name="chevron"
+                                className={`h-[11px] w-[11px] transition-transform ${subExpanded ? "rotate-90" : ""}`}
+                              />
+                            </button>
+                            {subExpanded && (
+                              !hasLinks ? (
+                                <p className="py-1 pl-12 text-[12px] italic text-neutral-700">Próximamente</p>
+                              ) : (
+                                <div className="flex flex-col gap-0.5">
+                                  {subItems.map((item) => (
+                                    <Link
+                                      key={item.id}
+                                      href={item.ruta}
+                                      className={`block rounded py-1.5 pl-12 pr-2 text-[12.5px] transition ${
+                                        pathname === item.ruta
+                                          ? "bg-[rgba(201,169,110,.14)] font-medium text-[#E2C892]"
+                                          : "text-neutral-400 hover:bg-neutral-900 hover:text-neutral-100"
+                                      }`}
+                                    >
+                                      {item.nombre}
+                                    </Link>
+                                  ))}
+                                </div>
+                              )
                             )}
                           </div>
                         );
