@@ -4,6 +4,7 @@ import { Sidebar } from "@/components/shared/Sidebar";
 import { ServiceWorkerRegister } from "@/components/shared/ServiceWorkerRegister";
 import { AuthProvider } from "@/components/shared/AuthProvider";
 import { createClient } from "@/lib/supabase/server";
+import { getSidebarData } from "@/lib/personal/sidebar-queries";
 import "./globals.css";
 
 const bebasNeue = Bebas_Neue({
@@ -44,9 +45,11 @@ export default async function RootLayout({
 }>) {
   const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
-  // auth.users no guarda un nombre todavía (solo email, via magic-link) —
-  // se usa de los metadatos si algún día se añade, "Alex" como fallback fijo.
   const displayName = data.user ? (data.user.user_metadata?.name as string | undefined) ?? "Alex" : null;
+
+  const sidebarData = data.user
+    ? await getSidebarData().catch(() => ({ sections: [], subsections: [], items: [] }))
+    : { sections: [], subsections: [], items: [] };
 
   return (
     <html
@@ -60,7 +63,7 @@ export default async function RootLayout({
       >
         <AuthProvider>
           <ServiceWorkerRegister />
-          <Sidebar name={displayName} email={data.user?.email ?? null} />
+          <Sidebar name={displayName} email={data.user?.email ?? null} sidebarData={sidebarData} />
           <main className="flex-1 overflow-y-auto">{children}</main>
         </AuthProvider>
       </body>
