@@ -7,7 +7,7 @@ import { taskDoneOn, taskOccursOn, taskShowToday, type TaskVM } from "@/lib/pers
 import { dowOf, minToStr, todayISO } from "@/lib/personal/format";
 import { recordatoriosHoy } from "@/lib/personal/reminders";
 import { recurOccursOn } from "@/lib/personal/recurrence";
-import { clientesActivos, hasNotas, type ClienteVM } from "@/lib/coaching/clientes";
+import { calcularMRR, clientesActivos, hasNotas, type ClienteVM } from "@/lib/coaching/clientes";
 import { CATEGORIAS } from "@/lib/coaching/constants";
 import type { GoalVM } from "@/lib/personal/goal";
 import type { EventBlockVM } from "@/lib/personal/events";
@@ -91,7 +91,8 @@ export function MiDiaPageClient({
   const hoyTexto = new Date(hoy + "T12:00:00").toLocaleDateString("es-ES", {
     weekday: "long", day: "numeric", month: "long",
   });
-  const pct = goal.target > 0 ? Math.min(100, (goal.current / goal.target) * 100) : 0;
+  const mrr = useMemo(() => calcularMRR(clientes), [clientes]);
+  const pct = goal.target > 0 ? Math.min(100, (mrr / goal.target) * 100) : 0;
 
   // Tasks for selected day
   const selDow = dowOf(selectedDay);
@@ -388,10 +389,23 @@ export function MiDiaPageClient({
 
       {/* ── Columna izquierda (60%) ── */}
       <div className="flex w-full flex-col gap-8 md:w-3/5">
-        {/* Fecha */}
-        <h1 className="font-heading text-[34px] font-semibold capitalize leading-tight">
-          {hoyTexto}
-        </h1>
+        {/* Fecha + MRR */}
+        <div>
+          <h1 className="font-heading text-[34px] font-semibold capitalize leading-tight">
+            {hoyTexto}
+          </h1>
+          <div className="mt-2.5">
+            <span className="text-[12px] tabular-nums text-neutral-600">
+              {mrr.toLocaleString("es-ES")}€ · {Math.round(pct)}%
+            </span>
+            <div className="mt-1.5 h-[2px] overflow-hidden rounded-full bg-neutral-800/80">
+              <div
+                className="h-full rounded-full bg-[#C9A96E] transition-[width] duration-700"
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+          </div>
+        </div>
 
         {/* Strip semanal — ancho completo de la columna */}
         {weekStrip}
@@ -402,24 +416,6 @@ export function MiDiaPageClient({
 
       {/* ── Columna derecha (40%) ── */}
       <div className="hidden w-2/5 flex-col gap-8 md:flex">
-        {/* MRR discreto arriba */}
-        <div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-700">MRR</span>
-            <span className="font-display text-[20px] leading-none text-neutral-300">
-              {goal.current.toLocaleString("es-ES")}€
-            </span>
-            <span className="text-[12px] text-neutral-700">/ {goal.target.toLocaleString("es-ES")}€</span>
-            <span className="ml-auto text-[11px] tabular-nums text-neutral-700">{Math.round(pct)}%</span>
-          </div>
-          <div className="mt-2 h-[2px] overflow-hidden rounded-full bg-neutral-800/80">
-            <div
-              className="h-full rounded-full bg-[#C9A96E] transition-[width] duration-700"
-              style={{ width: `${pct}%` }}
-            />
-          </div>
-        </div>
-
         {/* Coaching */}
         {hasCoaching && (
           <>
@@ -432,20 +428,8 @@ export function MiDiaPageClient({
         )}
       </div>
 
-      {/* ── Mobile: MRR + Coaching apilados debajo de las tareas ── */}
+      {/* ── Mobile: Coaching apilado debajo de las tareas ── */}
       <div className="mt-2 flex flex-col gap-8 md:hidden">
-        <div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-700">MRR</span>
-            <span className="font-display text-[20px] leading-none text-neutral-300">
-              {goal.current.toLocaleString("es-ES")}€
-            </span>
-            <span className="text-[12px] text-neutral-700">/ {goal.target.toLocaleString("es-ES")}€</span>
-          </div>
-          <div className="mt-2 h-[2px] overflow-hidden rounded-full bg-neutral-800/80">
-            <div className="h-full rounded-full bg-[#C9A96E] transition-[width] duration-700" style={{ width: `${pct}%` }} />
-          </div>
-        </div>
         {hasCoaching && (
           <>
             <div className="flex items-center gap-2">
