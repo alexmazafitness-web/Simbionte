@@ -30,6 +30,8 @@ export type KnCategoryVM = {
   name: string;
 };
 
+export type FuenteLongitud = "corta" | "larga" | "sesion";
+
 export type KnNoteVM = {
   id: string;
   title: string;
@@ -37,6 +39,7 @@ export type KnNoteVM = {
   notaBruta: string | null;
   fuenteTipo: FuenteTipo | null;
   fuenteNombre: string;
+  fuenteLongitud: FuenteLongitud;
   puntosClave: string[];
   source: string | null;
   categoryId: string | null;

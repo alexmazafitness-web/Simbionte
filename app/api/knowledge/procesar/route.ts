@@ -16,17 +16,39 @@ export async function POST(req: Request) {
     fuenteTipo: string;
     fuenteNombre: string;
     categorias: Array<{ id: string; name: string }>;
+    textoLargo?: boolean;
   };
 
-  const { notaBruta, fuenteTipo, fuenteNombre, categorias } = body;
+  const { notaBruta, fuenteTipo, fuenteNombre, categorias, textoLargo } = body;
+  const isLarga = textoLargo === true || notaBruta.length > 2000;
+
   const categoriasStr = categorias.length
     ? categorias.map((c) => `- ${c.name} (id: ${c.id})`).join("\n")
     : "(sin categorías disponibles)";
 
-  const message = await anthropic.messages.create({
-    model: "claude-sonnet-4-6",
-    max_tokens: 1024,
-    system: `Eres un asistente que procesa y estructura conocimiento personal. Transforma la nota bruta del usuario en conocimiento claro y accionable.
+  const systemPrompt = isLarga
+    ? `Eres un experto en síntesis y extracción de conocimiento. Tu tarea es procesar un texto largo (transcripción, artículo, apuntes) y destilar ÚNICAMENTE el conocimiento valioso y accionable.
+
+NO copies el texto original. Solo extrae y estructura el conocimiento.
+
+INSTRUCCIONES:
+1. Crea un título descriptivo y conciso (máximo 12 palabras).
+2. Estructura el conocimiento extraído en secciones con cabecera markdown (## Sección).
+   - Cada sección = un tema, concepto o aprendizaje central
+   - Máximo 5-6 secciones, cada una con 2-3 párrafos densos
+   - Solo conocimiento valioso: ideas clave, conceptos, frameworks, aprendizajes
+   - Prosa clara y directa, sin listas dentro de las secciones
+3. Extrae entre 5 y 15 puntos clave: frases cortas, concretas y memorables.
+4. Elige la categoría más adecuada de la lista. Si ninguna encaja, devuelve null.
+
+FORMATO DE RESPUESTA: Responde ÚNICAMENTE con JSON válido, sin bloques markdown, sin texto extra:
+{
+  "titulo": "...",
+  "contenido": "## Sección 1\\n\\n...\\n\\n## Sección 2\\n\\n...",
+  "puntosClave": ["...", "...", "..."],
+  "categoriaId": "..."
+}`
+    : `Eres un asistente que procesa y estructura conocimiento personal. Transforma la nota bruta del usuario en conocimiento claro y accionable.
 
 INSTRUCCIONES:
 1. Crea un título descriptivo y conciso (máximo 10 palabras).
@@ -40,11 +62,16 @@ FORMATO DE RESPUESTA: Responde ÚNICAMENTE con JSON válido, sin bloques markdow
   "contenido": "...",
   "puntosClave": ["...", "...", "..."],
   "categoriaId": "..."
-}`,
+}`;
+
+  const message = await anthropic.messages.create({
+    model: "claude-sonnet-4-6",
+    max_tokens: isLarga ? 4096 : 1024,
+    system: systemPrompt,
     messages: [
       {
         role: "user",
-        content: `Nota bruta: ${notaBruta}
+        content: `${isLarga ? "Texto a procesar" : "Nota bruta"}: ${notaBruta}
 
 Fuente: ${fuenteTipo}${fuenteNombre ? ` — ${fuenteNombre}` : ""}
 
@@ -55,8 +82,6 @@ ${categoriasStr}`,
   });
 
   const raw = message.content[0].type === "text" ? message.content[0].text.trim() : "";
-
-  // Strip markdown code fences if the model wraps in ```json
   const cleaned = raw.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "").trim();
 
   try {

@@ -40,21 +40,24 @@ export async function crearNotaIA(params: {
   fuenteNombre: string;
   puntosClave: string[];
   categoryId: string | null;
+  fuenteLongitud?: "corta" | "larga" | "sesion";
 }) {
   const supabase = await createClient();
   const ownerId = await requireUserId(supabase);
+  const isLarga = params.fuenteLongitud === "larga";
   const { error } = await supabase.schema("personal").from("kn_notes").insert({
-    owner_id:      ownerId,
-    title:         params.title,
-    content:       params.contentProcesado,
-    nota_bruta:    params.notaBruta,
-    fuente_tipo:   params.fuenteTipo,
-    fuente_nombre: params.fuenteNombre,
-    puntos_clave:  params.puntosClave,
-    source:        params.fuenteNombre
+    owner_id:         ownerId,
+    title:            params.title,
+    content:          params.contentProcesado,
+    nota_bruta:       isLarga ? null : (params.notaBruta || null),
+    fuente_tipo:      params.fuenteTipo,
+    fuente_nombre:    params.fuenteNombre,
+    puntos_clave:     params.puntosClave,
+    source:           params.fuenteNombre
       ? `${params.fuenteTipo}: ${params.fuenteNombre}`
       : params.fuenteTipo,
-    category_id:   params.categoryId,
+    category_id:      params.categoryId,
+    fuente_longitud:  params.fuenteLongitud ?? "corta",
   });
   if (error) throw error;
   revalidatePath(PATH);
@@ -82,6 +85,30 @@ export async function editarNotaIA(
     .eq("id", id);
   if (error) throw error;
   revalidatePath(PATH);
+}
+
+// ── Sesión ────────────────────────────────────────────────────────────────────
+
+export async function crearSesionNota(id: string, sesionId: string, contenido: string, orden: number) {
+  const supabase = await createClient();
+  const ownerId = await requireUserId(supabase);
+  await supabase.schema("personal").from("knowledge_sesion_notas").insert({
+    id,
+    owner_id:  ownerId,
+    sesion_id: sesionId,
+    contenido,
+    orden,
+  });
+}
+
+export async function eliminarSesionNota(id: string) {
+  const supabase = await createClient();
+  await supabase.schema("personal").from("knowledge_sesion_notas").delete().eq("id", id);
+}
+
+export async function limpiarSesionNotas(sesionId: string) {
+  const supabase = await createClient();
+  await supabase.schema("personal").from("knowledge_sesion_notas").delete().eq("sesion_id", sesionId);
 }
 
 export async function eliminarNota(id: string) {

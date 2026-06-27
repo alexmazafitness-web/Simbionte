@@ -13,6 +13,7 @@ import {
 import { Modal } from "@/components/ui/Modal";
 import { NuevaNotaModal } from "./knowledge/NuevaNotaModal";
 import { KnowledgeChatPanel } from "./knowledge/KnowledgeChatPanel";
+import { SesionModo } from "./knowledge/SesionModo";
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -207,10 +208,11 @@ export function KnowledgePageClient({
   categorias: KnCategoryVM[];
   notas: KnNoteVM[];
 }) {
-  const [selectedCat,  setSelectedCat]  = useState<string | null>(null);
-  const [search,       setSearch]       = useState("");
-  const [chatOpen,     setChatOpen]     = useState(false);
-  const [modal,        setModal]        = useState<ModalState>(null);
+  const [selectedCat,   setSelectedCat]   = useState<string | null>(null);
+  const [search,        setSearch]        = useState("");
+  const [chatOpen,      setChatOpen]      = useState(false);
+  const [sesionActiva,  setSesionActiva]  = useState(false);
+  const [modal,         setModal]         = useState<ModalState>(null);
   const [editingCatId, setEditingCatId] = useState<string | null>(null);
   const [editDraft,    setEditDraft]    = useState({ emoji: "", name: "" });
   const [addEmoji,     setAddEmoji]     = useState("📌");
@@ -246,8 +248,8 @@ export function KnowledgePageClient({
 
   return (
     <div className="flex h-full overflow-hidden">
-      {/* ── Left: categories ──────────────────────────────────── */}
-      <aside className="flex w-56 shrink-0 flex-col border-r border-line-soft">
+      {/* ── Left: categories — oculto en modo sesión ──────────── */}
+      {!sesionActiva && <aside className="flex w-56 shrink-0 flex-col border-r border-line-soft">
         <div className="flex items-center justify-between border-b border-line-soft px-4 py-3.5">
           <span className="text-[10px] font-bold tracking-[0.22em] text-gold-dim uppercase">Categorías</span>
           <button type="button" onClick={() => setModal({ type: "addCat" })} className="flex h-5 w-5 items-center justify-center rounded text-text-dim hover:bg-panel-2 hover:text-foreground" title="Nueva categoría">
@@ -282,10 +284,18 @@ export function KnowledgePageClient({
             ),
           )}
         </nav>
-      </aside>
+      </aside>}
 
-      {/* ── Center: notes ─────────────────────────────────────── */}
+      {/* ── Center: notes / sesión ────────────────────────────── */}
       <div className="flex flex-1 flex-col overflow-hidden">
+        {sesionActiva ? (
+          <SesionModo
+            categorias={categorias}
+            defaultCategoriaId={selectedCat}
+            onGuardada={() => setSesionActiva(false)}
+            onCerrar={() => setSesionActiva(false)}
+          />
+        ) : (<>
         <div className="flex items-center gap-3 border-b border-line-soft px-6 py-3.5">
           <h2 className="font-heading text-[16px] font-bold">{headerTitle}</h2>
           <span className="rounded-full bg-panel-2 px-2 py-0.5 text-[11px] text-text-dim">{filteredNotas.length}</span>
@@ -296,6 +306,13 @@ export function KnowledgePageClient({
               </svg>
               <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar notas…" className="w-48 rounded-lg border border-line bg-panel-2 py-1.5 pl-7 pr-3 text-[12.5px] outline-none focus:border-gold-dim placeholder:text-text-dim" />
             </div>
+            <button
+              type="button"
+              onClick={() => setSesionActiva(true)}
+              className="flex items-center gap-1.5 rounded-lg border border-line px-3.5 py-1.5 text-[12px] font-semibold text-text-2 transition hover:border-gold-dim hover:text-foreground"
+            >
+              🎙 Sesión
+            </button>
             <button type="button" onClick={() => setModal({ type: "nueva" })} className="rounded-lg bg-gold px-3.5 py-1.5 text-[12px] font-bold text-[#1a1208] transition hover:bg-gold-bright">
               + Nueva nota
             </button>
@@ -332,10 +349,11 @@ export function KnowledgePageClient({
             </div>
           )}
         </div>
+        </>)}
       </div>
 
-      {/* ── Right: chat ───────────────────────────────────────── */}
-      {chatOpen && <KnowledgeChatPanel onClose={() => setChatOpen(false)} />}
+      {/* ── Right: chat — oculto en modo sesión ───────────────── */}
+      {!sesionActiva && chatOpen && <KnowledgeChatPanel onClose={() => setChatOpen(false)} />}
 
       {/* ── Modals ────────────────────────────────────────────── */}
       <NuevaNotaModal
