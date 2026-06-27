@@ -222,10 +222,10 @@ export function Sidebar({ name: initialName, email }: { name: string | null; ema
                     <button
                       type="button"
                       onClick={() => toggle(item.label)}
-                      className="flex w-full items-center gap-1.5 rounded px-2 py-1.5 pl-8 text-left text-[12.5px] text-neutral-400 hover:bg-neutral-900 hover:text-neutral-100"
+                      className="mt-1 flex w-full items-center gap-1 rounded py-1 pl-8 pr-2 text-left text-[9px] font-bold tracking-[0.25em] text-neutral-600 uppercase hover:text-neutral-400"
                     >
                       <span className="flex-1 truncate">{item.label}</span>
-                      <Icon name="chevron" className={`transition-transform ${subExpanded ? "rotate-90" : ""}`} />
+                      <Icon name="chevron" className={`h-[13px] w-[13px] transition-transform ${subExpanded ? "rotate-90" : ""}`} />
                     </button>
                     {subExpanded && (
                       <div className="flex flex-col gap-0.5">
@@ -288,21 +288,25 @@ export function Sidebar({ name: initialName, email }: { name: string | null; ema
 
         {showFull && groupExpanded && (
           <div className="flex flex-col">
-            {group.sections.map((section) => (
-              <div key={section.label} className="mb-2">
-                {/* Section label — static, not collapsible */}
-                <div className="px-2 pb-0.5 pl-8 pt-2 text-[9.5px] font-semibold tracking-[0.2em] text-neutral-600 uppercase">
+            {group.sections.map((section, sIdx) => (
+              <div key={section.label}>
+                {/* Section label — static divider, not interactive */}
+                <div
+                  className={`cursor-default select-none pl-8 pb-0.5 text-[9px] font-bold tracking-[0.25em] text-neutral-700 uppercase ${
+                    sIdx === 0 ? "pt-2" : "mt-2 border-t border-white/[0.06] pt-3"
+                  }`}
+                >
                   {section.label}
                 </div>
                 {section.links.length === 0 ? (
-                  <p className="px-2 py-1 pl-8 text-[12px] italic text-neutral-700">Próximamente</p>
+                  <p className="py-1 pl-12 text-[12px] italic text-neutral-700">Próximamente</p>
                 ) : (
                   <div className="flex flex-col gap-0.5">
                     {section.links.map((link) => (
                       <Link
                         key={link.href}
                         href={link.href}
-                        className={`block rounded px-2 py-1.5 pl-10 text-[12.5px] transition ${
+                        className={`block rounded py-1.5 pl-12 pr-2 text-[12.5px] transition ${
                           pathname === link.href
                             ? "bg-[rgba(201,169,110,.14)] font-medium text-[#E2C892]"
                             : "text-neutral-400 hover:bg-neutral-900 hover:text-neutral-100"
