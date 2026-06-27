@@ -8,23 +8,24 @@ import { AjustesModal } from "./ajustes/AjustesModal";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type NavLink = { label: string; href: string };
-// SubGroup: toggle header (no href) with nested links — e.g. Cerebro
-type NavSubGroup = { label: string; links: NavLink[] };
-type NavItem = NavLink | NavSubGroup;
-type NavGroup = { label: string; icon: keyof typeof ICONS; items: NavItem[] };
+type NavLink    = { label: string; href: string };
+type NavSubGroup = { label: string; links: NavLink[] };          // e.g. Cerebro
+type NavItem    = NavLink | NavSubGroup;
+type NavSection = { label: string; links: NavLink[] };           // labeled category inside Business
 
-function isSubGroup(item: NavItem): item is NavSubGroup {
-  return "links" in item;
-}
+type GroupItems    = { label: string; icon: keyof typeof ICONS; items: NavItem[] };
+type GroupSections = { label: string; icon: keyof typeof ICONS; sections: NavSection[] };
+type NavGroup = GroupItems | GroupSections;
+
+function hasItems(g: NavGroup): g is GroupItems       { return "items" in g; }
+function isSubGroup(item: NavItem): item is NavSubGroup { return "links" in item; }
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 
 const ICONS = {
   checkCircle: (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M9 12l2 2 4-4" />
+      <circle cx="12" cy="12" r="9" /><path d="M9 12l2 2 4-4" />
     </svg>
   ),
   home: (
@@ -51,8 +52,7 @@ const ICONS = {
   ),
   panel: (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
-      <rect x="3" y="4" width="18" height="16" rx="2" />
-      <path d="M9 4v16" />
+      <rect x="3" y="4" width="18" height="16" rx="2" /><path d="M9 4v16" />
     </svg>
   ),
   logout: (
@@ -74,14 +74,14 @@ const GROUPS: NavGroup[] = [
       {
         label: "Cerebro",
         links: [
-          { label: "Tareas", href: "/personal/cerebro/tareas" },
-          { label: "Ideas", href: "/personal/cerebro/ideas" },
-          { label: "Recordatorios", href: "/personal/cerebro/recordatorios" },
-          { label: "Calendario", href: "/personal/cerebro/calendario" },
-          { label: "Knowledge", href: "/personal/cerebro/knowledge" },
-          { label: "El Norte", href: "/personal/cerebro/norte" },
+          { label: "Tareas",           href: "/personal/cerebro/tareas" },
+          { label: "Ideas",            href: "/personal/cerebro/ideas" },
+          { label: "Recordatorios",    href: "/personal/cerebro/recordatorios" },
+          { label: "Calendario",       href: "/personal/cerebro/calendario" },
+          { label: "Knowledge",        href: "/personal/cerebro/knowledge" },
+          { label: "El Norte",         href: "/personal/cerebro/norte" },
           { label: "Revisión semanal", href: "/personal/cerebro/revision" },
-          { label: "Infra", href: "/personal/cerebro/infra" },
+          { label: "Infra",            href: "/personal/cerebro/infra" },
         ],
       },
       { label: "Finanzas", href: "/personal/finanzas" },
@@ -90,17 +90,29 @@ const GROUPS: NavGroup[] = [
   {
     label: "Business",
     icon: "briefcase",
-    items: [
-      { label: "Dashboard", href: "/coaching/dashboard" },
-      { label: "Clientes", href: "/coaching/clientes" },
-      { label: "Leads", href: "/coaching/leads" },
-      { label: "Pagos", href: "/coaching/pagos" },
-      { label: "Revisiones", href: "/coaching/revisiones" },
-      { label: "Mesociclos", href: "/coaching/mesociclos" },
-      { label: "Ventas", href: "/coaching/ventas" },
-      { label: "Contenido", href: "/coaching/contenido" },
-      { label: "Negocio", href: "/coaching/negocio" },
-      { label: "Captación", href: "/coaching/captacion" },
+    sections: [
+      {
+        label: "Captación",
+        links: [
+          { label: "Leads",     href: "/coaching/leads" },
+          { label: "Ventas",    href: "/coaching/ventas" },
+          { label: "Contenido", href: "/coaching/contenido" },
+          { label: "Negocio",   href: "/coaching/negocio" },
+        ],
+      },
+      {
+        label: "Onboarding",
+        links: [],
+      },
+      {
+        label: "Operativa",
+        links: [
+          { label: "Clientes",    href: "/coaching/clientes" },
+          { label: "Pagos",       href: "/coaching/pagos" },
+          { label: "Revisiones",  href: "/coaching/revisiones" },
+          { label: "Mesociclos",  href: "/coaching/mesociclos" },
+        ],
+      },
     ],
   },
 ];
@@ -108,22 +120,30 @@ const GROUPS: NavGroup[] = [
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function Icon({ name, className }: { name: keyof typeof ICONS; className?: string }) {
-  return <span className={`block h-[18px] w-[18px] shrink-0 ${className ?? ""}`}>{ICONS[name]}</span>;
+  return (
+    <span className={`block h-[18px] w-[18px] shrink-0 ${className ?? ""}`}>
+      {ICONS[name]}
+    </span>
+  );
 }
 
 function initExpanded(pathname: string): Set<string> {
   const keys = new Set<string>();
   for (const group of GROUPS) {
     let groupActive = false;
-    for (const item of group.items) {
-      if (isSubGroup(item)) {
-        if (item.links.some((l) => l.href === pathname)) {
-          keys.add(item.label);
+    if (hasItems(group)) {
+      for (const item of group.items) {
+        if (isSubGroup(item)) {
+          if (item.links.some((l) => l.href === pathname)) {
+            keys.add(item.label);
+            groupActive = true;
+          }
+        } else if (item.href === pathname) {
           groupActive = true;
         }
-      } else if (item.href === pathname) {
-        groupActive = true;
       }
+    } else {
+      groupActive = group.sections.some((s) => s.links.some((l) => l.href === pathname));
     }
     if (groupActive) keys.add(group.label);
   }
@@ -134,24 +154,24 @@ function initExpanded(pathname: string): Set<string> {
 
 export function Sidebar({ name: initialName, email }: { name: string | null; email: string | null }) {
   const pathname = usePathname();
-  const router = useRouter();
+  const router   = useRouter();
 
-  const [name, setName] = useState(initialName);
-  const [expanded, setExpanded] = useState<Set<string>>(() => initExpanded(pathname));
-  const [collapsed, setCollapsed] = useState(false);
+  const [name,        setName]        = useState(initialName);
+  const [expanded,    setExpanded]    = useState<Set<string>>(() => initExpanded(pathname));
+  const [collapsed,   setCollapsed]   = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [ajustesOpen, setAjustesOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!profileOpen) return;
-    function handleClickOutside(e: MouseEvent) {
+    function onClickOutside(e: MouseEvent) {
       if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
         setProfileOpen(false);
       }
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
   }, [profileOpen]);
 
   function toggle(label: string) {
@@ -171,12 +191,148 @@ export function Sidebar({ name: initialName, email }: { name: string | null; ema
 
   const showFull = !collapsed;
 
-  function renderContent() {
+  // ─── Render helpers ───────────────────────────────────────────────────────
+
+  function renderGroupItems(group: GroupItems) {
+    const groupExpanded = expanded.has(group.label);
     return (
-      <>
+      <div key={group.label} className="mb-0.5">
+        <button
+          type="button"
+          onClick={() => showFull && toggle(group.label)}
+          title={group.label}
+          className="flex w-full items-center gap-2.5 rounded px-2 py-2 text-left text-[10px] font-semibold tracking-widest text-neutral-500 uppercase hover:text-neutral-300"
+        >
+          <Icon name={group.icon} />
+          {showFull && (
+            <>
+              <span className="flex-1 truncate">{group.label}</span>
+              <Icon name="chevron" className={`transition-transform ${groupExpanded ? "rotate-90" : ""}`} />
+            </>
+          )}
+        </button>
+
+        {showFull && groupExpanded && (
+          <div className="flex flex-col gap-0.5">
+            {group.items.map((item) => {
+              if (isSubGroup(item)) {
+                const subExpanded = expanded.has(item.label);
+                return (
+                  <div key={item.label}>
+                    <button
+                      type="button"
+                      onClick={() => toggle(item.label)}
+                      className="flex w-full items-center gap-1.5 rounded px-2 py-1.5 pl-8 text-left text-[12.5px] text-neutral-400 hover:bg-neutral-900 hover:text-neutral-100"
+                    >
+                      <span className="flex-1 truncate">{item.label}</span>
+                      <Icon name="chevron" className={`transition-transform ${subExpanded ? "rotate-90" : ""}`} />
+                    </button>
+                    {subExpanded && (
+                      <div className="flex flex-col gap-0.5">
+                        {item.links.map((link) => (
+                          <Link
+                            key={link.href}
+                            href={link.href}
+                            className={`block rounded px-2 py-1.5 pl-12 text-[12.5px] transition ${
+                              pathname === link.href
+                                ? "bg-[rgba(201,169,110,.14)] font-medium text-[#E2C892]"
+                                : "text-neutral-400 hover:bg-neutral-900 hover:text-neutral-100"
+                            }`}
+                          >
+                            {link.label}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`block rounded px-2 py-1.5 pl-8 text-[12.5px] transition ${
+                    pathname === item.href
+                      ? "bg-[rgba(201,169,110,.14)] font-medium text-[#E2C892]"
+                      : "text-neutral-400 hover:bg-neutral-900 hover:text-neutral-100"
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  function renderGroupSections(group: GroupSections) {
+    const groupExpanded = expanded.has(group.label);
+    return (
+      <div key={group.label} className="mb-0.5">
+        <button
+          type="button"
+          onClick={() => showFull && toggle(group.label)}
+          title={group.label}
+          className="flex w-full items-center gap-2.5 rounded px-2 py-2 text-left text-[10px] font-semibold tracking-widest text-neutral-500 uppercase hover:text-neutral-300"
+        >
+          <Icon name={group.icon} />
+          {showFull && (
+            <>
+              <span className="flex-1 truncate">{group.label}</span>
+              <Icon name="chevron" className={`transition-transform ${groupExpanded ? "rotate-90" : ""}`} />
+            </>
+          )}
+        </button>
+
+        {showFull && groupExpanded && (
+          <div className="flex flex-col">
+            {group.sections.map((section) => (
+              <div key={section.label} className="mb-2">
+                {/* Section label — static, not collapsible */}
+                <div className="px-2 pb-0.5 pl-8 pt-2 text-[9.5px] font-semibold tracking-[0.2em] text-neutral-600 uppercase">
+                  {section.label}
+                </div>
+                {section.links.length === 0 ? (
+                  <p className="px-2 py-1 pl-8 text-[12px] italic text-neutral-700">Próximamente</p>
+                ) : (
+                  <div className="flex flex-col gap-0.5">
+                    {section.links.map((link) => (
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        className={`block rounded px-2 py-1.5 pl-10 text-[12.5px] transition ${
+                          pathname === link.href
+                            ? "bg-[rgba(201,169,110,.14)] font-medium text-[#E2C892]"
+                            : "text-neutral-400 hover:bg-neutral-900 hover:text-neutral-100"
+                        }`}
+                      >
+                        {link.label}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ─── Main render ──────────────────────────────────────────────────────────
+
+  return (
+    <div className={`relative flex-shrink-0 ${collapsed ? "w-16" : "w-56"}`}>
+      <aside className="flex h-full w-full flex-col border-r border-white/10 bg-[#141414] px-3 py-6">
         {/* Header */}
         <div className="mb-6 flex items-center justify-between px-2">
-          {showFull && <span className="font-heading text-lg font-semibold tracking-wide text-[#C9A96E]">Simbionte</span>}
+          {showFull && (
+            <span className="font-heading text-lg font-semibold tracking-wide text-[#C9A96E]">
+              Simbionte
+            </span>
+          )}
           <button
             type="button"
             onClick={() => setCollapsed((c) => !c)}
@@ -187,6 +343,7 @@ export function Sidebar({ name: initialName, email }: { name: string | null; ema
           </button>
         </div>
 
+        {/* Nav */}
         <nav className="flex flex-1 flex-col gap-1 overflow-y-auto">
           {/* 1 — MI DÍA */}
           <Link
@@ -204,90 +361,12 @@ export function Sidebar({ name: initialName, email }: { name: string | null; ema
 
           <div className="my-1 h-px bg-white/10" />
 
-          {/* 2 + 3 — PERSONAL & BUSINESS */}
-          {GROUPS.map((group) => {
-            const groupExpanded = expanded.has(group.label);
-            return (
-              <div key={group.label} className="mb-0.5">
-                {/* Group header */}
-                <button
-                  type="button"
-                  onClick={() => showFull && toggle(group.label)}
-                  title={group.label}
-                  className="flex w-full items-center gap-2.5 rounded px-2 py-2 text-left text-[10px] font-semibold tracking-widest text-neutral-500 uppercase hover:text-neutral-300"
-                >
-                  <Icon name={group.icon} />
-                  {showFull && (
-                    <>
-                      <span className="flex-1 truncate">{group.label}</span>
-                      <Icon name="chevron" className={`transition-transform ${groupExpanded ? "rotate-90" : ""}`} />
-                    </>
-                  )}
-                </button>
-
-                {/* Group items */}
-                {showFull && groupExpanded && (
-                  <div className="flex flex-col gap-0.5">
-                    {group.items.map((item) => {
-                      if (isSubGroup(item)) {
-                        const subExpanded = expanded.has(item.label);
-                        return (
-                          <div key={item.label}>
-                            {/* Sub-group toggle */}
-                            <button
-                              type="button"
-                              onClick={() => toggle(item.label)}
-                              className="flex w-full items-center gap-1.5 rounded px-2 py-1.5 pl-8 text-left text-[12.5px] text-neutral-400 hover:bg-neutral-900 hover:text-neutral-100"
-                            >
-                              <span className="flex-1 truncate">{item.label}</span>
-                              <Icon name="chevron" className={`transition-transform ${subExpanded ? "rotate-90" : ""}`} />
-                            </button>
-                            {/* Sub-group links */}
-                            {subExpanded && (
-                              <div className="flex flex-col gap-0.5">
-                                {item.links.map((link) => {
-                                  const active = pathname === link.href;
-                                  return (
-                                    <Link
-                                      key={link.href}
-                                      href={link.href}
-                                      className={`block rounded px-2 py-1.5 pl-12 text-[12.5px] transition ${
-                                        active
-                                          ? "bg-[rgba(201,169,110,.14)] font-medium text-[#E2C892]"
-                                          : "text-neutral-400 hover:bg-neutral-900 hover:text-neutral-100"
-                                      }`}
-                                    >
-                                      {link.label}
-                                    </Link>
-                                  );
-                                })}
-                              </div>
-                            )}
-                          </div>
-                        );
-                      }
-
-                      // Flat link
-                      const active = pathname === item.href;
-                      return (
-                        <Link
-                          key={item.href}
-                          href={item.href}
-                          className={`block rounded px-2 py-1.5 pl-8 text-[12.5px] transition ${
-                            active
-                              ? "bg-[rgba(201,169,110,.14)] font-medium text-[#E2C892]"
-                              : "text-neutral-400 hover:bg-neutral-900 hover:text-neutral-100"
-                          }`}
-                        >
-                          {item.label}
-                        </Link>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+          {/* 2 — PERSONAL  /  3 — BUSINESS */}
+          {GROUPS.map((group) =>
+            hasItems(group)
+              ? renderGroupItems(group)
+              : renderGroupSections(group),
+          )}
         </nav>
 
         {/* Profile */}
@@ -320,17 +399,22 @@ export function Sidebar({ name: initialName, email }: { name: string | null; ema
             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#C9A96E] to-[#9a7c47] text-xs font-bold text-[#1a1208]">
               {name ? name[0]!.toUpperCase() : "?"}
             </span>
-            {showFull && <span className="min-w-0 flex-1 truncate text-left text-[12.5px] text-neutral-300">{name ?? "Sin sesión"}</span>}
+            {showFull && (
+              <span className="min-w-0 flex-1 truncate text-left text-[12.5px] text-neutral-300">
+                {name ?? "Sin sesión"}
+              </span>
+            )}
           </button>
         </div>
-      </>
-    );
-  }
+      </aside>
 
-  return (
-    <div className={`relative flex-shrink-0 ${collapsed ? "w-16" : "w-56"}`}>
-      <aside className="flex h-full w-full flex-col border-r border-white/10 bg-[#141414] px-3 py-6">{renderContent()}</aside>
-      <AjustesModal open={ajustesOpen} onClose={() => setAjustesOpen(false)} name={name} email={email} onNameSaved={setName} />
+      <AjustesModal
+        open={ajustesOpen}
+        onClose={() => setAjustesOpen(false)}
+        name={name}
+        email={email}
+        onNameSaved={setName}
+      />
     </div>
   );
 }
