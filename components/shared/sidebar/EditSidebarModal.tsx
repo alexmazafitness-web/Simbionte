@@ -656,7 +656,7 @@ export function EditSidebarModal({
                               );
                             }
 
-                            // Direct item (kind === "item")
+                            // Direct item (kind === "item") — shown at subsection level, use subsection label style
                             const { item } = child;
                             return (
                               <SortableRow
@@ -669,6 +669,7 @@ export function EditSidebarModal({
                                     item={item}
                                     handle={handle}
                                     indent="pl-7"
+                                    labelClassName={SUB_LABEL_CLASS}
                                     isEditing={editingId === item.id}
                                     onToggle={() => doToggleItem(item.id, item.visible)}
                                     onEdit={() => setEditingId(item.id)}
@@ -766,11 +767,15 @@ export function EditSidebarModal({
 
 // ── ItemRow subcomponent ──────────────────────────────────────────────────────
 
+const SUB_LABEL_CLASS = "text-[9.5px] font-bold uppercase tracking-[0.2em] text-neutral-600";
+const ITEM_LABEL_CLASS = "text-[12.5px] text-neutral-400";
+
 function ItemRow({
   item,
   dragMeta,
   handle: externalHandle,
   indent = "pl-12",
+  labelClassName,
   isEditing,
   onToggle,
   onEdit,
@@ -782,6 +787,7 @@ function ItemRow({
   dragMeta?: DragMeta;
   handle?: React.ReactNode;
   indent?: string;
+  labelClassName?: string;
   isEditing: boolean;
   onToggle: () => void;
   onEdit: () => void;
@@ -814,8 +820,10 @@ function ItemRow({
         <RenameInput value={item.nombre} onSave={onRename} onCancel={onCancelEdit} />
       ) : (
         <>
-          <span className="flex-1 truncate text-[12.5px] text-neutral-400">{item.nombre}</span>
-          <span className="hidden truncate text-[10px] text-neutral-700 group-hover:block">{item.ruta}</span>
+          <span className={`flex-1 truncate ${labelClassName ?? ITEM_LABEL_CLASS}`}>{item.nombre}</span>
+          {!labelClassName && (
+            <span className="hidden truncate text-[10px] text-neutral-700 group-hover:block">{item.ruta}</span>
+          )}
         </>
       )}
       <div className="flex shrink-0 items-center gap-0.5">
