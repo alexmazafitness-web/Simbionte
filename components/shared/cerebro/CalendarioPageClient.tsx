@@ -135,7 +135,7 @@ export function CalendarioPageClient({
           <p className="mb-4 text-[13px] text-text-dim">Sin bloques para este día.</p>
         )}
         <div className="rounded-xl border border-line-soft bg-panel">
-          <div ref={diaScrollRef} className="h-[calc(100vh-280px)] overflow-y-auto">
+          <div ref={diaScrollRef} className="h-[calc(100vh-280px)] overflow-y-auto pt-3">
           <div className="relative" style={{ height: totalPx }}>
             {hours.map((h, i) => (
               <div key={h} className="absolute inset-x-0 flex" style={{ top: i * HOUR_H }}>
