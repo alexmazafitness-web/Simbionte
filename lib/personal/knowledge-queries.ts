@@ -1,11 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { requireUserId } from "@/lib/supabase/auth";
 import { KN_CATS_DEFAULT } from "./constants";
-import type { KnCategoryVM, KnNoteVM, KnPrincipleVM, KnSystemVM } from "./knowledge";
+import type { KnCategoryVM, KnNoteVM, KnPrincipleVM, KnSystemVM, FuenteTipo } from "./knowledge";
 
-// Si el usuario todavía no tiene categorías propias, siembra las 9 por
-// defecto del HTML de referencia (knCats() las fusionaba en memoria; aquí
-// las creamos de verdad la primera vez para que category_id sea un FK real).
 export async function listKnCategories(): Promise<KnCategoryVM[]> {
   const supabase = await createClient();
   const { data, error } = await supabase.schema("personal").from("kn_categories").select("id, emoji, name").order("name");
@@ -29,10 +26,21 @@ export async function listKnNotes(): Promise<KnNoteVM[]> {
   const { data, error } = await supabase
     .schema("personal")
     .from("kn_notes")
-    .select("id, title, content, source, category_id")
+    .select("id, title, content, source, category_id, nota_bruta, fuente_tipo, fuente_nombre, puntos_clave, created_at")
     .order("created_at", { ascending: false });
   if (error) throw error;
-  return data.map((row) => ({ id: row.id, title: row.title, text: row.content, source: row.source, categoryId: row.category_id }));
+  return data.map((row) => ({
+    id:           row.id,
+    title:        row.title,
+    text:         row.content ?? null,
+    notaBruta:    (row as any).nota_bruta ?? null,
+    fuenteTipo:   ((row as any).fuente_tipo as FuenteTipo | null) ?? null,
+    fuenteNombre: (row as any).fuente_nombre ?? "",
+    puntosClave:  Array.isArray((row as any).puntos_clave) ? (row as any).puntos_clave as string[] : [],
+    source:       row.source ?? null,
+    categoryId:   row.category_id ?? null,
+    createdAt:    row.created_at,
+  }));
 }
 
 export async function listKnPrinciples(): Promise<KnPrincipleVM[]> {

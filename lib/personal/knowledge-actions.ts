@@ -6,10 +6,19 @@ import { requireUserId } from "@/lib/supabase/auth";
 
 const PATH = "/personal/cerebro/knowledge";
 
+// ── Categorías ────────────────────────────────────────────────────────────────
+
 export async function crearCategoria(emoji: string, name: string) {
   const supabase = await createClient();
   const ownerId = await requireUserId(supabase);
   const { error } = await supabase.schema("personal").from("kn_categories").insert({ owner_id: ownerId, emoji, name });
+  if (error) throw error;
+  revalidatePath(PATH);
+}
+
+export async function renombrarCategoria(id: string, emoji: string, name: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.schema("personal").from("kn_categories").update({ emoji, name }).eq("id", id);
   if (error) throw error;
   revalidatePath(PATH);
 }
@@ -21,18 +30,74 @@ export async function eliminarCategoria(id: string) {
   revalidatePath(PATH);
 }
 
-// Nota: el HTML de referencia no tiene un modal manual para crear notas —
-// la única vía es la IA (desactivada en esta fase), así que este modal
-// manual es necesario para que la entidad sea utilizable.
+// ── Notas ─────────────────────────────────────────────────────────────────────
+
+export async function crearNotaIA(params: {
+  title: string;
+  contentProcesado: string;
+  notaBruta: string;
+  fuenteTipo: string;
+  fuenteNombre: string;
+  puntosClave: string[];
+  categoryId: string | null;
+}) {
+  const supabase = await createClient();
+  const ownerId = await requireUserId(supabase);
+  const { error } = await supabase.schema("personal").from("kn_notes").insert({
+    owner_id:      ownerId,
+    title:         params.title,
+    content:       params.contentProcesado,
+    nota_bruta:    params.notaBruta,
+    fuente_tipo:   params.fuenteTipo,
+    fuente_nombre: params.fuenteNombre,
+    puntos_clave:  params.puntosClave,
+    source:        params.fuenteNombre
+      ? `${params.fuenteTipo}: ${params.fuenteNombre}`
+      : params.fuenteTipo,
+    category_id:   params.categoryId,
+  });
+  if (error) throw error;
+  revalidatePath(PATH);
+}
+
+export async function editarNotaIA(
+  id: string,
+  params: {
+    title: string;
+    contentProcesado: string;
+    puntosClave: string[];
+    categoryId: string | null;
+  },
+) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .schema("personal")
+    .from("kn_notes")
+    .update({
+      title:        params.title,
+      content:      params.contentProcesado,
+      puntos_clave: params.puntosClave,
+      category_id:  params.categoryId,
+    })
+    .eq("id", id);
+  if (error) throw error;
+  revalidatePath(PATH);
+}
+
+export async function eliminarNota(id: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.schema("personal").from("kn_notes").delete().eq("id", id);
+  if (error) throw error;
+  revalidatePath(PATH);
+}
+
+// ── Legacy (principios / sistemas — se mantienen para no romper) ──────────────
+
 export async function crearNota(title: string, text: string, source: string, categoryId: string | null) {
   const supabase = await createClient();
   const ownerId = await requireUserId(supabase);
   const { error } = await supabase.schema("personal").from("kn_notes").insert({
-    owner_id: ownerId,
-    title,
-    content: text || null,
-    source: source || null,
-    category_id: categoryId,
+    owner_id: ownerId, title, content: text || null, source: source || null, category_id: categoryId,
   });
   if (error) throw error;
   revalidatePath(PATH);
@@ -49,13 +114,6 @@ export async function editarNota(id: string, title: string, text: string, source
   revalidatePath(PATH);
 }
 
-export async function eliminarNota(id: string) {
-  const supabase = await createClient();
-  const { error } = await supabase.schema("personal").from("kn_notes").delete().eq("id", id);
-  if (error) throw error;
-  revalidatePath(PATH);
-}
-
 export async function crearPrincipio(text: string, source: string) {
   const supabase = await createClient();
   const ownerId = await requireUserId(supabase);
@@ -66,11 +124,7 @@ export async function crearPrincipio(text: string, source: string) {
 
 export async function editarPrincipio(id: string, text: string, source: string) {
   const supabase = await createClient();
-  const { error } = await supabase
-    .schema("personal")
-    .from("kn_principles")
-    .update({ content: text, source: source || null })
-    .eq("id", id);
+  const { error } = await supabase.schema("personal").from("kn_principles").update({ content: text, source: source || null }).eq("id", id);
   if (error) throw error;
   revalidatePath(PATH);
 }
@@ -92,11 +146,7 @@ export async function crearSistema(name: string, desc: string) {
 
 export async function editarSistema(id: string, name: string, desc: string) {
   const supabase = await createClient();
-  const { error } = await supabase
-    .schema("personal")
-    .from("kn_systems")
-    .update({ title: name, content: desc || null })
-    .eq("id", id);
+  const { error } = await supabase.schema("personal").from("kn_systems").update({ title: name, content: desc || null }).eq("id", id);
   if (error) throw error;
   revalidatePath(PATH);
 }
