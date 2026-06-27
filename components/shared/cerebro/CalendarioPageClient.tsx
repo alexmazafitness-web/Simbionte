@@ -22,17 +22,23 @@ const MESES_L = [
   "Enero","Febrero","Marzo","Abril","Mayo","Junio",
   "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre",
 ];
-const H_START = 7;
-const H_END   = 22;
-const HOUR_H  = 60; // px per hour in day view
+const H_START = 0;
+const H_END   = 23;
+const HOUR_H  = 56; // px per hour in day view
 
 // ── pure helpers ──────────────────────────────────────────────────────────────
+
+// Construye "YYYY-MM-DD" usando componentes locales (evita el desfase UTC
+// que produce toISO/toISOString en zonas horarias con offset positivo).
+function isoDate(y: number, m: number, d: number): string {
+  return `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+}
 
 function addMonths(iso: string, n: number): string {
   const d = new Date(iso + "T00:00:00");
   d.setDate(1);
   d.setMonth(d.getMonth() + n);
-  return toISO(d);
+  return isoDate(d.getFullYear(), d.getMonth(), 1);
 }
 
 function unikoMin(startAt: string): number {
@@ -106,7 +112,7 @@ export function CalendarioPageClient({
     const { blocks, unicos: uDay } = eventsOn(cursor, events, eventosUnicos);
     const marca    = marks.find((m) => m.date === cursor);
     const hours    = Array.from({ length: H_END - H_START + 1 }, (_, i) => H_START + i);
-    const totalPx  = (H_END - H_START) * HOUR_H;
+    const totalPx  = (H_END - H_START + 1) * HOUR_H; // 24 horas × px/hora
 
     return (
       <div>
@@ -119,6 +125,7 @@ export function CalendarioPageClient({
           <p className="mb-4 text-[13px] text-text-dim">Sin bloques para este día.</p>
         )}
         <div className="overflow-hidden rounded-xl border border-line-soft bg-panel">
+          <div className="max-h-[640px] overflow-y-auto">
           <div className="relative" style={{ height: totalPx }}>
             {hours.map((h, i) => (
               <div key={h} className="absolute inset-x-0 flex" style={{ top: i * HOUR_H }}>
@@ -182,6 +189,7 @@ export function CalendarioPageClient({
               })}
             </div>
           </div>
+          </div> {/* scroll wrapper */}
         </div>
       </div>
     );
@@ -277,7 +285,7 @@ export function CalendarioPageClient({
               return <div key={i} className={`min-h-[84px] bg-[rgba(0,0,0,.12)] ${borders}`} />;
             }
 
-            const iso         = toISO(new Date(y, m, day));
+            const iso         = isoDate(y, m, day);
             const { blocks, unicos: uDay } = eventsOn(iso, events, eventosUnicos);
             const marca       = marks.find((mk) => mk.date === iso);
             const isToday     = iso === today;
@@ -335,7 +343,7 @@ export function CalendarioPageClient({
             >
               <button
                 type="button"
-                onClick={() => { setCursor(toISO(new Date(y, mIdx, 1))); setVista("mes"); }}
+                onClick={() => { setCursor(isoDate(y, mIdx, 1)); setVista("mes"); }}
                 className="w-full border-b border-line-soft px-3 py-2 text-left hover:bg-panel-2"
               >
                 <span className={`text-[12px] font-semibold ${curM === mIdx ? "text-gold" : "text-text-2"}`}>
@@ -353,7 +361,7 @@ export function CalendarioPageClient({
                     const day   = i - fdow + 1;
                     const inM   = day >= 1 && day <= numDays;
                     if (!inM) return <div key={i} className="h-5" />;
-                    const iso     = toISO(new Date(y, mIdx, day));
+                    const iso     = isoDate(y, mIdx, day);
                     const isToday = iso === today;
                     const { blocks, unicos: uDay } = eventsOn(iso, events, eventosUnicos);
                     const frontTypes = [...new Set([...blocks.map((b) => b.type), ...uDay.map((u) => u.type)])];
