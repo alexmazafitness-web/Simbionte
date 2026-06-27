@@ -1,42 +1,26 @@
 # Proyecto: Simbionte
 
-Sistema operativo personal de Alex Maza. Next.js + Supabase, un único proyecto con dos mundos de datos separados: `personal` (vida) y `coaching` (negocio de fitness). PWA instalable en móvil/escritorio.
+Sistema operativo personal de Alex Maza. Next.js + Supabase, dos esquemas separados: `personal` (vida) y `coaching` (negocio de fitness). PWA instalable.
 
-> 📐 **Documento de arquitectura completo:** `docs/arquitectura-simbionte.md` — esquema de datos detallado, mapa de navegación, los "puentes" de sinergia entre módulos (§6) y el plan de fases. Consultarlo antes de empezar cualquier fase nueva.
+## Documentación modular → `docs/memory/`
 
-## Stack
-- Next.js (App Router) + TypeScript
-- Supabase (Postgres + Auth + RLS) — auth por magic-link, un solo usuario por ahora
-- Tailwind CSS
-- IA: rutas API propias en `app/api/ai/`, llamando a la API de Claude con la key como variable de entorno (`ANTHROPIC_API_KEY`). Nunca expuesta al cliente.
-- Deploy: Vercel, dominio `simbionte.alexmaza.es`
-- PWA: `manifest.json` + service worker desde el inicio
+| Archivo | Contenido |
+|---|---|
+| [01_arquitectura.md](docs/memory/01_arquitectura.md) | Stack, mapa de rutas completo, estructura de carpetas, patrones de componente |
+| [02_base_datos.md](docs/memory/02_base_datos.md) | Esquema real de todas las tablas (personal + coaching), registro de migraciones, project ID Supabase |
+| [03_identidad_visual.md](docs/memory/03_identidad_visual.md) | Variables CSS exactas, clases Tailwind, tipografías, patrones de UI recurrentes |
+| [04_reglas_desarrollo.md](docs/memory/04_reglas_desarrollo.md) | Reglas absolutas, patrones de código (Server Actions, queries, rutas API con IA), convenciones |
+| [05_historial_decisiones.md](docs/memory/05_historial_decisiones.md) | Qué se construyó en cada fase, decisiones clave, bugs relevantes resueltos |
 
-## Arquitectura de datos — regla no negociable
-- Dos esquemas Postgres: `personal.*` y `coaching.*`. Nunca mezclar tablas de un mundo en el otro.
-- TODA tabla lleva `owner_id uuid references auth.users` + RLS (`owner_id = auth.uid()`), aunque hoy solo exista un usuario.
-- `lib/personal/` y `lib/coaching/` separan las queries de cada mundo. Si un módulo necesita datos del otro, se hace por una función "puente" explícita.
+> `docs/arquitectura-simbionte.md` mantiene el plan original de fases — útil para contexto histórico, pero `docs/memory/` es la fuente de verdad del estado real.
 
-## Estructura de carpetas
-app/(auth)/login/        app/personal/cerebro/   app/personal/finanzas/
-app/page.tsx (portada Hoy)   app/coaching/{clientes,leads,ventas,contenido,negocio}/
-lib/supabase/  lib/personal/  lib/coaching/
-components/ui/  components/shared/
-styles/tokens.css
-supabase/{01_schema,02_rls,03_seed}.sql
+---
 
-## Identidad visual (MARCA brand — aplicar siempre)
-- Fondo `#141414`, dorado `#C9A96E` transversal a todas las paletas.
-- Paletas por área: MESO (`#243B55` azul), NUTRI (`#2A4A38` verde), SEGUIMIENTO (`#1A1A1A` negro + `#EDE6D6` beige), ADMIN (`#2A2A2A` grafito + `#F5F2EC` papel).
-- Tipografía: Bebas Neue (números grandes/KPI), Schibsted Grotesk (encabezados), DM Sans (cuerpo).
-- Toda pantalla oscura lleva `color-scheme: dark` explícito en `:root`/`html`/`body` + `<meta name="color-scheme" content="dark">`.
-- Estilo general: minimalista, ledger/extracto bancario.
+## Reglas críticas (siempre en mente)
 
-## Convenciones
-- Componentes UI compartidos en `components/ui/`.
-- Toda mutación de datos pasa por Supabase client (`lib/supabase/`).
-
-## Qué NO hacer
-- No usar localStorage para nada persistente — todo va a Supabase.
-- No crear endpoints de IA que acepten la key del cliente.
-- No empezar un módulo nuevo sin decidir primero si sus tablas van en `personal` o `coaching`.
+- **Sin localStorage** — todo estado persistente va a Supabase.
+- **IA solo desde servidor** — `ANTHROPIC_API_KEY` en variables de entorno Vercel. Rutas API en `app/api/`. Nunca el SDK en el cliente.
+- **`owner_id` en todo INSERT** + RLS activado en cada tabla. Usar `requireUserId(supabase)` de `lib/supabase/auth.ts`.
+- **Dos esquemas, nunca mezclar** — `personal.*` y `coaching.*`. Cruces solo por funciones "puente" explícitas.
+- **Confirmar antes de crear módulo nuevo** — definir esquema, tablas y rutas antes de escribir código.
+- **Migraciones solo hacia adelante** — nunca editar ficheros SQL existentes; añadir uno nuevo numerado.

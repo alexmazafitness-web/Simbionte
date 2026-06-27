@@ -1,3 +1,7 @@
+> **Nota (2026-06-27):** Este documento es el plan original de fases y sigue siendo válido como referencia histórica. La fuente de verdad del estado actual del sistema (esquema real de tablas, rutas, tokens visuales, reglas, historial de decisiones) está en **`docs/memory/`**. Consultar ese directorio primero.
+
+---
+
 # SIMBIONTE · Arquitectura del sistema unificado
 
 > Sistema operativo personal de Alex Maza. Un solo proyecto, un solo login, una sola base de datos — con módulos separados por área de vida (Personal / Coaching), y preparado para extraer Control Clientes como producto vendible en el futuro sin cirugía mayor.
