@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
+import { useAutoRefresh } from "@/lib/hooks/useAutoRefresh";
 import { crearTarea, marcarTareaHecha } from "@/lib/personal/tasks-actions";
 import { taskDoneOn, taskOccursOn, taskShowToday, type TaskVM } from "@/lib/personal/tasks";
 import { dowOf, minToStr, todayISO } from "@/lib/personal/format";
@@ -77,6 +78,8 @@ export function MiDiaPageClient({
   clientes: ClienteVM[];
 }) {
   const hoy = todayISO();
+
+  useAutoRefresh(60_000);
 
   const [selectedDay, setSelectedDay]   = useState(hoy);
   const [pending, startTransition]      = useTransition();

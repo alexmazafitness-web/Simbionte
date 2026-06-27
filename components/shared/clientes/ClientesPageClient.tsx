@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useAutoRefresh } from "@/lib/hooks/useAutoRefresh";
 import { notaToTituloTarea, type ClienteVM } from "@/lib/coaching/clientes";
 import type { Categoria } from "@/lib/coaching/constants";
 import type { GrupoRevision } from "@/lib/coaching/grupos";
@@ -46,6 +47,8 @@ export function ClientesPageClient({
   grupos: GrupoRevision[];
   leadPrefill?: { id: string; nombre: string };
 }) {
+  useAutoRefresh(60_000);
+
   const [drawerClienteId, setDrawerClienteId] = useState<string | null>(null);
   const [modal, setModal] = useState<ModalState>(leadPrefill ? { type: "nuevo" } : null);
   const [search, setSearch] = useState("");
