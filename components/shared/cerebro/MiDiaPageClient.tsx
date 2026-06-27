@@ -94,8 +94,9 @@ export function MiDiaPageClient({
   const hoyTexto = new Date(hoy + "T12:00:00").toLocaleDateString("es-ES", {
     weekday: "long", day: "numeric", month: "long",
   });
-  const mrr = useMemo(() => calcularMRR(clientes), [clientes]);
-  const pct = goal.target > 0 ? Math.min(100, (mrr / goal.target) * 100) : 0;
+  const mrr    = useMemo(() => Math.round(calcularMRR(clientes)), [clientes]);
+  const target = goal.target > 0 ? goal.target : 2000;
+  const pct    = Math.min(100, (mrr / target) * 100);
 
   // Tasks for selected day
   const selDow = dowOf(selectedDay);
@@ -297,93 +298,101 @@ export function MiDiaPageClient({
   );
 
   const coachingPanel = hasCoaching ? (
-    <div className="flex flex-col gap-1">
-      <div className="flex flex-col divide-y divide-neutral-800/60">
+    <div className="flex flex-col gap-5">
 
-        {revPend.length > 0 && (
-          <div className="py-3">
-            <button
-              type="button"
-              onClick={() => setOpenCoach((p) => ({ ...p, revisiones: !p.revisiones }))}
-              className="flex w-full items-center gap-2 text-left"
-            >
-              <span className="flex-1 text-[12.5px] text-neutral-400">Revisiones pendientes</span>
-              <span className="text-[11px] tabular-nums text-neutral-600">{revPend.length}</span>
-              <Chevron open={openCoach.revisiones} />
-            </button>
-            {openCoach.revisiones && (
-              <div className="mt-2 flex flex-col gap-0.5">
-                {revPend.map((c) => (
-                  <Link key={c.id} href="/coaching/revisiones"
-                    className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] transition hover:bg-[#1c1c1c]"
+      {revPend.length > 0 && (
+        <div>
+          <button
+            type="button"
+            onClick={() => setOpenCoach((p) => ({ ...p, revisiones: !p.revisiones }))}
+            className="mb-2 flex w-full items-center gap-2 text-left"
+          >
+            <span className="text-[9.5px] font-bold uppercase tracking-widest text-neutral-500">
+              Revisiones pendientes
+            </span>
+            <span className="h-px flex-1 bg-neutral-800/60" />
+            <span className="text-[9.5px] tabular-nums text-neutral-600">{revPend.length}</span>
+            <Chevron open={openCoach.revisiones} />
+          </button>
+          {openCoach.revisiones && (
+            <div className="flex flex-col gap-0.5">
+              {revPend.map((c) => (
+                <Link key={c.id} href="/coaching/revisiones"
+                  className="flex items-center gap-2 rounded-lg px-2 py-2 transition hover:bg-[#1c1c1c]"
+                >
+                  <span className="text-[12px] leading-none text-red-400">•</span>
+                  <span className="flex-1 text-[13px] font-medium text-[#e5e5e5]">{c.nombre}</span>
+                  <span className="text-[11.5px] text-red-400">{Math.abs(c.revD ?? 0)}d vencida</span>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {mesoRenov.length > 0 && (
+        <div>
+          <button
+            type="button"
+            onClick={() => setOpenCoach((p) => ({ ...p, mesociclos: !p.mesociclos }))}
+            className="mb-2 flex w-full items-center gap-2 text-left"
+          >
+            <span className="text-[9.5px] font-bold uppercase tracking-widest text-neutral-500">
+              Mesociclos a renovar
+            </span>
+            <span className="h-px flex-1 bg-neutral-800/60" />
+            <span className="text-[9.5px] tabular-nums text-neutral-600">{mesoRenov.length}</span>
+            <Chevron open={openCoach.mesociclos} />
+          </button>
+          {openCoach.mesociclos && (
+            <div className="flex flex-col gap-0.5">
+              {mesoRenov.map((c) => (
+                <Link key={c.id} href="/coaching/mesociclos"
+                  className="flex items-center gap-2 rounded-lg px-2 py-2 transition hover:bg-[#1c1c1c]"
+                >
+                  <span className="flex-1 text-[13px] font-medium text-[#e5e5e5]">{c.nombre}</span>
+                  <span className="text-[11.5px] text-neutral-600">
+                    {c.mesociclo?.estado !== "EN_CURSO" ? "Vencido" : `${c.mesociclo.diasRestantes}d restantes`}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {conNotas.length > 0 && (
+        <div>
+          <button
+            type="button"
+            onClick={() => setOpenCoach((p) => ({ ...p, notas: !p.notas }))}
+            className="mb-2 flex w-full items-center gap-2 text-left"
+          >
+            <span className="text-[9.5px] font-bold uppercase tracking-widest text-neutral-500">
+              Anotaciones recientes
+            </span>
+            <span className="h-px flex-1 bg-neutral-800/60" />
+            <span className="text-[9.5px] tabular-nums text-neutral-600">{conNotas.length}</span>
+            <Chevron open={openCoach.notas} />
+          </button>
+          {openCoach.notas && (
+            <div className="flex flex-col gap-0.5">
+              {conNotas.map((c) => {
+                const snippet = CATEGORIAS.flatMap((cat) => c.notas[cat] ?? [])[0]?.texto ?? "";
+                return (
+                  <Link key={c.id} href="/coaching/clientes"
+                    className="flex flex-col rounded-lg px-2 py-2 transition hover:bg-[#1c1c1c]"
                   >
-                    <span className="flex-1 text-neutral-300">{c.nombre}</span>
-                    <span className="text-[11px] text-red-500/70">{Math.abs(c.revD ?? 0)}d vencida</span>
+                    <span className="text-[13px] font-medium text-[#e5e5e5]">{c.nombre}</span>
+                    {snippet && <span className="mt-0.5 line-clamp-1 text-[11.5px] text-neutral-600">{snippet}</span>}
                   </Link>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
-        {mesoRenov.length > 0 && (
-          <div className="py-3">
-            <button
-              type="button"
-              onClick={() => setOpenCoach((p) => ({ ...p, mesociclos: !p.mesociclos }))}
-              className="flex w-full items-center gap-2 text-left"
-            >
-              <span className="flex-1 text-[12.5px] text-neutral-400">Mesociclos a renovar</span>
-              <span className="text-[11px] tabular-nums text-neutral-600">{mesoRenov.length}</span>
-              <Chevron open={openCoach.mesociclos} />
-            </button>
-            {openCoach.mesociclos && (
-              <div className="mt-2 flex flex-col gap-0.5">
-                {mesoRenov.map((c) => (
-                  <Link key={c.id} href="/coaching/mesociclos"
-                    className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] transition hover:bg-[#1c1c1c]"
-                  >
-                    <span className="flex-1 text-neutral-300">{c.nombre}</span>
-                    <span className="text-[11px] text-neutral-600">
-                      {c.mesociclo?.estado !== "EN_CURSO" ? "Vencido" : `${c.mesociclo.diasRestantes}d restantes`}
-                    </span>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {conNotas.length > 0 && (
-          <div className="py-3">
-            <button
-              type="button"
-              onClick={() => setOpenCoach((p) => ({ ...p, notas: !p.notas }))}
-              className="flex w-full items-center gap-2 text-left"
-            >
-              <span className="flex-1 text-[12.5px] text-neutral-400">Anotaciones recientes</span>
-              <span className="text-[11px] tabular-nums text-neutral-600">{conNotas.length}</span>
-              <Chevron open={openCoach.notas} />
-            </button>
-            {openCoach.notas && (
-              <div className="mt-2 flex flex-col gap-0.5">
-                {conNotas.map((c) => {
-                  const snippet = CATEGORIAS.flatMap((cat) => c.notas[cat] ?? [])[0]?.texto ?? "";
-                  return (
-                    <Link key={c.id} href="/coaching/clientes"
-                      className="flex flex-col rounded-lg px-2.5 py-2 transition hover:bg-[#1c1c1c]"
-                    >
-                      <span className="text-[13px] text-neutral-300">{c.nombre}</span>
-                      {snippet && <span className="mt-0.5 line-clamp-1 text-[11.5px] text-neutral-700">{snippet}</span>}
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
-
-      </div>
     </div>
   ) : null;
 
@@ -399,7 +408,7 @@ export function MiDiaPageClient({
           </h1>
           <div className="mt-2.5">
             <span className="text-[12px] tabular-nums text-neutral-600">
-              {mrr.toLocaleString("es-ES")}€ · {Math.round(pct)}%
+              {mrr.toLocaleString("es-ES")}€ · {Math.round(pct)}% de {target.toLocaleString("es-ES")}€
             </span>
             <div className="mt-1.5 h-[2px] overflow-hidden rounded-full bg-neutral-800/80">
               <div
@@ -418,31 +427,16 @@ export function MiDiaPageClient({
       </div>
 
       {/* ── Columna derecha (40%) ── */}
-      <div className="hidden w-2/5 flex-col gap-8 md:flex">
-        {/* Coaching */}
-        {hasCoaching && (
-          <>
-            <div className="flex items-center gap-2">
-              <h2 className="text-[10.5px] font-bold uppercase tracking-widest text-neutral-600">Coaching</h2>
-              <span className="h-px flex-1 bg-neutral-800/60" />
-            </div>
-            {coachingPanel}
-          </>
-        )}
+      <div className="hidden w-2/5 flex-col pt-1 md:flex">
+        {coachingPanel}
       </div>
 
       {/* ── Mobile: Coaching apilado debajo de las tareas ── */}
-      <div className="mt-2 flex flex-col gap-8 md:hidden">
-        {hasCoaching && (
-          <>
-            <div className="flex items-center gap-2">
-              <h2 className="text-[10.5px] font-bold uppercase tracking-widest text-neutral-600">Coaching</h2>
-              <span className="h-px flex-1 bg-neutral-800/60" />
-            </div>
-            {coachingPanel}
-          </>
-        )}
-      </div>
+      {hasCoaching && (
+        <div className="mt-6 md:hidden">
+          {coachingPanel}
+        </div>
+      )}
 
     </div>
   );
