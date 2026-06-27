@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { DAYS_SH, FRONT_COLOR } from "@/lib/personal/constants";
 import {
   addDaysISO, dowOf, fmtDateCorta, minToStr,
@@ -22,9 +22,10 @@ const MESES_L = [
   "Enero","Febrero","Marzo","Abril","Mayo","Junio",
   "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre",
 ];
-const H_START = 0;
-const H_END   = 23;
-const HOUR_H  = 56; // px per hour in day view
+const H_START        = 0;
+const H_END          = 23;
+const HOUR_H         = 60;  // px per hour — 24h × 60px = 1440px total
+const H_SCROLL_START = 7;   // hora a la que arranca el scroll por defecto
 
 // ── pure helpers ──────────────────────────────────────────────────────────────
 
@@ -70,6 +71,15 @@ export function CalendarioPageClient({
   const [modal,      setModal]      = useState<null | "nuevo" | string>(null);
   const [marcarOpen, setMarcarOpen] = useState(false);
   const [, startTransition]         = useTransition();
+
+  const diaScrollRef = useRef<HTMLDivElement>(null);
+
+  // Cuando se muestra la vista Día, posicionar el scroll en las 07:00
+  useEffect(() => {
+    if (vista === "dia" && diaScrollRef.current) {
+      diaScrollRef.current.scrollTop = H_SCROLL_START * HOUR_H;
+    }
+  }, [vista, cursor]);
 
   const today    = todayISO();
   const editando =
@@ -124,8 +134,8 @@ export function CalendarioPageClient({
         {blocks.length === 0 && uDay.length === 0 && (
           <p className="mb-4 text-[13px] text-text-dim">Sin bloques para este día.</p>
         )}
-        <div className="overflow-hidden rounded-xl border border-line-soft bg-panel">
-          <div className="max-h-[640px] overflow-y-auto">
+        <div className="rounded-xl border border-line-soft bg-panel">
+          <div ref={diaScrollRef} className="h-[calc(100vh-280px)] overflow-y-auto">
           <div className="relative" style={{ height: totalPx }}>
             {hours.map((h, i) => (
               <div key={h} className="absolute inset-x-0 flex" style={{ top: i * HOUR_H }}>
