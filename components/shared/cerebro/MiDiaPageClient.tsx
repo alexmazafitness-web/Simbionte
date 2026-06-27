@@ -159,291 +159,303 @@ export function MiDiaPageClient({
 
   // ── Render ──────────────────────────────────────────────────────────────────
 
-  return (
-    <div className="mx-auto flex max-w-[680px] flex-col gap-10 px-8 py-10">
+  const weekStrip = (
+    <div className="flex rounded-2xl bg-[#181818] p-1.5">
+      {weekDays.map(({ iso, label, num }) => {
+        const isToday    = iso === hoy;
+        const isPast     = iso < hoy;
+        const isSelected = iso === selectedDay;
+        const hasDot     = dayHasDot(iso);
+        return (
+          <button
+            key={iso}
+            type="button"
+            onClick={() => setSelectedDay(iso)}
+            className={`flex flex-1 flex-col items-center gap-1 rounded-xl py-2.5 transition ${
+              isPast && !isSelected ? "opacity-30" : ""
+            } ${isSelected && !isToday ? "bg-white/[0.05]" : ""} hover:opacity-100`}
+          >
+            <span className="text-[8.5px] font-bold uppercase tracking-widest text-neutral-700">{label}</span>
+            <span
+              className={`font-display text-[21px] leading-none ${
+                isToday
+                  ? "flex h-8 w-8 items-center justify-center rounded-[10px] bg-[#C9A96E] text-[17px] text-[#1a1208]"
+                  : isSelected ? "text-neutral-100" : "text-neutral-500"
+              }`}
+            >
+              {num}
+            </span>
+            <span className={`h-[5px] w-[5px] rounded-full transition-opacity ${hasDot ? "bg-[#C9A96E] opacity-60" : "opacity-0"}`} />
+          </button>
+        );
+      })}
+    </div>
+  );
 
-      {/* ── 1. Cabecera ── */}
-      <div>
+  const tasksList = (
+    <div>
+      <div className="mb-4 flex items-center gap-2">
+        <h2 className="text-[10.5px] font-bold uppercase tracking-widest text-neutral-600">
+          Tareas{selectedDay !== hoy ? ` · ${selLabel}` : ""}
+        </h2>
+        <span className="h-px flex-1 bg-neutral-800/60" />
+        <Link href="/personal/cerebro/tareas" className="text-[11px] text-neutral-700 transition hover:text-neutral-400">
+          Ver todas →
+        </Link>
+      </div>
+
+      {(eventosDelDia.length > 0 || recHoy.length > 0) && (
+        <div className="mb-4 flex flex-col gap-1">
+          {eventosDelDia.map((e) => (
+            <div key={e.id} className="flex items-center gap-3 border-l-[2px] border-neutral-800 py-1 pl-3">
+              <span className="text-[10.5px] tabular-nums text-neutral-700">{minToStr(e.startMin)}</span>
+              <span className="text-[12.5px] text-neutral-500">{e.title}</span>
+            </div>
+          ))}
+          {recHoy.map((r) => (
+            <div key={r.id} className="flex items-center gap-3 border-l-[2px] border-neutral-800 py-1 pl-3">
+              <span className="text-[10.5px] tabular-nums text-neutral-700">
+                {new Date(r.whenISO).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}
+              </span>
+              <span className="text-[12.5px] text-neutral-500">{r.text}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {tareasDelDia.length === 0 ? (
+        <p className="py-1 text-[13px] italic text-neutral-700">{MOTIVATION[0]}</p>
+      ) : (
+        <div className="flex flex-col gap-1.5">
+          {tareasDelDia.map((t) => {
+            const done = taskDoneOn(t, selectedDay);
+            return (
+              <div
+                key={t.id}
+                className={`flex items-center gap-3 rounded-xl px-3.5 py-2.5 transition ${done ? "opacity-40" : "bg-[#1c1c1c]"}`}
+              >
+                <button
+                  type="button"
+                  onClick={() => handleCheck(t)}
+                  disabled={pending}
+                  className={`h-[18px] w-[18px] shrink-0 rounded-[4px] border transition ${
+                    done ? "border-[#C9A96E] bg-[#C9A96E]" : "border-neutral-700 hover:border-neutral-500"
+                  }`}
+                >
+                  {done && <CheckMark />}
+                </button>
+                <span className={`flex-1 text-[13.5px] leading-snug ${done ? "text-neutral-600 line-through" : "text-neutral-200"}`}>
+                  {t.title}
+                </span>
+                {t.isPriority && !done && <span className="text-[11px] text-[#C9A96E] opacity-50">★</span>}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <div className="mt-3">
+        {isAdding ? (
+          <div className="flex items-center gap-3 rounded-xl bg-[#1c1c1c] px-3.5 py-2.5">
+            <div className="h-[18px] w-[18px] shrink-0 rounded-[4px] border border-neutral-700" />
+            <input
+              ref={addInputRef}
+              autoFocus
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleAddTask();
+                if (e.key === "Escape") { setIsAdding(false); setNewTitle(""); }
+              }}
+              placeholder="Nombre de la tarea…"
+              className="flex-1 bg-transparent text-[13.5px] text-neutral-200 outline-none placeholder:text-neutral-700"
+            />
+            <button
+              type="button"
+              onClick={handleAddTask}
+              disabled={!newTitle.trim() || pending}
+              className="text-[11.5px] font-semibold text-[#C9A96E] transition disabled:opacity-30"
+            >
+              Añadir
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setIsAdding(true)}
+            className="flex items-center gap-1.5 text-[12px] text-neutral-700 transition hover:text-neutral-400"
+          >
+            <span className="text-[15px] leading-none">+</span> Añadir tarea
+          </button>
+        )}
+      </div>
+    </div>
+  );
+
+  const coachingPanel = hasCoaching ? (
+    <div className="flex flex-col gap-1">
+      <div className="flex flex-col divide-y divide-neutral-800/60">
+
+        {revPend.length > 0 && (
+          <div className="py-3">
+            <button
+              type="button"
+              onClick={() => setOpenCoach((p) => ({ ...p, revisiones: !p.revisiones }))}
+              className="flex w-full items-center gap-2 text-left"
+            >
+              <span className="flex-1 text-[12.5px] text-neutral-400">Revisiones pendientes</span>
+              <span className="text-[11px] tabular-nums text-neutral-600">{revPend.length}</span>
+              <Chevron open={openCoach.revisiones} />
+            </button>
+            {openCoach.revisiones && (
+              <div className="mt-2 flex flex-col gap-0.5">
+                {revPend.map((c) => (
+                  <Link key={c.id} href="/coaching/revisiones"
+                    className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] transition hover:bg-[#1c1c1c]"
+                  >
+                    <span className="flex-1 text-neutral-300">{c.nombre}</span>
+                    <span className="text-[11px] text-red-500/70">{Math.abs(c.revD ?? 0)}d vencida</span>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {mesoRenov.length > 0 && (
+          <div className="py-3">
+            <button
+              type="button"
+              onClick={() => setOpenCoach((p) => ({ ...p, mesociclos: !p.mesociclos }))}
+              className="flex w-full items-center gap-2 text-left"
+            >
+              <span className="flex-1 text-[12.5px] text-neutral-400">Mesociclos a renovar</span>
+              <span className="text-[11px] tabular-nums text-neutral-600">{mesoRenov.length}</span>
+              <Chevron open={openCoach.mesociclos} />
+            </button>
+            {openCoach.mesociclos && (
+              <div className="mt-2 flex flex-col gap-0.5">
+                {mesoRenov.map((c) => (
+                  <Link key={c.id} href="/coaching/mesociclos"
+                    className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] transition hover:bg-[#1c1c1c]"
+                  >
+                    <span className="flex-1 text-neutral-300">{c.nombre}</span>
+                    <span className="text-[11px] text-neutral-600">
+                      {c.mesociclo?.estado !== "EN_CURSO" ? "Vencido" : `${c.mesociclo.diasRestantes}d restantes`}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {conNotas.length > 0 && (
+          <div className="py-3">
+            <button
+              type="button"
+              onClick={() => setOpenCoach((p) => ({ ...p, notas: !p.notas }))}
+              className="flex w-full items-center gap-2 text-left"
+            >
+              <span className="flex-1 text-[12.5px] text-neutral-400">Anotaciones recientes</span>
+              <span className="text-[11px] tabular-nums text-neutral-600">{conNotas.length}</span>
+              <Chevron open={openCoach.notas} />
+            </button>
+            {openCoach.notas && (
+              <div className="mt-2 flex flex-col gap-0.5">
+                {conNotas.map((c) => {
+                  const snippet = CATEGORIAS.flatMap((cat) => c.notas[cat] ?? [])[0]?.texto ?? "";
+                  return (
+                    <Link key={c.id} href="/coaching/clientes"
+                      className="flex flex-col rounded-lg px-2.5 py-2 transition hover:bg-[#1c1c1c]"
+                    >
+                      <span className="text-[13px] text-neutral-300">{c.nombre}</span>
+                      {snippet && <span className="mt-0.5 line-clamp-1 text-[11.5px] text-neutral-700">{snippet}</span>}
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+      </div>
+    </div>
+  ) : null;
+
+  return (
+    <div className="flex h-full gap-0 px-8 py-10 md:gap-10">
+
+      {/* ── Columna izquierda (60%) ── */}
+      <div className="flex w-full flex-col gap-8 md:w-3/5">
+        {/* Fecha */}
         <h1 className="font-heading text-[34px] font-semibold capitalize leading-tight">
           {hoyTexto}
         </h1>
-        <div className="mt-4 flex items-baseline gap-2">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-700">MRR</span>
-          <span className="font-display text-[20px] leading-none text-neutral-300">
-            {goal.current.toLocaleString("es-ES")}€
-          </span>
-          <span className="text-[12px] text-neutral-700">/ {goal.target.toLocaleString("es-ES")}€</span>
-          <span className="ml-auto text-[11px] tabular-nums text-neutral-700">{Math.round(pct)}%</span>
-        </div>
-        <div className="mt-2 h-[2px] overflow-hidden rounded-full bg-neutral-800/80">
-          <div
-            className="h-full rounded-full bg-[#C9A96E] transition-[width] duration-700"
-            style={{ width: `${pct}%` }}
-          />
-        </div>
+
+        {/* Strip semanal — ancho completo de la columna */}
+        {weekStrip}
+
+        {/* Tareas */}
+        {tasksList}
       </div>
 
-      {/* ── 2. Strip semanal ── */}
-      <div className="flex rounded-2xl bg-[#181818] p-1.5">
-        {weekDays.map(({ iso, label, num }) => {
-          const isToday    = iso === hoy;
-          const isPast     = iso < hoy;
-          const isSelected = iso === selectedDay;
-          const hasDot     = dayHasDot(iso);
-
-          return (
-            <button
-              key={iso}
-              type="button"
-              onClick={() => setSelectedDay(iso)}
-              className={`flex flex-1 flex-col items-center gap-1 rounded-xl py-2.5 transition ${
-                isPast && !isSelected ? "opacity-30" : ""
-              } ${isSelected && !isToday ? "bg-white/[0.05]" : ""} hover:opacity-100`}
-            >
-              <span className="text-[8.5px] font-bold uppercase tracking-widest text-neutral-700">{label}</span>
-              <span
-                className={`font-display text-[21px] leading-none ${
-                  isToday
-                    ? "flex h-8 w-8 items-center justify-center rounded-[10px] bg-[#C9A96E] text-[17px] text-[#1a1208]"
-                    : isSelected
-                      ? "text-neutral-100"
-                      : "text-neutral-500"
-                }`}
-              >
-                {num}
-              </span>
-              <span
-                className={`h-[5px] w-[5px] rounded-full transition-opacity ${
-                  hasDot ? "bg-[#C9A96E] opacity-60" : "opacity-0"
-                }`}
-              />
-            </button>
-          );
-        })}
-      </div>
-
-      {/* ── 3. Tareas del día ── */}
-      <div>
-        <div className="mb-4 flex items-center gap-2">
-          <h2 className="text-[10.5px] font-bold uppercase tracking-widest text-neutral-600">
-            Tareas{selectedDay !== hoy ? ` · ${selLabel}` : ""}
-          </h2>
-          <span className="h-px flex-1 bg-neutral-800/60" />
-          <Link
-            href="/personal/cerebro/tareas"
-            className="text-[11px] text-neutral-700 transition hover:text-neutral-400"
-          >
-            Ver todas →
-          </Link>
-        </div>
-
-        {/* Eventos y recordatorios del día (banda lateral izquierda) */}
-        {(eventosDelDia.length > 0 || recHoy.length > 0) && (
-          <div className="mb-4 flex flex-col gap-1">
-            {eventosDelDia.map((e) => (
-              <div key={e.id} className="flex items-center gap-3 border-l-[2px] border-neutral-800 py-1 pl-3">
-                <span className="text-[10.5px] tabular-nums text-neutral-700">{minToStr(e.startMin)}</span>
-                <span className="text-[12.5px] text-neutral-500">{e.title}</span>
-              </div>
-            ))}
-            {recHoy.map((r) => (
-              <div key={r.id} className="flex items-center gap-3 border-l-[2px] border-neutral-800 py-1 pl-3">
-                <span className="text-[10.5px] tabular-nums text-neutral-700">
-                  {new Date(r.whenISO).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}
-                </span>
-                <span className="text-[12.5px] text-neutral-500">{r.text}</span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Lista de tareas */}
-        {tareasDelDia.length === 0 ? (
-          <p className="py-1 text-[13px] italic text-neutral-700">{MOTIVATION[0]}</p>
-        ) : (
-          <div className="flex flex-col gap-1.5">
-            {tareasDelDia.map((t) => {
-              const done = taskDoneOn(t, selectedDay);
-              return (
-                <div
-                  key={t.id}
-                  className={`flex items-center gap-3 rounded-xl px-3.5 py-2.5 transition ${
-                    done ? "opacity-40" : "bg-[#1c1c1c]"
-                  }`}
-                >
-                  <button
-                    type="button"
-                    onClick={() => handleCheck(t)}
-                    disabled={pending}
-                    className={`h-[18px] w-[18px] shrink-0 rounded-[4px] border transition ${
-                      done ? "border-[#C9A96E] bg-[#C9A96E]" : "border-neutral-700 hover:border-neutral-500"
-                    }`}
-                  >
-                    {done && <CheckMark />}
-                  </button>
-                  <span
-                    className={`flex-1 text-[13.5px] leading-snug ${
-                      done ? "text-neutral-600 line-through" : "text-neutral-200"
-                    }`}
-                  >
-                    {t.title}
-                  </span>
-                  {t.isPriority && !done && (
-                    <span className="text-[11px] text-[#C9A96E] opacity-50">★</span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Añadir tarea inline */}
-        <div className="mt-3">
-          {isAdding ? (
-            <div className="flex items-center gap-3 rounded-xl bg-[#1c1c1c] px-3.5 py-2.5">
-              <div className="h-[18px] w-[18px] shrink-0 rounded-[4px] border border-neutral-700" />
-              <input
-                ref={addInputRef}
-                autoFocus
-                value={newTitle}
-                onChange={(e) => setNewTitle(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleAddTask();
-                  if (e.key === "Escape") { setIsAdding(false); setNewTitle(""); }
-                }}
-                placeholder="Nombre de la tarea…"
-                className="flex-1 bg-transparent text-[13.5px] text-neutral-200 outline-none placeholder:text-neutral-700"
-              />
-              <button
-                type="button"
-                onClick={handleAddTask}
-                disabled={!newTitle.trim() || pending}
-                className="text-[11.5px] font-semibold text-[#C9A96E] transition disabled:opacity-30"
-              >
-                Añadir
-              </button>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setIsAdding(true)}
-              className="flex items-center gap-1.5 text-[12px] text-neutral-700 transition hover:text-neutral-400"
-            >
-              <span className="text-[15px] leading-none">+</span> Añadir tarea
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* ── 4. Coaching ── */}
-      {hasCoaching && (
+      {/* ── Columna derecha (40%) ── */}
+      <div className="hidden w-2/5 flex-col gap-8 md:flex">
+        {/* MRR discreto arriba */}
         <div>
-          <div className="mb-4 flex items-center gap-2">
-            <h2 className="text-[10.5px] font-bold uppercase tracking-widest text-neutral-600">Coaching</h2>
-            <span className="h-px flex-1 bg-neutral-800/60" />
+          <div className="flex items-baseline gap-2">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-700">MRR</span>
+            <span className="font-display text-[20px] leading-none text-neutral-300">
+              {goal.current.toLocaleString("es-ES")}€
+            </span>
+            <span className="text-[12px] text-neutral-700">/ {goal.target.toLocaleString("es-ES")}€</span>
+            <span className="ml-auto text-[11px] tabular-nums text-neutral-700">{Math.round(pct)}%</span>
           </div>
-
-          <div className="flex flex-col divide-y divide-neutral-800/60">
-
-            {/* Revisiones pendientes */}
-            {revPend.length > 0 && (
-              <div className="py-3">
-                <button
-                  type="button"
-                  onClick={() => setOpenCoach((p) => ({ ...p, revisiones: !p.revisiones }))}
-                  className="flex w-full items-center gap-2 text-left"
-                >
-                  <span className="flex-1 text-[12.5px] text-neutral-400">Revisiones pendientes</span>
-                  <span className="text-[11px] tabular-nums text-neutral-600">{revPend.length}</span>
-                  <Chevron open={openCoach.revisiones} />
-                </button>
-                {openCoach.revisiones && (
-                  <div className="mt-2 flex flex-col gap-0.5">
-                    {revPend.map((c) => (
-                      <Link
-                        key={c.id}
-                        href="/coaching/revisiones"
-                        className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] transition hover:bg-[#1c1c1c]"
-                      >
-                        <span className="flex-1 text-neutral-300">{c.nombre}</span>
-                        <span className="text-[11px] text-red-500/70">{Math.abs(c.revD ?? 0)}d vencida</span>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Mesociclos a renovar */}
-            {mesoRenov.length > 0 && (
-              <div className="py-3">
-                <button
-                  type="button"
-                  onClick={() => setOpenCoach((p) => ({ ...p, mesociclos: !p.mesociclos }))}
-                  className="flex w-full items-center gap-2 text-left"
-                >
-                  <span className="flex-1 text-[12.5px] text-neutral-400">Mesociclos a renovar</span>
-                  <span className="text-[11px] tabular-nums text-neutral-600">{mesoRenov.length}</span>
-                  <Chevron open={openCoach.mesociclos} />
-                </button>
-                {openCoach.mesociclos && (
-                  <div className="mt-2 flex flex-col gap-0.5">
-                    {mesoRenov.map((c) => (
-                      <Link
-                        key={c.id}
-                        href="/coaching/mesociclos"
-                        className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] transition hover:bg-[#1c1c1c]"
-                      >
-                        <span className="flex-1 text-neutral-300">{c.nombre}</span>
-                        <span className="text-[11px] text-neutral-600">
-                          {c.mesociclo?.estado !== "EN_CURSO"
-                            ? "Vencido"
-                            : `${c.mesociclo.diasRestantes}d restantes`}
-                        </span>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Anotaciones de clientes */}
-            {conNotas.length > 0 && (
-              <div className="py-3">
-                <button
-                  type="button"
-                  onClick={() => setOpenCoach((p) => ({ ...p, notas: !p.notas }))}
-                  className="flex w-full items-center gap-2 text-left"
-                >
-                  <span className="flex-1 text-[12.5px] text-neutral-400">Anotaciones recientes</span>
-                  <span className="text-[11px] tabular-nums text-neutral-600">{conNotas.length}</span>
-                  <Chevron open={openCoach.notas} />
-                </button>
-                {openCoach.notas && (
-                  <div className="mt-2 flex flex-col gap-0.5">
-                    {conNotas.map((c) => {
-                      const snippet = CATEGORIAS.flatMap((cat) => c.notas[cat] ?? [])[0]?.texto ?? "";
-                      return (
-                        <Link
-                          key={c.id}
-                          href="/coaching/clientes"
-                          className="flex flex-col rounded-lg px-2.5 py-2 transition hover:bg-[#1c1c1c]"
-                        >
-                          <span className="text-[13px] text-neutral-300">{c.nombre}</span>
-                          {snippet && (
-                            <span className="mt-0.5 line-clamp-1 text-[11.5px] text-neutral-700">{snippet}</span>
-                          )}
-                        </Link>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
-
+          <div className="mt-2 h-[2px] overflow-hidden rounded-full bg-neutral-800/80">
+            <div
+              className="h-full rounded-full bg-[#C9A96E] transition-[width] duration-700"
+              style={{ width: `${pct}%` }}
+            />
           </div>
         </div>
-      )}
+
+        {/* Coaching */}
+        {hasCoaching && (
+          <>
+            <div className="flex items-center gap-2">
+              <h2 className="text-[10.5px] font-bold uppercase tracking-widest text-neutral-600">Coaching</h2>
+              <span className="h-px flex-1 bg-neutral-800/60" />
+            </div>
+            {coachingPanel}
+          </>
+        )}
+      </div>
+
+      {/* ── Mobile: MRR + Coaching apilados debajo de las tareas ── */}
+      <div className="mt-2 flex flex-col gap-8 md:hidden">
+        <div>
+          <div className="flex items-baseline gap-2">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-700">MRR</span>
+            <span className="font-display text-[20px] leading-none text-neutral-300">
+              {goal.current.toLocaleString("es-ES")}€
+            </span>
+            <span className="text-[12px] text-neutral-700">/ {goal.target.toLocaleString("es-ES")}€</span>
+          </div>
+          <div className="mt-2 h-[2px] overflow-hidden rounded-full bg-neutral-800/80">
+            <div className="h-full rounded-full bg-[#C9A96E] transition-[width] duration-700" style={{ width: `${pct}%` }} />
+          </div>
+        </div>
+        {hasCoaching && (
+          <>
+            <div className="flex items-center gap-2">
+              <h2 className="text-[10.5px] font-bold uppercase tracking-widest text-neutral-600">Coaching</h2>
+              <span className="h-px flex-1 bg-neutral-800/60" />
+            </div>
+            {coachingPanel}
+          </>
+        )}
+      </div>
 
     </div>
   );
