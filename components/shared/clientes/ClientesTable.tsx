@@ -162,7 +162,14 @@ export function ClientesTable({
                       ) : <span className="text-text-dim">—</span>}
                     </td>
                     <td className="px-4 py-3 text-[12.5px] text-text-2">{fmtDateCorta(c.fechaAlta)}</td>
-                    <td className="px-4 py-3">{c.permanencia}m</td>
+                    <td className="px-4 py-3">
+                      <div className="text-[13px]">{c.permanencia}m</div>
+                      {c.fechaAlta && (
+                        <div className="text-xs" style={{ color: "#6b7280" }}>
+                          {Math.floor((Date.now() - new Date(c.fechaAlta + "T12:00:00").getTime()) / 86_400_000)} días
+                        </div>
+                      )}
+                    </td>
                     <td className="px-4 py-3">
                       {c.faseCompletada ? <Pill variant="ok">Sí</Pill> : <Pill variant="neutral">No</Pill>}
                     </td>
