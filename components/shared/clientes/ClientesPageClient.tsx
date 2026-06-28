@@ -47,7 +47,7 @@ export function ClientesPageClient({
   grupos: GrupoRevision[];
   leadPrefill?: { id: string; nombre: string };
 }) {
-  useAutoRefresh(60_000);
+  useAutoRefresh(300_000);
 
   const [drawerClienteId, setDrawerClienteId] = useState<string | null>(null);
   const [modal, setModal] = useState<ModalState>(leadPrefill ? { type: "nuevo" } : null);

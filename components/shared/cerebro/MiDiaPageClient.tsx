@@ -71,6 +71,14 @@ type DragVisual = {
 
 // ── helpers (module-level) ────────────────────────────────────────────────────
 
+// Compute days-until/since a target ISO date relative to a given today ISO.
+// Negative = overdue.
+function daysDiffFromToday(targetISO: string, todayISO: string): number {
+  const a = new Date(todayISO  + "T12:00:00").getTime();
+  const b = new Date(targetISO + "T12:00:00").getTime();
+  return Math.round((b - a) / 86_400_000);
+}
+
 function tsToMin(isoTs: string): number {
   const d = new Date(isoTs);
   return d.getHours() * 60 + d.getMinutes();
@@ -217,10 +225,26 @@ export function MiDiaPageClient({
   const [resizeEndMin, setResizeEndMin] = useState<number | null>(null);
   const [notasCliente, setNotasCliente] = useState<ClienteVM | null>(null);
 
-  // Pause auto-refresh while any modal/drawer is open so they don't reset
-  useAutoRefresh(60_000, calModal !== null || notasCliente !== null);
-
   const pomodoro = usePomodoroCtx();
+
+  // Pause when any modal/drawer is open OR pomodoro is running on a task
+  const refreshPaused =
+    calModal !== null ||
+    notasCliente !== null ||
+    (pomodoro.state.running && pomodoro.state.linkedTask !== null);
+
+  // 5-min background refresh; isSafeToRefresh() inside the hook also guards input focus
+  useAutoRefresh(300_000, refreshPaused);
+
+  // clientHoy: updates at midnight so day-diff counters stay accurate without router.refresh()
+  const [clientHoy, setClientHoy] = useState(hoy);
+  useEffect(() => {
+    const id = setInterval(() => {
+      const newHoy = todayISO();
+      setClientHoy((prev) => (prev !== newHoy ? newHoy : prev));
+    }, 60_000);
+    return () => clearInterval(id);
+  }, []);
 
   // Current time in minutes (updates every minute for the now-line)
   const [nowMin, setNowMin] = useState(() => {
@@ -274,10 +298,14 @@ export function MiDiaPageClient({
       .sort((a, b) => a.whenISO.localeCompare(b.whenISO)),
   [reminders, hoy]);
 
-  // Coaching data
-  const activos   = useMemo(() => clientesActivos(clientes), [clientes]);
-  const revPend   = activos.filter((c) => c.revD !== null && c.revD <= 0);
-  const conNotas  = activos.filter(hasNotas).slice(0, 4);
+  // Coaching data — revPend computed client-side so day counters stay current
+  // without requiring a router.refresh() for that purpose alone.
+  const activos  = useMemo(() => clientesActivos(clientes), [clientes]);
+  const revPend  = useMemo(
+    () => activos.filter((c) => c.proximaRevision !== null && daysDiffFromToday(c.proximaRevision, clientHoy) <= 0),
+    [activos, clientHoy],
+  );
+  const conNotas = activos.filter(hasNotas).slice(0, 4);
 
   // Fade-out helper
   function fadeAndDo(id: string, action: () => void) {
@@ -773,7 +801,7 @@ export function MiDiaPageClient({
                         Revisión
                       </span>
                       <span className="text-[12px] tabular-nums text-[#f87171]">
-                        {Math.abs(c.revD ?? 0)}d vencida
+                        {Math.abs(daysDiffFromToday(c.proximaRevision!, clientHoy))}d vencida
                       </span>
                     </div>
                   </div>
