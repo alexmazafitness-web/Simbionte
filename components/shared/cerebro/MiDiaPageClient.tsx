@@ -278,7 +278,7 @@ export function MiDiaPageClient({
           <div className="w-10 shrink-0">
             {HOURS.map((h, i) => (
               <div key={h} className="absolute left-0 w-10 pr-2 text-right" style={{ top: GRID_PAD + i * HOUR_H + 3 }}>
-                <span className="text-xs tabular-nums" style={{ color: "#6b7280" }}>
+                <span className="text-[10px] tabular-nums" style={{ color: "#6b7280" }}>
                   {String(h).padStart(2, "0")}:00
                 </span>
               </div>
