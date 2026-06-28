@@ -119,7 +119,7 @@ function weekDays(anchor: string): string[] {
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <div className="mb-3">
-      <span className="text-[10px] uppercase tracking-[0.15em]" style={{ color: "#4b5563" }}>{children}</span>
+      <span className="text-sm font-semibold uppercase tracking-widest" style={{ color: "#C9A96E" }}>{children}</span>
       <div className="mt-1.5 h-px" style={{ backgroundColor: "#2a2a2a" }} />
     </div>
   );
@@ -195,7 +195,7 @@ export function MiDiaPageClient({
   const hoy = todayISO();
   useAutoRefresh(60_000);
 
-  const [weekAnchor, setWeekAnchor] = useState(hoy);
+  const weekAnchor = hoy;
   const [pending, startTransition]  = useTransition();
   const [isAdding, setIsAdding]     = useState(false);
   const [newTitle, setNewTitle]     = useState("");
@@ -645,7 +645,7 @@ export function MiDiaPageClient({
   // ── Right list ────────────────────────────────────────────────────────────
 
   const rightList = (
-    <div className="flex flex-col gap-6 overflow-y-auto" style={{ maxHeight: "calc(100vh - 200px)" }}>
+    <div className="flex flex-col gap-8 overflow-y-auto" style={{ maxHeight: "calc(100vh - 200px)" }}>
 
       {/* ── Tareas del día ─────────────────────────────────────────────── */}
       <div>
@@ -798,8 +798,8 @@ export function MiDiaPageClient({
     <div className="flex h-full flex-col overflow-hidden px-6 py-6">
 
       {/* Header */}
-      <div className="mb-5 flex shrink-0 items-end gap-6">
-        <div className="flex-1">
+      <div className="mb-5 shrink-0">
+        <div>
           <h1 className="font-heading text-[30px] font-semibold capitalize leading-none">
             {hoyTexto}
           </h1>
@@ -816,30 +816,6 @@ export function MiDiaPageClient({
           </div>
         </div>
 
-        {/* Week navigation */}
-        <div className="flex shrink-0 items-center gap-1">
-          <button
-            type="button"
-            onClick={() => setWeekAnchor((a) => addDaysLocal(a, -7))}
-            className="flex h-7 w-7 items-center justify-center rounded-md text-neutral-600 transition hover:bg-white/[0.06] hover:text-neutral-300"
-          >
-            <ChevronIcon dir="left" />
-          </button>
-          <button
-            type="button"
-            onClick={() => setWeekAnchor(hoy)}
-            className="rounded-md px-2.5 py-1 text-[11px] text-neutral-600 transition hover:bg-white/[0.06] hover:text-neutral-300"
-          >
-            Hoy
-          </button>
-          <button
-            type="button"
-            onClick={() => setWeekAnchor((a) => addDaysLocal(a, 7))}
-            className="flex h-7 w-7 items-center justify-center rounded-md text-neutral-600 transition hover:bg-white/[0.06] hover:text-neutral-300"
-          >
-            <ChevronIcon dir="right" />
-          </button>
-        </div>
       </div>
 
       {/* 2-column body */}
