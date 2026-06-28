@@ -737,19 +737,34 @@ export function MiDiaPageClient({
       {revPend.length > 0 && (
         <div>
           <SectionLabel>Revisiones pendientes</SectionLabel>
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-2">
             {revPend.map((c) => (
               <FadeItem key={c.id} id={`rev-${c.id}`} fadingIds={fadingIds}>
-                <div className="flex items-center gap-2 rounded-lg px-2 py-2">
-                  <span className="shrink-0 text-[12px] leading-none text-red-400">•</span>
-                  <span className="flex-1 text-[13px] font-medium text-[#e5e5e5]">{c.nombre}</span>
-                  <span className="text-[11px] tabular-nums text-red-400">{Math.abs(c.revD ?? 0)}d vencida</span>
+                <div
+                  className="flex items-center gap-3 rounded-lg border p-3"
+                  style={{ backgroundColor: "#1a1a1a", borderColor: "#2a2a2a" }}
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-1.5 text-[13px] font-medium text-white">{c.nombre}</div>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="shrink-0 rounded px-1.5 py-0.5 text-[9.5px] font-semibold uppercase tracking-wide"
+                        style={{ backgroundColor: "#3b1f1f", color: "#f87171" }}
+                      >
+                        Revisión
+                      </span>
+                      <span className="text-[12px] tabular-nums text-[#f87171]">
+                        {Math.abs(c.revD ?? 0)}d vencida
+                      </span>
+                    </div>
+                  </div>
                   <button
                     type="button"
                     disabled={pending}
                     onClick={() => handleRevisionHecha(c.id)}
                     title="Marcar realizada"
-                    className="ml-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-white/[0.05] text-[12px] text-neutral-400 transition hover:bg-white/[0.1] hover:text-[#C9A96E]"
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[13px] text-neutral-500 transition hover:bg-white/[0.08] hover:text-[#C9A96E]"
+                    style={{ backgroundColor: "#242424" }}
                   >
                     ✓
                   </button>
