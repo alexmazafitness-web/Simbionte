@@ -107,13 +107,11 @@ export function ClientesTable({
         <table className="w-full border-collapse">
           <thead>
             <tr className="bg-panel-2">
-              {["Cliente", "Cuota", "Alta", "Permanencia", "Próximo pago", "Próxima revisión", "Mesociclo", "Notas", "LTV"].map(
-                (h, i) => (
+              {["Cliente", "Cuota", "Alta", "Permanencia", "Próximo pago", "Próxima revisión", "Mesociclo", "Notas"].map(
+                (h) => (
                   <th
                     key={h}
-                    className={`border-b border-line px-4 py-3 text-[10px] font-semibold tracking-wider text-text-dim uppercase ${
-                      i === 8 ? "text-right" : "text-left"
-                    }`}
+                    className="border-b border-line px-4 py-3 text-[10px] font-semibold tracking-wider text-text-dim uppercase text-left"
                   >
                     {h}
                   </th>
@@ -124,7 +122,7 @@ export function ClientesTable({
           <tbody>
             {list.length === 0 ? (
               <tr>
-                <td colSpan={9} className="px-4 py-9 text-center text-text-dim">
+                <td colSpan={8} className="px-4 py-9 text-center text-text-dim">
                   Sin clientes que coincidan
                 </td>
               </tr>
@@ -177,7 +175,6 @@ export function ClientesTable({
                     <td className="px-4 py-3">
                       {n ? <Pill variant="neutral">{n}</Pill> : <span className="text-text-dim">—</span>}
                     </td>
-                    <td className="px-4 py-3 text-right tabular-nums">{c.ltvAcumulado} €</td>
                   </tr>
                 );
               })
