@@ -44,6 +44,7 @@ export type ClienteVM = {
   revD: number | null;
   mesociclo: MesocicloVM | null;
   notas: Record<Categoria, NotaItem[]>;
+  driveFolderId: string | null;
 };
 
 export function estadoMesociclo(diasRestantes: number | null): EstadoMesociclo {

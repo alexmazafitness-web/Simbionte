@@ -6,6 +6,7 @@ import { requireUserId } from "@/lib/supabase/auth";
 import { CICLO_DIAS, GRUPO_REV_DEFAULT, type Categoria, type Recurrencia } from "./constants";
 import { addDaysISO, fmtDateCorta, todayISO } from "./format";
 import { initOnboarding } from "./onboarding-actions";
+import { crearCarpetaCliente, driveConfigured } from "@/lib/google/drive";
 
 const PATH = "/coaching/clientes";
 
@@ -106,6 +107,20 @@ export async function crearCliente(input: NuevoClienteInput) {
     await initOnboarding(clienteId, input.nombre, hoy);
   } catch (e) {
     console.error("initOnboarding failed (non-blocking):", e);
+  }
+
+  // Create Google Drive folder structure (non-blocking, skipped if credentials not set)
+  if (driveConfigured()) {
+    try {
+      const folderId = await crearCarpetaCliente(input.nombre);
+      await supabase
+        .schema("coaching")
+        .from("clientes")
+        .update({ drive_folder_id: folderId })
+        .eq("id", clienteId);
+    } catch (e) {
+      console.error("Drive folder creation failed (non-blocking):", e);
+    }
   }
 
   revalidatePath(PATH);

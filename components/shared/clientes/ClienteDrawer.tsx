@@ -383,6 +383,21 @@ export function ClienteDrawer({
             <Field label="Alta" value={fmtDateCorta(cliente.fechaAlta)} />
             <Field label="LTV acumulado" value={`${cliente.ltvAcumulado} €`} />
           </div>
+          {cliente.driveFolderId && (
+            <a
+              href={`https://drive.google.com/drive/folders/${cliente.driveFolderId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2.5 flex items-center justify-center gap-1.5 rounded-lg bg-panel-2 py-2.5 text-[12.5px] font-semibold text-gold-bright hover:bg-[rgba(201,169,110,.14)]"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-[14px] w-[14px]">
+                <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" />
+                <polyline points="15 3 21 3 21 9" />
+                <line x1="10" y1="14" x2="21" y2="3" />
+              </svg>
+              Carpeta en Drive
+            </a>
+          )}
         </div>
 
         {baja ? (

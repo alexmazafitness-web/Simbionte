@@ -16,6 +16,7 @@ type ClienteRow = {
   baja_fecha: string | null;
   baja_motivo: string | null;
   ltv_acumulado: number;
+  drive_folder_id: string | null;
   proxima_revision: string | null;
   grupo_revision_id: string | null;
   grupos_revision: { id: string; codigo: string; nombre: string } | null;
@@ -87,12 +88,13 @@ function shapeCliente(row: ClienteRow): ClienteVM {
         }
       : null,
     notas,
+    driveFolderId: row.drive_folder_id,
   };
 }
 
 const SELECT_CLIENTE = `
   id, nombre, estado, fecha_inicio, fase_completada, baja_fecha, baja_motivo,
-  ltv_acumulado, proxima_revision, grupo_revision_id,
+  ltv_acumulado, proxima_revision, grupo_revision_id, drive_folder_id,
   grupos_revision ( id, codigo, nombre ),
   suscripciones ( id, precio, recurrencia, proximo_pago, estado, fecha_inicio ),
   mesociclos ( id, numero_microciclos, dias_microciclo, fecha_fin, estado, fecha_inicio ),
