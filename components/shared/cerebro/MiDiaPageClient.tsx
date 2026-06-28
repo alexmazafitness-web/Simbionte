@@ -505,7 +505,6 @@ export function MiDiaPageClient({
           {days.map((iso, colIdx) => {
             const isToday     = iso === hoy;
             const { blocks, unicos } = eventsOn(iso, events, eventosUnicos);
-            const revClientes = activos.filter((c) => c.revD !== null && c.revD <= 0 && c.proximaRevision === iso);
 
             return (
               <div
@@ -617,20 +616,6 @@ export function MiDiaPageClient({
                     );
                   })}
 
-                {/* Revisiones indicator */}
-                {revClientes.length > 0 && (
-                  <div
-                    className="pointer-events-none absolute left-0.5 right-0.5 rounded-sm px-1 py-0.5"
-                    style={{ top: GRID_PAD + 2, height: 16, backgroundColor: "#C9A96E12", borderLeft: "2px solid #C9A96E" }}
-                    title={revClientes.map((c) => `Rev: ${c.nombre}`).join("\n")}
-                  >
-                    <div className="truncate text-[8.5px] font-semibold text-[#C9A96E]">
-                      {revClientes.length === 1
-                        ? revClientes[0]!.nombre.split(",")[0]
-                        : `${revClientes.length} revisiones`}
-                    </div>
-                  </div>
-                )}
 
                 {/* Now line */}
                 {isToday && (() => {
