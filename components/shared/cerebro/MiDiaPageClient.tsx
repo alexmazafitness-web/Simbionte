@@ -18,11 +18,12 @@ import type { ReminderVM } from "@/lib/personal/reminders";
 
 // ── Calendar constants ────────────────────────────────────────────────────────
 
-const H_START  = 0;
-const H_END    = 23;
-const HOUR_H   = 52; // px per hour
-const HOURS    = Array.from({ length: H_END - H_START + 1 }, (_, i) => H_START + i); // 00..23
-const TOTAL_PX = HOURS.length * HOUR_H; // 24 × 52 = 1248px
+const H_START    = 0;
+const H_END      = 23;
+const HOUR_H     = 52; // px per hour
+const GRID_PAD   = 20; // px top & bottom padding inside the grid
+const HOURS      = Array.from({ length: H_END - H_START + 1 }, (_, i) => H_START + i); // 00..23
+const TOTAL_PX   = HOURS.length * HOUR_H + GRID_PAD * 2;
 const DAY_HEADS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 
 function unikoMin(startAt: string): number {
@@ -143,6 +144,19 @@ export function MiDiaPageClient({
   const [fadingIds, setFadingIds]   = useState<Set<string>>(new Set());
   const calScrollRef                = useRef<HTMLDivElement>(null);
 
+  // Current time in minutes (updates every minute for the now-line)
+  const [nowMin, setNowMin] = useState(() => {
+    const n = new Date();
+    return n.getHours() * 60 + n.getMinutes();
+  });
+  useEffect(() => {
+    const id = setInterval(() => {
+      const n = new Date();
+      setNowMin(n.getHours() * 60 + n.getMinutes());
+    }, 60_000);
+    return () => clearInterval(id);
+  }, []);
+
   // MRR
   const mrr    = useMemo(() => Math.round(calcularMRR(clientes)), [clientes]);
   const target = goal.target > 0 ? goal.target : 2000;
@@ -257,8 +271,8 @@ export function MiDiaPageClient({
           {/* Time column */}
           <div className="w-10 shrink-0">
             {HOURS.map((h, i) => (
-              <div key={h} className="absolute left-0 w-10 pr-2 text-right" style={{ top: i * HOUR_H + 3 }}>
-                <span className="text-[9px] tabular-nums text-neutral-700">
+              <div key={h} className="absolute left-0 w-10 pr-2 text-right" style={{ top: GRID_PAD + i * HOUR_H + 3 }}>
+                <span className="text-[9px] tabular-nums" style={{ color: "#6b7280" }}>
                   {String(h).padStart(2, "0")}:00
                 </span>
               </div>
@@ -278,18 +292,18 @@ export function MiDiaPageClient({
               }`}>
                 {/* Hour lines */}
                 {HOURS.map((_, i) => (
-                  <div key={i} className="absolute inset-x-0 border-t border-white/[0.04]" style={{ top: i * HOUR_H }} />
+                  <div key={i} className="absolute inset-x-0 border-t border-white/[0.04]" style={{ top: GRID_PAD + i * HOUR_H }} />
                 ))}
 
                 {/* Half-hour lines */}
                 {HOURS.map((_, i) => (
-                  <div key={`h${i}`} className="absolute inset-x-0 border-t border-white/[0.02]" style={{ top: i * HOUR_H + HOUR_H / 2 }} />
+                  <div key={`h${i}`} className="absolute inset-x-0 border-t border-white/[0.02]" style={{ top: GRID_PAD + i * HOUR_H + HOUR_H / 2 }} />
                 ))}
 
                 {/* Recurring event blocks */}
                 {blocks.map((ev) => {
                   const topMin  = Math.max(ev.startMin - H_START * 60, 0);
-                  const top     = (topMin / 60) * HOUR_H + 1;
+                  const top     = GRID_PAD + (topMin / 60) * HOUR_H + 1;
                   const botMin  = Math.min(ev.endMin - H_START * 60, HOURS.length * 60);
                   const height  = Math.max(((botMin - topMin) / 60) * HOUR_H - 2, 18);
                   const color   = FRONT_COLOR[ev.type];
@@ -314,7 +328,7 @@ export function MiDiaPageClient({
                 {/* One-time events */}
                 {unicos.map((ev) => {
                   const topMin = Math.max(unikoMin(ev.startAt) - H_START * 60, 0);
-                  const top    = (topMin / 60) * HOUR_H + 1;
+                  const top    = GRID_PAD + (topMin / 60) * HOUR_H + 1;
                   const color  = FRONT_COLOR[ev.type];
                   return (
                     <div
@@ -333,7 +347,7 @@ export function MiDiaPageClient({
                 {revClientes.length > 0 && (
                   <div
                     className="absolute left-0.5 right-0.5 rounded-sm px-1 py-0.5"
-                    style={{ top: 2, height: 16, backgroundColor: "#C9A96E12", borderLeft: "2px solid #C9A96E" }}
+                    style={{ top: GRID_PAD + 2, height: 16, backgroundColor: "#C9A96E12", borderLeft: "2px solid #C9A96E" }}
                     title={revClientes.map((c) => `Rev: ${c.nombre}`).join("\n")}
                   >
                     <div className="truncate text-[8.5px] font-semibold text-[#C9A96E]">
@@ -343,6 +357,23 @@ export function MiDiaPageClient({
                     </div>
                   </div>
                 )}
+
+                {/* Now line — only on today's column */}
+                {isToday && (() => {
+                  const nowTop = GRID_PAD + (nowMin / 60) * HOUR_H;
+                  return (
+                    <div className="pointer-events-none absolute inset-x-0 z-20" style={{ top: nowTop }}>
+                      <div
+                        className="absolute left-0 -translate-y-1/2 h-2 w-2 rounded-full"
+                        style={{ backgroundColor: "#C9A96E" }}
+                      />
+                      <div
+                        className="absolute right-0 h-[1px]"
+                        style={{ left: 8, backgroundColor: "#C9A96E", opacity: 0.7 }}
+                      />
+                    </div>
+                  );
+                })()}
               </div>
             );
           })}
