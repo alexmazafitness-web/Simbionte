@@ -99,6 +99,25 @@ export async function crearEventoUnico(input: EventoUnicoInput) {
   });
   if (error) throw error;
   revalidatePath(PATH);
+  revalidatePath("/personal/cerebro");
+}
+
+export async function editarEventoUnico(id: string, input: EventoUnicoInput) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .schema("personal")
+    .from("events")
+    .update({
+      title: input.title,
+      start_at: input.startAt,
+      end_at: input.endAt,
+      event_type: input.type,
+      description: input.notes || null,
+    })
+    .eq("id", id);
+  if (error) throw error;
+  revalidatePath(PATH);
+  revalidatePath("/personal/cerebro");
 }
 
 export async function eliminarEventoUnico(id: string) {
@@ -106,4 +125,5 @@ export async function eliminarEventoUnico(id: string) {
   const { error } = await supabase.schema("personal").from("events").delete().eq("id", id);
   if (error) throw error;
   revalidatePath(PATH);
+  revalidatePath("/personal/cerebro");
 }

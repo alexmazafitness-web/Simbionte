@@ -3,18 +3,29 @@
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useAutoRefresh } from "@/lib/hooks/useAutoRefresh";
+import { useCalendarRealtime } from "@/lib/hooks/useCalendarRealtime";
 import { crearTarea, marcarTareaHecha } from "@/lib/personal/tasks-actions";
 import { taskDoneOn, taskShowToday, type TaskVM } from "@/lib/personal/tasks";
 import { addDaysISO, dowOf, minToStr, todayISO } from "@/lib/personal/format";
 import { recurOccursOn } from "@/lib/personal/recurrence";
-import { marcarRecordatorioHecho } from "@/lib/personal/reminders-actions";
+import {
+  crearRecordatorio,
+  editarRecordatorio,
+  eliminarRecordatorio,
+  marcarRecordatorioHecho,
+} from "@/lib/personal/reminders-actions";
+import {
+  crearEventoUnico,
+  editarEventoUnico,
+  eliminarEventoUnico,
+} from "@/lib/personal/events-actions";
 import { calcularMRR, clientesActivos, hasNotas, type ClienteVM } from "@/lib/coaching/clientes";
 import { marcarRevisionHecha } from "@/lib/coaching/clientes-actions";
 import { CATEGORIAS } from "@/lib/coaching/constants";
-import { FRONT_COLOR } from "@/lib/personal/constants";
 import type { GoalVM } from "@/lib/personal/goal";
 import type { EventBlockVM, EventoUnicoVM } from "@/lib/personal/events";
 import type { ReminderVM } from "@/lib/personal/reminders";
+import { CalEventModal, type CalModalProps } from "./CalEventModal";
 
 // ── Calendar constants ────────────────────────────────────────────────────────
 
@@ -25,6 +36,48 @@ const GRID_PAD   = 20; // px top & bottom padding inside the grid
 const HOURS      = Array.from({ length: H_END - H_START + 1 }, (_, i) => H_START + i); // 00..23
 const TOTAL_PX   = HOURS.length * HOUR_H + GRID_PAD * 2;
 const DAY_HEADS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+
+// Event visual styles
+const EVENTO_BG     = "#1e3a5f";
+const EVENTO_BORDER = "#C9A96E";
+const REMINDER_BG   = "#2a1f0e";
+const BLOQUE_BG     = "#1a1a1a";
+const BLOQUE_BORDER = "#4b5563";
+
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+type CalModal = CalModalProps | null;
+
+type DragInfo = {
+  kind: "evento" | "reminder";
+  id: string;
+  ev?: EventoUnicoVM;
+  r?: ReminderVM;
+  startMin: number;
+  endMin: number;
+  origIso: string;
+  grabOffsetMin: number;
+};
+
+type DragVisual = {
+  id: string;
+  kind: "evento" | "reminder";
+  iso: string;
+  startMin: number;
+  endMin: number;
+};
+
+// ── helpers (module-level) ────────────────────────────────────────────────────
+
+function tsToMin(isoTs: string): number {
+  const d = new Date(isoTs);
+  return d.getHours() * 60 + d.getMinutes();
+}
+
+function buildIsoForDB(iso: string, min: number): string {
+  const [y, mo, d] = iso.split("-").map(Number);
+  return new Date(y!, mo! - 1, d!, Math.floor(min / 60), min % 60, 0).toISOString();
+}
 
 function unikoMin(startAt: string): number {
   const d = new Date(startAt);
@@ -148,6 +201,19 @@ export function MiDiaPageClient({
   const [newTitle, setNewTitle]     = useState("");
   const [fadingIds, setFadingIds]   = useState<Set<string>>(new Set());
   const calScrollRef                = useRef<HTMLDivElement>(null);
+  const calGridInnerRef             = useRef<HTMLDivElement>(null);
+
+  // Modal
+  const [calModal, setCalModal] = useState<CalModal>(null);
+
+  // Drag state — refs to avoid stale closures in event listeners
+  const dragRef     = useRef<DragInfo | null>(null);
+  const daysRef     = useRef<string[]>([]);
+  const [dragVisual, setDragVisual] = useState<DragVisual | null>(null);
+
+  // Resize state
+  const resizeRef      = useRef<{ ev: EventoUnicoVM; iso: string; startMin: number } | null>(null);
+  const [resizeEndMin, setResizeEndMin] = useState<number | null>(null);
 
   // Current time in minutes (updates every minute for the now-line)
   const [nowMin, setNowMin] = useState(() => {
@@ -179,8 +245,12 @@ export function MiDiaPageClient({
     }
   }, []);
 
+  // Realtime sync
+  useCalendarRealtime();
+
   // Week days
   const days = useMemo(() => weekDays(weekAnchor), [weekAnchor]);
+  useEffect(() => { daysRef.current = days; }, [days]);
 
   // Tasks for today
   const todayDow    = dowOf(hoy);
@@ -243,6 +313,152 @@ export function MiDiaPageClient({
     });
   }
 
+  // ── Calendar interaction helpers ─────────────────────────────────────────
+
+  function screenToSlot(clientX: number, clientY: number): { iso: string; min: number } | null {
+    const gridEl = calGridInnerRef.current;
+    if (!gridEl) return null;
+    const rect = gridEl.getBoundingClientRect();
+    const relX = clientX - rect.left;
+    const relY = clientY - rect.top - GRID_PAD;
+    if (relX < 40) return null; // time column
+    const colAreaW = rect.width - 40;
+    const colW     = colAreaW / 7;
+    const colIdx   = Math.floor((relX - 40) / colW);
+    if (colIdx < 0 || colIdx > 6) return null;
+    const iso = daysRef.current[colIdx];
+    if (!iso) return null;
+    const min = Math.max(0, Math.min(23 * 60 + 59, Math.round((relY / HOUR_H) * 60 / 15) * 15));
+    return { iso, min };
+  }
+
+  // Click + drag handler for events (< 6px movement = click, else drag)
+  function handleEventPointerDown(
+    e: React.MouseEvent,
+    kind: "evento" | "reminder",
+    id: string,
+    ev: EventoUnicoVM | undefined,
+    r: ReminderVM | undefined,
+    startMin: number,
+    endMin: number,
+    iso: string,
+  ) {
+    e.stopPropagation();
+    const startX = e.clientX;
+    const startY = e.clientY;
+    let dragging  = false;
+
+    // Where within the event was the click (for offset-preserving drag)
+    const elRect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const grabOffsetMin = Math.round(((startY - elRect.top) / HOUR_H) * 60);
+
+    function onMove(ev_: MouseEvent) {
+      if (!dragging) {
+        if (Math.abs(ev_.clientX - startX) > 5 || Math.abs(ev_.clientY - startY) > 5) {
+          dragging = true;
+          dragRef.current = { kind, id, ev, r, startMin, endMin, origIso: iso, grabOffsetMin };
+          setDragVisual({ id, kind, iso, startMin, endMin });
+        }
+      }
+      if (dragging) {
+        const slot = screenToSlot(ev_.clientX, ev_.clientY);
+        if (slot) {
+          const dur = dragRef.current ? dragRef.current.endMin - dragRef.current.startMin : 0;
+          const newStart = slot.min - grabOffsetMin;
+          setDragVisual({ id, kind, iso: slot.iso, startMin: newStart, endMin: newStart + dur });
+        }
+      }
+    }
+
+    function onUp(ev_: MouseEvent) {
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseup", onUp);
+
+      if (dragging && dragRef.current) {
+        const slot = screenToSlot(ev_.clientX, ev_.clientY);
+        if (slot) {
+          const d = dragRef.current;
+          const dur = Math.max(15, d.endMin - d.startMin);
+          const newStart = Math.max(0, Math.round((slot.min - grabOffsetMin) / 15) * 15);
+          const newEnd   = newStart + dur;
+          if (kind === "evento" && d.ev) {
+            void editarEventoUnico(d.ev.id, {
+              title: d.ev.title, type: d.ev.type, notes: d.ev.notes ?? "",
+              startAt: buildIsoForDB(slot.iso, newStart),
+              endAt:   buildIsoForDB(slot.iso, newEnd),
+            });
+          } else if (kind === "reminder" && d.r) {
+            void editarRecordatorio(d.r.id, d.r.text, buildIsoForDB(slot.iso, newStart), d.r.front);
+          }
+        }
+        dragRef.current = null;
+        setDragVisual(null);
+      } else if (!dragging) {
+        // Simple click → open edit modal
+        if (kind === "evento" && ev)  setCalModal({ mode: "evento",   ev,  iso, onClose: () => setCalModal(null) });
+        if (kind === "reminder" && r) setCalModal({ mode: "reminder", r,   iso, onClose: () => setCalModal(null) });
+      }
+    }
+
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup",   onUp);
+  }
+
+  function handleResizePointerDown(
+    e: React.MouseEvent,
+    ev: EventoUnicoVM,
+    iso: string,
+    startMin: number,
+    currentEndMin: number,
+  ) {
+    e.stopPropagation();
+    e.preventDefault();
+    resizeRef.current = { ev, iso, startMin };
+    setResizeEndMin(currentEndMin);
+
+    function onMove(ev_: MouseEvent) {
+      const gridEl = calGridInnerRef.current;
+      if (!gridEl) return;
+      const rect = gridEl.getBoundingClientRect();
+      const relY  = ev_.clientY - rect.top - GRID_PAD;
+      const snapped = Math.max(startMin + 15, Math.min(24 * 60, Math.round((relY / HOUR_H) * 60 / 15) * 15));
+      setResizeEndMin(snapped);
+    }
+
+    function onUp(ev_: MouseEvent) {
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseup",   onUp);
+      const resize = resizeRef.current;
+      if (resize) {
+        const gridEl = calGridInnerRef.current;
+        if (gridEl) {
+          const rect = gridEl.getBoundingClientRect();
+          const relY = ev_.clientY - rect.top - GRID_PAD;
+          const newEnd = Math.max(resize.startMin + 15, Math.min(24 * 60, Math.round((relY / HOUR_H) * 60 / 15) * 15));
+          void editarEventoUnico(resize.ev.id, {
+            title: resize.ev.title, type: resize.ev.type, notes: resize.ev.notes ?? "",
+            startAt: buildIsoForDB(resize.iso, resize.startMin),
+            endAt:   buildIsoForDB(resize.iso, newEnd),
+          });
+        }
+      }
+      resizeRef.current = null;
+      setResizeEndMin(null);
+    }
+
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup",   onUp);
+  }
+
+  function handleSlotClick(e: React.MouseEvent, iso: string) {
+    const gridEl = calGridInnerRef.current;
+    if (!gridEl) return;
+    const rect   = gridEl.getBoundingClientRect();
+    const relY   = e.clientY - rect.top - GRID_PAD;
+    const startMin = Math.max(0, Math.min(23 * 60, Math.round((relY / HOUR_H) * 60 / 15) * 15));
+    setCalModal({ mode: "create", iso, startMin, onClose: () => setCalModal(null) });
+  }
+
   // ── Calendar render ───────────────────────────────────────────────────────
 
   const calGrid = (
@@ -273,9 +489,9 @@ export function MiDiaPageClient({
             );
           })}
         </div>
-        <div className="relative flex" style={{ height: TOTAL_PX }}>
+        <div ref={calGridInnerRef} className="relative flex" style={{ height: TOTAL_PX }}>
           {/* Time column */}
-          <div className="w-10 shrink-0">
+          <div className="pointer-events-none w-10 shrink-0">
             {HOURS.map((h, i) => (
               <div key={h} className="absolute left-0 w-10 pr-2 text-right" style={{ top: GRID_PAD + i * HOUR_H + 3 }}>
                 <span className="text-[10px] tabular-nums" style={{ color: "#6b7280" }}>
@@ -287,43 +503,57 @@ export function MiDiaPageClient({
 
           {/* Day columns */}
           {days.map((iso, colIdx) => {
-            const isToday      = iso === hoy;
+            const isToday     = iso === hoy;
             const { blocks, unicos } = eventsOn(iso, events, eventosUnicos);
-            const hasRevision  = revPend.some(() => false); // placeholder — shown as subtle dot below
-            const revClientes  = activos.filter((c) => c.revD !== null && c.revD <= 0 && c.proximaRevision === iso);
+            const revClientes = activos.filter((c) => c.revD !== null && c.revD <= 0 && c.proximaRevision === iso);
 
             return (
-              <div key={iso} className={`relative flex-1 ${colIdx < 6 ? "border-r border-white/[0.04]" : ""} ${
-                isToday ? "bg-[#C9A96E]/[0.025]" : ""
-              }`}>
+              <div
+                key={iso}
+                className={`relative flex-1 cursor-crosshair ${colIdx < 6 ? "border-r border-white/[0.04]" : ""} ${
+                  isToday ? "bg-[#C9A96E]/[0.025]" : ""
+                }`}
+                onClick={(e) => handleSlotClick(e, iso)}
+              >
                 {/* Hour lines */}
                 {HOURS.map((_, i) => (
-                  <div key={i} className="absolute inset-x-0 border-t border-white/[0.04]" style={{ top: GRID_PAD + i * HOUR_H }} />
+                  <div key={i} className="pointer-events-none absolute inset-x-0 border-t border-white/[0.04]" style={{ top: GRID_PAD + i * HOUR_H }} />
                 ))}
-
                 {/* Half-hour lines */}
                 {HOURS.map((_, i) => (
-                  <div key={`h${i}`} className="absolute inset-x-0 border-t border-white/[0.02]" style={{ top: GRID_PAD + i * HOUR_H + HOUR_H / 2 }} />
+                  <div key={`h${i}`} className="pointer-events-none absolute inset-x-0 border-t border-white/[0.02]" style={{ top: GRID_PAD + i * HOUR_H + HOUR_H / 2 }} />
                 ))}
 
-                {/* Recurring event blocks */}
+                {/* Drag target indicator */}
+                {dragVisual && dragVisual.iso === iso && (
+                  <div
+                    className="pointer-events-none absolute inset-x-0.5 z-10 rounded-md border-2 border-dashed"
+                    style={{
+                      top:    GRID_PAD + (Math.max(0, dragVisual.startMin) / 60) * HOUR_H,
+                      height: Math.max(18, ((dragVisual.endMin - Math.max(0, dragVisual.startMin)) / 60) * HOUR_H - 2),
+                      borderColor:     dragVisual.kind === "evento" ? EVENTO_BORDER : "#C9A96E",
+                      backgroundColor: dragVisual.kind === "evento" ? `${EVENTO_BG}50` : `${REMINDER_BG}50`,
+                    }}
+                  />
+                )}
+
+                {/* Recurring blocks (bloque style — gray, no interaction) */}
                 {blocks.map((ev) => {
-                  const topMin  = Math.max(ev.startMin - H_START * 60, 0);
-                  const top     = GRID_PAD + (topMin / 60) * HOUR_H + 1;
-                  const botMin  = Math.min(ev.endMin - H_START * 60, HOURS.length * 60);
-                  const height  = Math.max(((botMin - topMin) / 60) * HOUR_H - 2, 18);
-                  const color   = FRONT_COLOR[ev.type];
+                  const topMin = Math.max(ev.startMin, 0);
+                  const top    = GRID_PAD + (topMin / 60) * HOUR_H + 1;
+                  const botMin = Math.min(ev.endMin, HOURS.length * 60);
+                  const height = Math.max(((botMin - topMin) / 60) * HOUR_H - 2, 18);
                   return (
                     <div
                       key={ev.id}
-                      className="absolute left-0.5 right-0.5 overflow-hidden rounded-md px-1.5 py-0.5"
-                      style={{ top, height, backgroundColor: color + "20", borderLeft: `2px solid ${color}` }}
+                      className="absolute left-0.5 right-0.5 select-none overflow-hidden rounded-md px-1.5 py-0.5"
+                      style={{ top, height, backgroundColor: BLOQUE_BG, borderLeft: `3px solid ${BLOQUE_BORDER}` }}
                     >
-                      <div className="truncate text-[10px] font-semibold leading-snug" style={{ color }}>
+                      <div className="truncate text-[10px] font-semibold leading-snug text-[#9ca3af]">
                         {ev.title}
                       </div>
                       {height > 30 && (
-                        <div className="text-[9px] text-neutral-600">
+                        <div className="text-[9px] text-neutral-700">
                           {minToStr(ev.startMin)}–{minToStr(ev.endMin)}
                         </div>
                       )}
@@ -331,47 +561,66 @@ export function MiDiaPageClient({
                   );
                 })}
 
-                {/* One-time events */}
+                {/* One-time events (draggable + resizable + click-to-edit) */}
                 {unicos.map((ev) => {
-                  const topMin = Math.max(unikoMin(ev.startAt) - H_START * 60, 0);
-                  const top    = GRID_PAD + (topMin / 60) * HOUR_H + 1;
-                  const color  = FRONT_COLOR[ev.type];
+                  const evStartMin   = tsToMin(ev.startAt);
+                  const evEndMin     = ev.endAt ? tsToMin(ev.endAt) : evStartMin + 60;
+                  const isResizing   = resizeRef.current?.ev.id === ev.id;
+                  const displayEnd   = isResizing && resizeEndMin !== null ? resizeEndMin : evEndMin;
+                  const isDragging   = dragVisual?.id === ev.id;
+                  const top          = GRID_PAD + (evStartMin / 60) * HOUR_H + 1;
+                  const height       = Math.max(18, ((displayEnd - evStartMin) / 60) * HOUR_H - 2);
                   return (
                     <div
                       key={ev.id}
-                      className="absolute left-0.5 right-0.5 overflow-hidden rounded-md px-1.5 py-0.5"
-                      style={{ top, height: 34, backgroundColor: color + "20", borderLeft: `2px solid ${color}` }}
+                      className={`absolute left-0.5 right-0.5 select-none overflow-hidden rounded-md transition-opacity ${isDragging ? "opacity-30" : "hover:brightness-110"}`}
+                      style={{ top, height, backgroundColor: EVENTO_BG, borderLeft: `3px solid ${EVENTO_BORDER}`, cursor: "grab" }}
+                      onMouseDown={(e) => handleEventPointerDown(e, "evento", ev.id, ev, undefined, evStartMin, evEndMin, iso)}
                     >
-                      <div className="truncate text-[10px] font-semibold leading-snug" style={{ color }}>
-                        {ev.title}
+                      <div className="px-1.5 py-0.5">
+                        <div className="truncate text-[10px] font-semibold leading-snug text-white">
+                          {ev.title}
+                        </div>
+                        {height > 30 && (
+                          <div className="text-[9px] text-white/50">
+                            {minToStr(evStartMin)}–{minToStr(displayEnd)}
+                          </div>
+                        )}
                       </div>
+                      {/* Resize handle */}
+                      <div
+                        className="absolute inset-x-0 bottom-0 h-2 cursor-ns-resize"
+                        onMouseDown={(e) => handleResizePointerDown(e, ev, iso, evStartMin, evEndMin)}
+                      />
                     </div>
                   );
                 })}
 
-                {/* Reminders with a specific time */}
+                {/* Reminders with time (draggable + click-to-edit) */}
                 {reminders
                   .filter((r) => !r.done && r.whenISO.slice(0, 10) === iso && remHasTiempo(r))
                   .map((r) => {
-                    const rMin = unikoMin(r.whenISO);
-                    const top  = GRID_PAD + (rMin / 60) * HOUR_H + 1;
+                    const rMin     = tsToMin(r.whenISO);
+                    const isDragging = dragVisual?.id === r.id;
+                    const top      = GRID_PAD + (rMin / 60) * HOUR_H + 1;
                     return (
                       <div
                         key={r.id}
-                        className="absolute left-0.5 right-0.5 overflow-hidden rounded-md px-1.5 py-0.5"
-                        style={{ top, height: 26, backgroundColor: "#C9A96E12", borderLeft: "2px solid #C9A96E" }}
+                        className={`absolute left-0.5 right-0.5 select-none overflow-hidden rounded-md transition-opacity ${isDragging ? "opacity-30" : "hover:brightness-110"}`}
+                        style={{ top, height: 26, backgroundColor: REMINDER_BG, borderLeft: `3px solid #C9A96E`, cursor: "grab" }}
+                        onMouseDown={(e) => handleEventPointerDown(e, "reminder", r.id, undefined, r, rMin, rMin + 30, iso)}
                       >
-                        <div className="truncate text-[9.5px] font-semibold text-[#C9A96E]">
+                        <div className="truncate px-1.5 py-0.5 text-[9.5px] font-semibold text-[#C9A96E]">
                           {r.text}
                         </div>
                       </div>
                     );
                   })}
 
-                {/* Revisiones indicator — single consolidated block to avoid stacking overlap */}
+                {/* Revisiones indicator */}
                 {revClientes.length > 0 && (
                   <div
-                    className="absolute left-0.5 right-0.5 rounded-sm px-1 py-0.5"
+                    className="pointer-events-none absolute left-0.5 right-0.5 rounded-sm px-1 py-0.5"
                     style={{ top: GRID_PAD + 2, height: 16, backgroundColor: "#C9A96E12", borderLeft: "2px solid #C9A96E" }}
                     title={revClientes.map((c) => `Rev: ${c.nombre}`).join("\n")}
                   >
@@ -383,25 +632,20 @@ export function MiDiaPageClient({
                   </div>
                 )}
 
-                {/* Now line — only on today's column */}
+                {/* Now line */}
                 {isToday && (() => {
                   const nowTop = GRID_PAD + (nowMin / 60) * HOUR_H;
                   const hh = String(Math.floor(nowMin / 60)).padStart(2, "0");
                   const mm = String(nowMin % 60).padStart(2, "0");
                   return (
                     <div className="pointer-events-none absolute inset-x-0 z-20" style={{ top: nowTop }}>
-                      {/* Time badge */}
                       <div
                         className="absolute left-0 -translate-y-1/2 rounded px-1.5 py-0.5 text-[10px] font-medium tabular-nums leading-none text-white"
                         style={{ backgroundColor: "#C9A96E" }}
                       >
                         {hh}:{mm}
                       </div>
-                      {/* Horizontal line */}
-                      <div
-                        className="absolute right-0 h-[1px]"
-                        style={{ left: 50, backgroundColor: "#C9A96E", opacity: 0.7 }}
-                      />
+                      <div className="absolute right-0 h-[1px]" style={{ left: 50, backgroundColor: "#C9A96E", opacity: 0.7 }} />
                     </div>
                   );
                 })()}
@@ -630,6 +874,9 @@ export function MiDiaPageClient({
         </div>
 
       </div>
+
+      {/* Calendar event modal (create / edit) */}
+      {calModal && <CalEventModal {...calModal} />}
     </div>
   );
 }
