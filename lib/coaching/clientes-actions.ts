@@ -226,6 +226,7 @@ export async function marcarRevisionHecha(clienteId: string) {
     .eq("id", clienteId);
   if (error) throw error;
   revalidatePath(PATH);
+  revalidatePath("/personal/cerebro");
 }
 
 export async function marcarCobroHecho(clienteId: string) {
