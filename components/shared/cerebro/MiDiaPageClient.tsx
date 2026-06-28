@@ -22,6 +22,8 @@ import {
 import { calcularMRR, clientesActivos, hasNotas, type ClienteVM } from "@/lib/coaching/clientes";
 import { marcarRevisionHecha, saltarRevision } from "@/lib/coaching/clientes-actions";
 import { CATEGORIAS } from "@/lib/coaching/constants";
+import { fmtDateCorta } from "@/lib/coaching/format";
+import type { OnboardingVM } from "@/lib/coaching/onboarding-queries";
 import type { GoalVM } from "@/lib/personal/goal";
 import type { EventBlockVM, EventoUnicoVM } from "@/lib/personal/events";
 import type { ReminderVM } from "@/lib/personal/reminders";
@@ -185,6 +187,14 @@ function FadeItem({ id, fadingIds, children }: { id: string; fadingIds: Set<stri
   );
 }
 
+function SubLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-neutral-600">
+      {children}
+    </div>
+  );
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function MiDiaPageClient({
@@ -194,6 +204,7 @@ export function MiDiaPageClient({
   eventosUnicos,
   reminders,
   clientes,
+  onboardings,
 }: {
   tasks: TaskVM[];
   goal: GoalVM;
@@ -201,6 +212,7 @@ export function MiDiaPageClient({
   eventosUnicos: EventoUnicoVM[];
   reminders: ReminderVM[];
   clientes: ClienteVM[];
+  onboardings: OnboardingVM[];
 }) {
   const hoy = todayISO();
 
@@ -306,6 +318,10 @@ export function MiDiaPageClient({
     [activos, clientHoy],
   );
   const conNotas = activos.filter(hasNotas).slice(0, 4);
+  const mesoRenovar = useMemo(
+    () => activos.filter((c) => c.mesociclo !== null && c.mesociclo.diasRestantes !== null && c.mesociclo.diasRestantes <= 7),
+    [activos],
+  );
 
   // Fade-out helper
   function fadeAndDo(id: string, action: () => void) {
@@ -786,123 +802,214 @@ export function MiDiaPageClient({
         </div>
       )}
 
-      {/* ── Revisiones pendientes ─────────────────────────────────────── */}
-      {revPend.length > 0 && (
+      {/* ════ BLOQUE: SERVICIO ════════════════════════════════════════════ */}
+      {(revPend.length > 0 || mesoRenovar.length > 0 || onboardings.length > 0 || conNotas.length > 0) && (
         <div>
-          <SectionLabel>Revisiones pendientes</SectionLabel>
-          <div className="flex flex-col gap-2">
-            {revPend.map((c) => (
-              <FadeItem key={c.id} id={`rev-${c.id}`} fadingIds={fadingIds}>
-                <div
-                  className="flex items-center gap-3 rounded-lg border p-3"
-                  style={{ backgroundColor: "#1a1a1a", borderColor: "#2a2a2a" }}
-                >
-                  <div className="min-w-0 flex-1">
-                    <div className="mb-1.5 text-[13px] font-medium text-white">{c.nombre}</div>
-                    <div className="flex items-center gap-2">
-                      <span
-                        className="shrink-0 rounded px-1.5 py-0.5 text-[9.5px] font-semibold uppercase tracking-wide"
-                        style={{ backgroundColor: "#3b1f1f", color: "#f87171" }}
+          <SectionLabel>Servicio</SectionLabel>
+
+          <div className="flex flex-col gap-6">
+
+            {/* 1. Revisiones pendientes */}
+            {revPend.length > 0 && (
+              <div>
+                <SubLabel>Revisiones pendientes</SubLabel>
+                <div className="flex flex-col gap-2">
+                  {revPend.map((c) => (
+                    <FadeItem key={c.id} id={`rev-${c.id}`} fadingIds={fadingIds}>
+                      <div
+                        className="flex items-center gap-3 rounded-lg border p-3"
+                        style={{ backgroundColor: "#1a1a1a", borderColor: "#2a2a2a" }}
                       >
-                        Revisión
-                      </span>
-                      <span className="text-[12px] tabular-nums text-[#f87171]">
-                        {Math.abs(daysDiffFromToday(c.proximaRevision!, clientHoy))}d vencida
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-1.5">
-                    {/* Open notes drawer */}
-                    <button
-                      type="button"
-                      onClick={() => setNotasCliente(c)}
-                      title="Ver / añadir notas"
-                      className="flex h-7 w-7 items-center justify-center rounded-md text-neutral-500 transition hover:bg-white/[0.08] hover:text-[#C9A96E]"
-                      style={{ backgroundColor: "#242424" }}
-                    >
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-3.5 w-3.5">
-                        <path d="M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5" />
-                        <path d="M17.5 2.5a2.121 2.121 0 0 1 3 3L12 14l-4 1 1-4 7.5-7.5z" />
-                      </svg>
-                    </button>
-                    {/* Revisión hecha */}
-                    <button
-                      type="button"
-                      disabled={pending}
-                      onClick={() => handleRevisionHecha(c.id)}
-                      title="Revisión hecha"
-                      className="flex h-7 w-7 items-center justify-center rounded-md text-[13px] transition hover:bg-[#2A4A38] hover:text-[#4ade80]"
-                      style={{ backgroundColor: "#242424", color: "#4ade80" }}
-                    >
-                      ✓
-                    </button>
-                    {/* No subida — saltar ciclo */}
-                    <button
-                      type="button"
-                      disabled={pending}
-                      onClick={() => handleSaltarRevision(c.id)}
-                      title="No subida — saltar ciclo"
-                      className="flex h-7 w-7 items-center justify-center rounded-md text-[13px] text-neutral-500 transition hover:bg-white/[0.08] hover:text-neutral-300"
-                      style={{ backgroundColor: "#242424" }}
-                    >
-                      ⏭
-                    </button>
-                  </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="mb-1.5 text-[13px] font-medium text-white">{c.nombre}</div>
+                          <div className="flex items-center gap-2">
+                            <span
+                              className="shrink-0 rounded px-1.5 py-0.5 text-[9.5px] font-semibold uppercase tracking-wide"
+                              style={{ backgroundColor: "#3b1f1f", color: "#f87171" }}
+                            >
+                              Revisión
+                            </span>
+                            <span className="text-[12px] tabular-nums text-[#f87171]">
+                              {Math.abs(daysDiffFromToday(c.proximaRevision!, clientHoy))}d vencida
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex shrink-0 items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setNotasCliente(c)}
+                            title="Ver / añadir notas"
+                            className="flex h-7 w-7 items-center justify-center rounded-md text-neutral-500 transition hover:bg-white/[0.08] hover:text-[#C9A96E]"
+                            style={{ backgroundColor: "#242424" }}
+                          >
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-3.5 w-3.5">
+                              <path d="M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5" />
+                              <path d="M17.5 2.5a2.121 2.121 0 0 1 3 3L12 14l-4 1 1-4 7.5-7.5z" />
+                            </svg>
+                          </button>
+                          <button
+                            type="button"
+                            disabled={pending}
+                            onClick={() => handleRevisionHecha(c.id)}
+                            title="Revisión hecha"
+                            className="flex h-7 w-7 items-center justify-center rounded-md text-[13px] transition hover:bg-[#2A4A38] hover:text-[#4ade80]"
+                            style={{ backgroundColor: "#242424", color: "#4ade80" }}
+                          >
+                            ✓
+                          </button>
+                          <button
+                            type="button"
+                            disabled={pending}
+                            onClick={() => handleSaltarRevision(c.id)}
+                            title="No subida — saltar ciclo"
+                            className="flex h-7 w-7 items-center justify-center rounded-md text-[13px] text-neutral-500 transition hover:bg-white/[0.08] hover:text-neutral-300"
+                            style={{ backgroundColor: "#242424" }}
+                          >
+                            ⏭
+                          </button>
+                        </div>
+                      </div>
+                    </FadeItem>
+                  ))}
                 </div>
-              </FadeItem>
-            ))}
-          </div>
-        </div>
-      )}
+              </div>
+            )}
 
-      {/* ── Anotaciones de clientes ───────────────────────────────────── */}
-      {conNotas.length > 0 && (
-        <div>
-          <SectionLabel>Anotaciones de clientes</SectionLabel>
-          <div className="flex flex-col gap-2">
-            {conNotas.slice(0, 4).map((c) => {
-              // First non-empty category + its first note
-              const entry = CATEGORIAS
-                .map((cat) => ({ cat, nota: (c.notas[cat] ?? [])[0] }))
-                .find(({ nota }) => nota !== undefined);
-              const cat  = entry?.cat ?? null;
-              const nota = entry?.nota ?? null;
-
-              const CAT_STYLE: Record<string, { bg: string; text: string; label: string }> = {
-                nutricion:   { bg: "#2A4A38", text: "#4ade80",  label: "Nutrición" },
-                seguimiento: { bg: "#1a1a1a", text: "#C9A96E",  label: "Seguimiento" },
-                meso:        { bg: "#243B55", text: "#93c5fd",  label: "Mesociclo" },
-                otros:       { bg: "#2a2a2a", text: "#9ca3af",  label: "Otros" },
-              };
-              const style = cat ? (CAT_STYLE[cat] ?? CAT_STYLE.otros) : CAT_STYLE.otros;
-
-              return (
-                <Link
-                  key={c.id}
-                  href="/coaching/clientes"
-                  className="block rounded-lg border p-3 transition hover:border-white/10 hover:brightness-110"
-                  style={{ backgroundColor: "#1a1a1a", borderColor: "#2a2a2a" }}
-                >
-                  <div className="mb-1.5 text-[13px] font-medium text-white">{c.nombre}</div>
-                  {nota && (
-                    <div className="flex items-start gap-2">
-                      <span
-                        className="shrink-0 rounded px-1.5 py-0.5 text-[9.5px] font-semibold uppercase tracking-wide"
-                        style={{ backgroundColor: style.bg, color: style.text }}
+            {/* 2. Mesociclos a renovar */}
+            {mesoRenovar.length > 0 && (
+              <div>
+                <SubLabel>Mesociclos a renovar</SubLabel>
+                <div className="flex flex-col gap-2">
+                  {mesoRenovar.map((c) => {
+                    const dias = c.mesociclo!.diasRestantes!;
+                    const vencido = dias < 0;
+                    return (
+                      <Link
+                        key={c.id}
+                        href="/coaching/clientes"
+                        className="flex items-center gap-3 rounded-lg border p-3 transition hover:border-white/10 hover:brightness-110"
+                        style={{ backgroundColor: "#1a1a1a", borderColor: "#2a2a2a" }}
                       >
-                        {style.label}
-                      </span>
-                      <p className="min-w-0 truncate text-[12px] leading-snug text-[#9ca3af]">
-                        {nota.texto}
-                      </p>
-                    </div>
-                  )}
-                </Link>
-              );
-            })}
+                        <div className="min-w-0 flex-1">
+                          <div className="mb-0.5 text-[13px] font-medium text-white">{c.nombre}</div>
+                          <div className="text-[11.5px] text-neutral-600">
+                            Fin: {fmtDateCorta(c.mesociclo!.fechaFin)}
+                          </div>
+                        </div>
+                        <span
+                          className="shrink-0 rounded px-2 py-0.5 text-[11px] font-semibold tabular-nums"
+                          style={
+                            vencido
+                              ? { backgroundColor: "#3b1f1f", color: "#f87171" }
+                              : dias === 0
+                              ? { backgroundColor: "#2A2210", color: "#C9A96E" }
+                              : { backgroundColor: "#2A2210", color: "#C9A96E" }
+                          }
+                        >
+                          {vencido ? "Vencido" : dias === 0 ? "Hoy" : `${dias}d`}
+                        </span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* 3. Onboarding activo */}
+            {onboardings.length > 0 && (
+              <div>
+                <SubLabel>Onboarding activo</SubLabel>
+                <div className="flex flex-col gap-2">
+                  {onboardings.map((ob) => {
+                    const pct = ob.totalPasos > 0 ? Math.round((ob.pasosCompletados / ob.totalPasos) * 100) : 0;
+                    const planPendiente = ob.pasos.some((p) => p.titulo.includes("plan de entrenamiento") && !p.completado);
+                    return (
+                      <Link
+                        key={ob.id}
+                        href="/coaching/onboarding"
+                        className="block rounded-lg border p-3 transition hover:border-white/10 hover:brightness-110"
+                        style={{ backgroundColor: "#1a1a1a", borderColor: "#2a2a2a" }}
+                      >
+                        <div className="mb-2 flex items-center justify-between">
+                          <div className="text-[13px] font-medium text-white">{ob.clienteNombre}</div>
+                          <span className="shrink-0 text-[11.5px] tabular-nums" style={{ color: "#C9A96E" }}>
+                            D+{ob.diasDesdeInicio}
+                          </span>
+                        </div>
+                        <div className="h-1 overflow-hidden rounded-full" style={{ backgroundColor: "#2a2a2a" }}>
+                          <div
+                            className="h-full rounded-full transition-[width]"
+                            style={{ width: `${pct}%`, backgroundColor: pct === 100 ? "#4ade80" : "#C9A96E" }}
+                          />
+                        </div>
+                        <div className="mt-1.5 flex items-center justify-between">
+                          <span className="text-[11px] text-neutral-600">{ob.pasosCompletados}/{ob.totalPasos} pasos</span>
+                          {planPendiente && (
+                            <span className="text-[10.5px]" style={{ color: "#f87171" }}>⚠ Plan pendiente</span>
+                          )}
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* 4. Anotaciones de clientes */}
+            {conNotas.length > 0 && (
+              <div>
+                <SubLabel>Anotaciones de clientes</SubLabel>
+                <div className="flex flex-col gap-2">
+                  {conNotas.map((c) => {
+                    const entry = CATEGORIAS
+                      .map((cat) => ({ cat, nota: (c.notas[cat] ?? [])[0] }))
+                      .find(({ nota }) => nota !== undefined);
+                    const cat  = entry?.cat ?? null;
+                    const nota = entry?.nota ?? null;
+
+                    const CAT_STYLE: Record<string, { bg: string; text: string; label: string }> = {
+                      nutricion:   { bg: "#2A4A38", text: "#4ade80",  label: "Nutrición" },
+                      seguimiento: { bg: "#1a1a1a", text: "#C9A96E",  label: "Seguimiento" },
+                      meso:        { bg: "#243B55", text: "#93c5fd",  label: "Mesociclo" },
+                      otros:       { bg: "#2a2a2a", text: "#9ca3af",  label: "Otros" },
+                    };
+                    const style = cat ? (CAT_STYLE[cat] ?? CAT_STYLE.otros) : CAT_STYLE.otros;
+
+                    return (
+                      <Link
+                        key={c.id}
+                        href="/coaching/clientes"
+                        className="block rounded-lg border p-3 transition hover:border-white/10 hover:brightness-110"
+                        style={{ backgroundColor: "#1a1a1a", borderColor: "#2a2a2a" }}
+                      >
+                        <div className="mb-1.5 text-[13px] font-medium text-white">{c.nombre}</div>
+                        {nota && (
+                          <div className="flex items-start gap-2">
+                            <span
+                              className="shrink-0 rounded px-1.5 py-0.5 text-[9.5px] font-semibold uppercase tracking-wide"
+                              style={{ backgroundColor: style.bg, color: style.text }}
+                            >
+                              {style.label}
+                            </span>
+                            <p className="min-w-0 truncate text-[12px] leading-snug text-[#9ca3af]">
+                              {nota.texto}
+                            </p>
+                          </div>
+                        )}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
           </div>
         </div>
       )}
+
+      {/* ════ BLOQUE: CONTENIDO (futuro) ══════════════════════════════════ */}
+      {/* ════ BLOQUE: ESTUDIO (futuro) ════════════════════════════════════ */}
+      {/* ════ BLOQUE: PERSONAL (futuro) ═══════════════════════════════════ */}
 
     </div>
   );
