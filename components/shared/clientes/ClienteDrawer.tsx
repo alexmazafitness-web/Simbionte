@@ -190,6 +190,7 @@ export function ClienteDrawer({
   onSaveNote,
   onDeleteNote,
   onCrearTareaDesdeNota,
+  onActualizarFase,
   onMarcarRevision,
   onMarcarCobro,
   onAbrirMeso,
@@ -206,6 +207,7 @@ export function ClienteDrawer({
   onSaveNote: (categoria: Categoria, notaId: string | null, texto: string) => void;
   onDeleteNote: (notaId: string) => void;
   onCrearTareaDesdeNota: (texto: string) => Promise<void>;
+  onActualizarFase: (completada: boolean) => void;
   onMarcarRevision: () => void;
   onMarcarCobro: () => void;
   onAbrirMeso: () => void;
@@ -309,6 +311,47 @@ export function ClienteDrawer({
           <Field label="Próxima" value={fmtDateCorta(cliente.proximaRevision)} />
           <Field label="Estado" value={<RevisionPill dias={cliente.revD} />} />
           <Field label="Permanencia" value={`${cliente.permanencia} meses`} />
+        </Block>
+
+        <Block
+          title="Primera fase"
+          action={
+            <div className="mt-2.5 flex gap-2">
+              <button
+                type="button"
+                onClick={() => onActualizarFase(true)}
+                className={`flex-1 rounded-lg py-2.5 text-[12.5px] font-semibold transition ${
+                  cliente.faseCompletada
+                    ? "bg-[#1a3320] text-[#4ade80]"
+                    : "bg-panel-2 text-text-dim hover:bg-[rgba(74,222,128,.08)] hover:text-[#4ade80]"
+                }`}
+              >
+                ✓ Completada
+              </button>
+              <button
+                type="button"
+                onClick={() => onActualizarFase(false)}
+                className={`flex-1 rounded-lg py-2.5 text-[12.5px] font-semibold transition ${
+                  !cliente.faseCompletada
+                    ? "bg-panel-3 text-text-2 ring-1 ring-line"
+                    : "bg-panel-2 text-text-dim hover:bg-white/[0.06] hover:text-text-2"
+                }`}
+              >
+                Pendiente
+              </button>
+            </div>
+          }
+        >
+          <Field
+            label="Estado"
+            value={
+              cliente.faseCompletada ? (
+                <span className="text-[#4ade80]">Completada ✓</span>
+              ) : (
+                <span className="text-text-dim">Pendiente</span>
+              )
+            }
+          />
         </Block>
 
         <Block

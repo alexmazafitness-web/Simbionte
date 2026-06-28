@@ -7,6 +7,7 @@ import type { Categoria } from "@/lib/coaching/constants";
 import type { GrupoRevision } from "@/lib/coaching/grupos";
 import type { Tarifa } from "@/lib/coaching/tarifas";
 import {
+  actualizarPrimeraFase,
   crearCliente,
   crearNota,
   darBajaCliente,
@@ -121,6 +122,7 @@ export function ClientesPageClient({
             onCrearTareaDesdeNota={(texto) =>
               crearTarea({ title: notaToTituloTarea(texto), front: "coaching", isPriority: false, date: null, recur: null })
             }
+            onActualizarFase={(completada) => run(() => actualizarPrimeraFase(drawerCliente.id, completada))}
             onMarcarRevision={() => run(() => marcarRevisionHecha(drawerCliente.id))}
             onMarcarCobro={() => run(() => marcarCobroHecho(drawerCliente.id))}
             onAbrirMeso={() => setModal({ type: "meso", clienteId: drawerCliente.id })}

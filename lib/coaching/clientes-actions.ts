@@ -244,6 +244,17 @@ export async function saltarRevision(clienteId: string) {
   revalidatePath("/personal/cerebro");
 }
 
+export async function actualizarPrimeraFase(clienteId: string, completada: boolean) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .schema("coaching")
+    .from("clientes")
+    .update({ fase_completada: completada })
+    .eq("id", clienteId);
+  if (error) throw error;
+  revalidatePath(PATH);
+}
+
 export async function marcarCobroHecho(clienteId: string) {
   const supabase = await createClient();
   const hoy = todayISO();

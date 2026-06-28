@@ -107,12 +107,12 @@ export function ClientesTable({
         <table className="w-full border-collapse">
           <thead>
             <tr className="bg-panel-2">
-              {["Cliente", "Cuota", "Equiv. mensual", "Alta", "Permanencia", "1ª fase", "Próximo pago", "Próxima revisión", "Mesociclo", "Notas", "LTV"].map(
+              {["Cliente", "Cuota", "Equiv. mensual", "Alta", "Permanencia", "Próximo pago", "Próxima revisión", "Mesociclo", "Notas", "LTV"].map(
                 (h, i) => (
                   <th
                     key={h}
                     className={`border-b border-line px-4 py-3 text-[10px] font-semibold tracking-wider text-text-dim uppercase ${
-                      i === 10 ? "text-right" : "text-left"
+                      i === 9 ? "text-right" : "text-left"
                     }`}
                   >
                     {h}
@@ -124,7 +124,7 @@ export function ClientesTable({
           <tbody>
             {list.length === 0 ? (
               <tr>
-                <td colSpan={11} className="px-4 py-9 text-center text-text-dim">
+                <td colSpan={10} className="px-4 py-9 text-center text-text-dim">
                   Sin clientes que coincidan
                 </td>
               </tr>
@@ -169,9 +169,6 @@ export function ClientesTable({
                           {Math.floor((Date.now() - new Date(c.fechaAlta + "T12:00:00").getTime()) / 86_400_000)} días
                         </div>
                       )}
-                    </td>
-                    <td className="px-4 py-3">
-                      {c.faseCompletada ? <Pill variant="ok">Sí</Pill> : <Pill variant="neutral">No</Pill>}
                     </td>
                     <td className="px-4 py-3">
                       {baja ? <Pill variant="bad">Baja {c.bajaFecha ? fmtDateCorta(c.bajaFecha) : ""}</Pill> : <PagoPill dias={c.pagoD} />}
