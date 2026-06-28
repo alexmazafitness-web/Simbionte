@@ -272,7 +272,7 @@ export function MiDiaPageClient({
           <div className="w-10 shrink-0">
             {HOURS.map((h, i) => (
               <div key={h} className="absolute left-0 w-10 pr-2 text-right" style={{ top: GRID_PAD + i * HOUR_H + 3 }}>
-                <span className="text-[9px] tabular-nums" style={{ color: "#6b7280" }}>
+                <span className="text-xs tabular-nums" style={{ color: "#6b7280" }}>
                   {String(h).padStart(2, "0")}:00
                 </span>
               </div>
@@ -361,15 +361,21 @@ export function MiDiaPageClient({
                 {/* Now line — only on today's column */}
                 {isToday && (() => {
                   const nowTop = GRID_PAD + (nowMin / 60) * HOUR_H;
+                  const hh = String(Math.floor(nowMin / 60)).padStart(2, "0");
+                  const mm = String(nowMin % 60).padStart(2, "0");
                   return (
                     <div className="pointer-events-none absolute inset-x-0 z-20" style={{ top: nowTop }}>
+                      {/* Time badge */}
                       <div
-                        className="absolute left-0 -translate-y-1/2 h-2 w-2 rounded-full"
+                        className="absolute left-0 -translate-y-1/2 rounded px-1 py-0.5 text-[9px] font-semibold tabular-nums leading-none text-white"
                         style={{ backgroundColor: "#C9A96E" }}
-                      />
+                      >
+                        {hh}:{mm}
+                      </div>
+                      {/* Horizontal line */}
                       <div
                         className="absolute right-0 h-[1px]"
-                        style={{ left: 8, backgroundColor: "#C9A96E", opacity: 0.7 }}
+                        style={{ left: 36, backgroundColor: "#C9A96E", opacity: 0.7 }}
                       />
                     </div>
                   );
