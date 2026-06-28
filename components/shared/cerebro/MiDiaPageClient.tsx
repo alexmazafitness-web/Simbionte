@@ -270,7 +270,7 @@ export function MiDiaPageClient({
   // Coaching data
   const activos   = useMemo(() => clientesActivos(clientes), [clientes]);
   const revPend   = activos.filter((c) => c.revD !== null && c.revD <= 0);
-  const conNotas  = activos.filter(hasNotas).slice(0, 3);
+  const conNotas  = activos.filter(hasNotas).slice(0, 4);
 
   // Fade-out helper
   function fadeAndDo(id: string, action: () => void) {
@@ -764,25 +764,45 @@ export function MiDiaPageClient({
       {conNotas.length > 0 && (
         <div>
           <SectionLabel>Anotaciones de clientes</SectionLabel>
-          <div className="flex flex-col gap-1">
-            {conNotas.map((c) => {
-              const snippet = CATEGORIAS.flatMap((cat) => c.notas[cat] ?? [])[0]?.texto ?? "";
+          <div className="flex flex-col gap-2">
+            {conNotas.slice(0, 4).map((c) => {
+              // First non-empty category + its first note
+              const entry = CATEGORIAS
+                .map((cat) => ({ cat, nota: (c.notas[cat] ?? [])[0] }))
+                .find(({ nota }) => nota !== undefined);
+              const cat  = entry?.cat ?? null;
+              const nota = entry?.nota ?? null;
+
+              const CAT_STYLE: Record<string, { bg: string; text: string; label: string }> = {
+                nutricion:   { bg: "#2A4A38", text: "#4ade80",  label: "Nutrición" },
+                seguimiento: { bg: "#1e3a5f", text: "#60a5fa",  label: "Seguimiento" },
+                meso:        { bg: "#243B55", text: "#93c5fd",  label: "Mesociclo" },
+                otros:       { bg: "#2a2a2a", text: "#9ca3af",  label: "Otros" },
+              };
+              const style = cat ? (CAT_STYLE[cat] ?? CAT_STYLE.otros) : CAT_STYLE.otros;
+
               return (
-                <div key={c.id} className="flex items-center gap-2 rounded-lg px-2 py-2">
-                  <div className="min-w-0 flex-1">
-                    <span className="text-[13px] font-medium text-[#C9A96E]">{c.nombre}</span>
-                    {snippet && (
-                      <p className="mt-0.5 truncate text-sm text-[#6b7280]">{snippet}</p>
-                    )}
-                  </div>
-                  <Link
-                    href="/coaching/clientes"
-                    className="shrink-0 text-[13px] text-neutral-600 transition hover:text-neutral-300"
-                    title="Ver ficha del cliente"
-                  >
-                    →
-                  </Link>
-                </div>
+                <Link
+                  key={c.id}
+                  href="/coaching/clientes"
+                  className="block rounded-lg border p-3 transition hover:border-white/10 hover:brightness-110"
+                  style={{ backgroundColor: "#1a1a1a", borderColor: "#2a2a2a" }}
+                >
+                  <div className="mb-1.5 text-[13px] font-medium text-white">{c.nombre}</div>
+                  {nota && (
+                    <div className="flex items-start gap-2">
+                      <span
+                        className="shrink-0 rounded px-1.5 py-0.5 text-[9.5px] font-semibold uppercase tracking-wide"
+                        style={{ backgroundColor: style.bg, color: style.text }}
+                      >
+                        {style.label}
+                      </span>
+                      <p className="min-w-0 truncate text-[12px] leading-snug text-[#9ca3af]">
+                        {nota.texto}
+                      </p>
+                    </div>
+                  )}
+                </Link>
               );
             })}
           </div>
