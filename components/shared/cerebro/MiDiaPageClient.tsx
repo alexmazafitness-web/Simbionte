@@ -39,6 +39,11 @@ function eventsOn(iso: string, ev: EventBlockVM[], unicos: EventoUnicoVM[]) {
   };
 }
 
+function remHasTiempo(r: ReminderVM): boolean {
+  const d = new Date(r.whenISO);
+  return d.getHours() !== 0 || d.getMinutes() !== 0;
+}
+
 // Uses local date arithmetic to avoid UTC offset shifting the day
 function localISO(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -60,9 +65,9 @@ function weekDays(anchor: string): string[] {
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mb-2 flex items-center gap-2">
-      <span className="text-[9.5px] font-bold uppercase tracking-widest text-neutral-500">{children}</span>
-      <span className="h-px flex-1 bg-white/[0.06]" />
+    <div className="mb-3">
+      <span className="text-[10px] uppercase tracking-[0.15em]" style={{ color: "#4b5563" }}>{children}</span>
+      <div className="mt-1.5 h-px" style={{ backgroundColor: "#2a2a2a" }} />
     </div>
   );
 }
@@ -70,8 +75,8 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 function CheckboxIcon({ checked }: { checked: boolean }) {
   return (
     <span className={`flex h-[17px] w-[17px] shrink-0 items-center justify-center rounded-[4px] border transition ${
-      checked ? "border-[#C9A96E] bg-[#C9A96E]" : "border-neutral-700 hover:border-neutral-500"
-    }`}>
+      checked ? "border-[#C9A96E] bg-[#C9A96E]" : "hover:border-neutral-500"
+    }`} style={{ borderColor: checked ? "#C9A96E" : "#3a3a3a" }}>
       {checked && (
         <svg viewBox="0 0 24 24" fill="none" stroke="#1a1208" strokeWidth={3} className="h-full w-full p-[3px]">
           <path d="M5 13l4 4L19 7" />
@@ -83,8 +88,8 @@ function CheckboxIcon({ checked }: { checked: boolean }) {
 
 function BellIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}
-      className="h-[14px] w-[14px] shrink-0 text-neutral-600">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#C9A96E" strokeWidth={1.8}
+      className="h-[14px] w-[14px] shrink-0">
       <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" />
     </svg>
   );
@@ -185,10 +190,11 @@ export function MiDiaPageClient({
       .sort((a, b) => (a.isPriority === b.isPriority ? 0 : a.isPriority ? -1 : 1)),
   [tasks, hoy, todayDow]);
 
-  // Reminders for today
-  const recHoy = useMemo(() =>
-    reminders.filter((r) => !r.done && r.whenISO.slice(0, 10) === hoy)
-              .sort((a, b) => a.whenISO.localeCompare(b.whenISO)),
+  // Reminders for today — split by whether they have a specific time
+  const recHoySinHora = useMemo(() =>
+    reminders
+      .filter((r) => !r.done && r.whenISO.slice(0, 10) === hoy && !remHasTiempo(r))
+      .sort((a, b) => a.whenISO.localeCompare(b.whenISO)),
   [reminders, hoy]);
 
   // Coaching data
@@ -343,6 +349,25 @@ export function MiDiaPageClient({
                   );
                 })}
 
+                {/* Reminders with a specific time */}
+                {reminders
+                  .filter((r) => !r.done && r.whenISO.slice(0, 10) === iso && remHasTiempo(r))
+                  .map((r) => {
+                    const rMin = unikoMin(r.whenISO);
+                    const top  = GRID_PAD + (rMin / 60) * HOUR_H + 1;
+                    return (
+                      <div
+                        key={r.id}
+                        className="absolute left-0.5 right-0.5 overflow-hidden rounded-md px-1.5 py-0.5"
+                        style={{ top, height: 26, backgroundColor: "#C9A96E12", borderLeft: "2px solid #C9A96E" }}
+                      >
+                        <div className="truncate text-[9.5px] font-semibold text-[#C9A96E]">
+                          {r.text}
+                        </div>
+                      </div>
+                    );
+                  })}
+
                 {/* Revisiones indicator — single consolidated block to avoid stacking overlap */}
                 {revClientes.length > 0 && (
                   <div
@@ -367,7 +392,7 @@ export function MiDiaPageClient({
                     <div className="pointer-events-none absolute inset-x-0 z-20" style={{ top: nowTop }}>
                       {/* Time badge */}
                       <div
-                        className="absolute left-0 -translate-y-1/2 rounded px-1 py-0.5 text-[9px] font-semibold tabular-nums leading-none text-white"
+                        className="absolute left-0 -translate-y-1/2 rounded px-1.5 py-0.5 text-sm font-medium tabular-nums leading-none text-white"
                         style={{ backgroundColor: "#C9A96E" }}
                       >
                         {hh}:{mm}
@@ -375,7 +400,7 @@ export function MiDiaPageClient({
                       {/* Horizontal line */}
                       <div
                         className="absolute right-0 h-[1px]"
-                        style={{ left: 36, backgroundColor: "#C9A96E", opacity: 0.7 }}
+                        style={{ left: 50, backgroundColor: "#C9A96E", opacity: 0.7 }}
                       />
                     </div>
                   );
@@ -393,102 +418,85 @@ export function MiDiaPageClient({
   const rightList = (
     <div className="flex flex-col gap-6 overflow-y-auto" style={{ maxHeight: "calc(100vh - 200px)" }}>
 
-      {/* Tareas */}
-      {tareasHoy.length > 0 || isAdding ? (
-        <div>
-          <SectionLabel>Tareas</SectionLabel>
-          <div className="flex flex-col gap-0.5">
-            {tareasHoy.map((t) => {
-              const done = taskDoneOn(t, hoy);
-              return (
-                <FadeItem key={t.id} id={`task-${t.id}`} fadingIds={fadingIds}>
-                  <button
-                    type="button"
-                    disabled={pending}
-                    onClick={() => handleCheckTask(t)}
-                    className="flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left transition hover:bg-white/[0.03]"
-                  >
-                    <CheckboxIcon checked={done} />
-                    <span className={`flex-1 text-[13px] leading-snug ${
-                      done ? "text-neutral-600 line-through" : "font-medium text-[#e5e5e5]"
-                    }`}>
-                      {t.title}
-                    </span>
-                    {t.isPriority && !done && (
-                      <span className="text-[11px] text-[#C9A96E]/50">★</span>
-                    )}
-                  </button>
-                </FadeItem>
-              );
-            })}
-          </div>
-          <div className="mt-1.5">
-            {isAdding ? (
-              <div className="flex items-center gap-3 rounded-lg bg-white/[0.03] px-2.5 py-2">
-                <CheckboxIcon checked={false} />
-                <input
-                  autoFocus
-                  value={newTitle}
-                  onChange={(e) => setNewTitle(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleAddTask();
-                    if (e.key === "Escape") { setIsAdding(false); setNewTitle(""); }
-                  }}
-                  placeholder="Nombre de la tarea…"
-                  className="flex-1 bg-transparent text-[13px] text-[#e5e5e5] outline-none placeholder:text-neutral-700"
-                />
+      {/* ── Tareas del día ─────────────────────────────────────────────── */}
+      <div>
+        <SectionLabel>Tareas del día</SectionLabel>
+        <div className="flex flex-col gap-1">
+          {tareasHoy.map((t) => {
+            const done = taskDoneOn(t, hoy);
+            return (
+              <FadeItem key={t.id} id={`task-${t.id}`} fadingIds={fadingIds}>
                 <button
                   type="button"
-                  onClick={handleAddTask}
-                  disabled={!newTitle.trim() || pending}
-                  className="text-[11px] font-semibold text-[#C9A96E] transition disabled:opacity-30"
+                  disabled={pending}
+                  onClick={() => handleCheckTask(t)}
+                  className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition hover:bg-white/[0.03]"
                 >
-                  Añadir
+                  <CheckboxIcon checked={done} />
+                  <span className={`flex-1 text-[13px] leading-snug ${
+                    done ? "text-neutral-600 line-through" : "font-medium text-[#e5e5e5]"
+                  }`}>
+                    {t.title}
+                  </span>
+                  {t.isPriority && !done && (
+                    <span className="text-[11px] text-[#C9A96E]/50">★</span>
+                  )}
                 </button>
-              </div>
-            ) : (
+              </FadeItem>
+            );
+          })}
+        </div>
+        <div className="mt-2">
+          {isAdding ? (
+            <div className="flex items-center gap-3 rounded-lg bg-white/[0.03] px-2 py-2">
+              <CheckboxIcon checked={false} />
+              <input
+                autoFocus
+                value={newTitle}
+                onChange={(e) => setNewTitle(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleAddTask();
+                  if (e.key === "Escape") { setIsAdding(false); setNewTitle(""); }
+                }}
+                placeholder="Nombre de la tarea…"
+                className="flex-1 bg-transparent text-[13px] text-[#e5e5e5] outline-none placeholder:text-neutral-700"
+              />
               <button
                 type="button"
-                onClick={() => setIsAdding(true)}
-                className="flex items-center gap-1.5 px-2.5 text-[11.5px] text-neutral-700 transition hover:text-neutral-400"
+                onClick={handleAddTask}
+                disabled={!newTitle.trim() || pending}
+                className="text-[11px] font-semibold text-[#C9A96E] transition disabled:opacity-30"
               >
-                <span className="text-[14px] leading-none">+</span> Añadir tarea
+                Añadir
               </button>
-            )}
-          </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setIsAdding(true)}
+              className="flex items-center gap-1.5 px-2 text-[11.5px] font-medium text-[#C9A96E]/60 transition hover:text-[#C9A96E]"
+            >
+              <span className="text-[14px] leading-none">+</span> Añadir tarea
+            </button>
+          )}
         </div>
-      ) : (
-        <div>
-          <SectionLabel>Tareas</SectionLabel>
-          <button
-            type="button"
-            onClick={() => setIsAdding(true)}
-            className="flex items-center gap-1.5 px-2.5 text-[11.5px] text-neutral-700 transition hover:text-neutral-400"
-          >
-            <span className="text-[14px] leading-none">+</span> Añadir tarea
-          </button>
-        </div>
-      )}
+      </div>
 
-      {/* Recordatorios */}
-      {recHoy.length > 0 && (
+      {/* ── Recordatorios (sin hora — los que tienen hora van al calendario) ── */}
+      {recHoySinHora.length > 0 && (
         <div>
           <SectionLabel>Recordatorios</SectionLabel>
-          <div className="flex flex-col gap-0.5">
-            {recHoy.map((r) => (
+          <div className="flex flex-col gap-1">
+            {recHoySinHora.map((r) => (
               <FadeItem key={r.id} id={`rem-${r.id}`} fadingIds={fadingIds}>
                 <button
                   type="button"
                   disabled={pending}
                   onClick={() => handleCheckReminder(r)}
-                  className="flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left transition hover:bg-white/[0.03]"
+                  className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition hover:bg-white/[0.03]"
                 >
-                  <CheckboxIcon checked={false} />
                   <BellIcon />
                   <span className="flex-1 text-[13px] font-medium text-[#e5e5e5]">{r.text}</span>
-                  <span className="text-[10.5px] tabular-nums text-neutral-600">
-                    {new Date(r.whenISO).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}
-                  </span>
                 </button>
               </FadeItem>
             ))}
@@ -496,24 +504,25 @@ export function MiDiaPageClient({
         </div>
       )}
 
-      {/* Revisiones pendientes */}
+      {/* ── Revisiones pendientes ─────────────────────────────────────── */}
       {revPend.length > 0 && (
         <div>
           <SectionLabel>Revisiones pendientes</SectionLabel>
-          <div className="flex flex-col gap-0.5">
+          <div className="flex flex-col gap-1">
             {revPend.map((c) => (
               <FadeItem key={c.id} id={`rev-${c.id}`} fadingIds={fadingIds}>
-                <div className="flex items-center gap-2 rounded-lg px-2.5 py-2">
-                  <span className="text-[12px] leading-none text-red-400">•</span>
+                <div className="flex items-center gap-2 rounded-lg px-2 py-2">
+                  <span className="shrink-0 text-[12px] leading-none text-red-400">•</span>
                   <span className="flex-1 text-[13px] font-medium text-[#e5e5e5]">{c.nombre}</span>
-                  <span className="text-[11px] text-red-400">{Math.abs(c.revD ?? 0)}d vencida</span>
+                  <span className="text-[11px] tabular-nums text-red-400">{Math.abs(c.revD ?? 0)}d vencida</span>
                   <button
                     type="button"
                     disabled={pending}
                     onClick={() => handleRevisionHecha(c.id)}
-                    className="ml-1 rounded-md bg-white/[0.06] px-2 py-1 text-[10.5px] text-neutral-400 transition hover:bg-white/[0.1] hover:text-neutral-200"
+                    title="Marcar realizada"
+                    className="ml-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-white/[0.05] text-[12px] text-neutral-400 transition hover:bg-white/[0.1] hover:text-[#C9A96E]"
                   >
-                    Marcar realizada
+                    ✓
                   </button>
                 </div>
               </FadeItem>
@@ -522,24 +531,28 @@ export function MiDiaPageClient({
         </div>
       )}
 
-      {/* Anotaciones recientes */}
+      {/* ── Anotaciones de clientes ───────────────────────────────────── */}
       {conNotas.length > 0 && (
         <div>
-          <SectionLabel>Anotaciones recientes</SectionLabel>
-          <div className="flex flex-col gap-0.5">
+          <SectionLabel>Anotaciones de clientes</SectionLabel>
+          <div className="flex flex-col gap-1">
             {conNotas.map((c) => {
               const snippet = CATEGORIAS.flatMap((cat) => c.notas[cat] ?? [])[0]?.texto ?? "";
               return (
-                <div key={c.id} className="rounded-lg px-2.5 py-2">
-                  <div className="flex items-baseline gap-2">
-                    <span className="flex-1 text-[13px] font-medium text-[#e5e5e5]">{c.nombre}</span>
-                    <Link href="/coaching/clientes" className="text-[10.5px] text-neutral-600 transition hover:text-neutral-400">
-                      Ver cliente →
-                    </Link>
+                <div key={c.id} className="flex items-center gap-2 rounded-lg px-2 py-2">
+                  <div className="min-w-0 flex-1">
+                    <span className="text-[13px] font-medium text-[#C9A96E]">{c.nombre}</span>
+                    {snippet && (
+                      <p className="mt-0.5 truncate text-sm text-[#6b7280]">{snippet}</p>
+                    )}
                   </div>
-                  {snippet && (
-                    <p className="mt-0.5 line-clamp-2 text-[11.5px] leading-relaxed text-neutral-600">{snippet}</p>
-                  )}
+                  <Link
+                    href="/coaching/clientes"
+                    className="shrink-0 text-[13px] text-neutral-600 transition hover:text-neutral-300"
+                    title="Ver ficha del cliente"
+                  >
+                    →
+                  </Link>
                 </div>
               );
             })}
