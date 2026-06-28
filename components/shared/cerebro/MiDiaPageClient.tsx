@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useAutoRefresh } from "@/lib/hooks/useAutoRefresh";
 import { crearTarea, marcarTareaHecha } from "@/lib/personal/tasks-actions";
 import { taskDoneOn, taskShowToday, type TaskVM } from "@/lib/personal/tasks";
-import { addDaysISO, dowOf, minToStr, mondayOfWeek, todayISO } from "@/lib/personal/format";
+import { addDaysISO, dowOf, minToStr, todayISO } from "@/lib/personal/format";
 import { recurOccursOn } from "@/lib/personal/recurrence";
 import { marcarRecordatorioHecho } from "@/lib/personal/reminders-actions";
 import { calcularMRR, clientesActivos, hasNotas, type ClienteVM } from "@/lib/coaching/clientes";
@@ -38,9 +38,21 @@ function eventsOn(iso: string, ev: EventBlockVM[], unicos: EventoUnicoVM[]) {
   };
 }
 
+// Uses local date arithmetic to avoid UTC offset shifting the day
+function localISO(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function addDaysLocal(iso: string, n: number): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  return localISO(new Date(y, m - 1, d + n));
+}
+
 function weekDays(anchor: string): string[] {
-  const mon = mondayOfWeek(anchor);
-  return Array.from({ length: 7 }, (_, i) => addDaysISO(mon, i));
+  const [y, m, d] = anchor.split("-").map(Number);
+  const dow = new Date(y, m - 1, d).getDay(); // 0=Sun
+  const offset = dow === 0 ? -6 : 1 - dow;   // shift to Monday
+  return Array.from({ length: 7 }, (_, i) => localISO(new Date(y, m - 1, d + offset + i)));
 }
 
 // ── Tiny helpers ──────────────────────────────────────────────────────────────
@@ -245,12 +257,10 @@ export function MiDiaPageClient({
           {/* Time column */}
           <div className="w-10 shrink-0">
             {HOURS.map((h, i) => (
-              <div key={h} className="absolute left-0 w-10 -translate-y-[9px] pr-2 text-right" style={{ top: i * HOUR_H }}>
-                {i > 0 && (
-                  <span className="text-[9px] tabular-nums text-neutral-700">
-                    {String(h).padStart(2, "0")}
-                  </span>
-                )}
+              <div key={h} className="absolute left-0 w-10 pr-2 text-right" style={{ top: i * HOUR_H + 3 }}>
+                <span className="text-[9px] tabular-nums text-neutral-700">
+                  {String(h).padStart(2, "0")}:00
+                </span>
               </div>
             ))}
           </div>
@@ -512,7 +522,7 @@ export function MiDiaPageClient({
           </h1>
           <div className="mt-2">
             <span className="text-[11.5px] tabular-nums text-neutral-600">
-              {mrr.toLocaleString("es-ES")}€ · {Math.round(pct)}% de {target.toLocaleString("es-ES")}€
+              {mrr.toLocaleString("es-ES")}€ de {target.toLocaleString("es-ES")}€
             </span>
             <div className="mt-1.5 h-[2px] overflow-hidden rounded-full bg-neutral-800/80">
               <div
@@ -527,7 +537,7 @@ export function MiDiaPageClient({
         <div className="flex shrink-0 items-center gap-1">
           <button
             type="button"
-            onClick={() => setWeekAnchor((a) => addDaysISO(a, -7))}
+            onClick={() => setWeekAnchor((a) => addDaysLocal(a, -7))}
             className="flex h-7 w-7 items-center justify-center rounded-md text-neutral-600 transition hover:bg-white/[0.06] hover:text-neutral-300"
           >
             <ChevronIcon dir="left" />
@@ -541,7 +551,7 @@ export function MiDiaPageClient({
           </button>
           <button
             type="button"
-            onClick={() => setWeekAnchor((a) => addDaysISO(a, 7))}
+            onClick={() => setWeekAnchor((a) => addDaysLocal(a, 7))}
             className="flex h-7 w-7 items-center justify-center rounded-md text-neutral-600 transition hover:bg-white/[0.06] hover:text-neutral-300"
           >
             <ChevronIcon dir="right" />
