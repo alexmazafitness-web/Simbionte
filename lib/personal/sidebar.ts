@@ -106,4 +106,5 @@ export const RUTAS_APP: { label: string; ruta: string; grupo: string }[] = [
   { label: "Pagos",           ruta: "/coaching/pagos",                grupo: "Business" },
   { label: "Revisiones",      ruta: "/coaching/revisiones",           grupo: "Business" },
   { label: "Mesociclos",      ruta: "/coaching/mesociclos",           grupo: "Business" },
+  { label: "Onboarding",     ruta: "/coaching/onboarding",           grupo: "Business" },
 ];

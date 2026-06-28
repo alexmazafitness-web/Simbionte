@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireUserId } from "@/lib/supabase/auth";
 import { CICLO_DIAS, GRUPO_REV_DEFAULT, type Categoria, type Recurrencia } from "./constants";
 import { addDaysISO, fmtDateCorta, todayISO } from "./format";
+import { initOnboarding } from "./onboarding-actions";
 
 const PATH = "/coaching/clientes";
 
@@ -98,6 +99,13 @@ export async function crearCliente(input: NuevoClienteInput) {
       .update({ estado: "cliente" })
       .eq("id", input.leadId);
     if (leadUpdateError) throw leadUpdateError;
+  }
+
+  // Auto-start onboarding for new clients (existing clients are not backfilled)
+  try {
+    await initOnboarding(clienteId, input.nombre, hoy);
+  } catch (e) {
+    console.error("initOnboarding failed (non-blocking):", e);
   }
 
   revalidatePath(PATH);
