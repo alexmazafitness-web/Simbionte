@@ -29,7 +29,10 @@ import type { EventBlockVM, EventoUnicoVM } from "@/lib/personal/events";
 import type { ReminderVM } from "@/lib/personal/reminders";
 import { CalEventModal, type CalModalProps } from "./CalEventModal";
 import { RevisionNotasDrawer } from "./RevisionNotasDrawer";
+import { PlanificadorDrawer } from "./PlanificadorDrawer";
 import { usePomodoroCtx } from "@/lib/pomodoro/PomodoroContext";
+import type { HorarioConfig } from "@/lib/personal/asistente-types";
+import { HORARIO_DEFAULT } from "@/lib/personal/asistente-types";
 
 // ── Calendar constants ────────────────────────────────────────────────────────
 
@@ -205,6 +208,7 @@ export function MiDiaPageClient({
   reminders,
   clientes,
   onboardings,
+  horarioConfig,
 }: {
   tasks: TaskVM[];
   goal: GoalVM;
@@ -213,6 +217,7 @@ export function MiDiaPageClient({
   reminders: ReminderVM[];
   clientes: ClienteVM[];
   onboardings: OnboardingVM[];
+  horarioConfig: HorarioConfig | null;
 }) {
   const hoy = todayISO();
 
@@ -236,6 +241,7 @@ export function MiDiaPageClient({
   const resizeRef      = useRef<{ ev: EventoUnicoVM; iso: string; startMin: number } | null>(null);
   const [resizeEndMin, setResizeEndMin] = useState<number | null>(null);
   const [notasCliente, setNotasCliente] = useState<ClienteVM | null>(null);
+  const [planificadorOpen, setPlanificadorOpen] = useState(false);
 
   const pomodoro = usePomodoroCtx();
 
@@ -243,6 +249,7 @@ export function MiDiaPageClient({
   const refreshPaused =
     calModal !== null ||
     notasCliente !== null ||
+    planificadorOpen ||
     (pomodoro.state.running && pomodoro.state.linkedTask !== null);
 
   // 5-min background refresh; isSafeToRefresh() inside the hook also guards input focus
@@ -1039,24 +1046,38 @@ export function MiDiaPageClient({
           </div>
           </div>
 
-          {/* Pomodoro toggle button */}
-          <button
-            type="button"
-            onClick={() => pomodoro.open()}
-            title="Pomodoro"
-            className={`mt-1 flex h-8 w-8 items-center justify-center rounded-lg border transition hover:brightness-110 ${
-              pomodoro.state.open
-                ? "border-[#C9A96E]/40 bg-[#C9A96E]/10 text-[#C9A96E]"
-                : "border-white/[0.06] text-neutral-600 hover:border-white/10 hover:text-neutral-300"
-            }`}
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-4 w-4">
-              <circle cx="12" cy="13" r="8" />
-              <path d="M12 9v4l2 2" />
-              <path d="M9 2h6" strokeLinecap="round" />
-              <path d="M12 2v3" strokeLinecap="round" />
-            </svg>
-          </button>
+          {/* Header actions */}
+          <div className="mt-1 flex items-center gap-2">
+            {/* Planificar mi día */}
+            <button
+              type="button"
+              onClick={() => setPlanificadorOpen(true)}
+              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-semibold transition hover:brightness-110"
+              style={{ backgroundColor: "rgba(201,169,110,.12)", color: "#C9A96E", border: "1px solid rgba(201,169,110,.2)" }}
+            >
+              <span className="text-[13px] leading-none">✨</span>
+              Planificar
+            </button>
+
+            {/* Pomodoro toggle */}
+            <button
+              type="button"
+              onClick={() => pomodoro.open()}
+              title="Pomodoro"
+              className={`flex h-8 w-8 items-center justify-center rounded-lg border transition hover:brightness-110 ${
+                pomodoro.state.open
+                  ? "border-[#C9A96E]/40 bg-[#C9A96E]/10 text-[#C9A96E]"
+                  : "border-white/[0.06] text-neutral-600 hover:border-white/10 hover:text-neutral-300"
+              }`}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-4 w-4">
+                <circle cx="12" cy="13" r="8" />
+                <path d="M12 9v4l2 2" />
+                <path d="M9 2h6" strokeLinecap="round" />
+                <path d="M12 2v3" strokeLinecap="round" />
+              </svg>
+            </button>
+          </div>
         </div>
 
       </div>
@@ -1086,6 +1107,15 @@ export function MiDiaPageClient({
       <RevisionNotasDrawer
         cliente={notasCliente}
         onClose={() => setNotasCliente(null)}
+      />
+
+      {/* Daily planner drawer */}
+      <PlanificadorDrawer
+        open={planificadorOpen}
+        onClose={() => setPlanificadorOpen(false)}
+        horarioConfig={horarioConfig ?? HORARIO_DEFAULT}
+        hoyISO={hoy}
+        hoyTexto={hoyTexto}
       />
     </div>
   );

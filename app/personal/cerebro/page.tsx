@@ -4,6 +4,7 @@ import { listEvents, listEventosUnicos } from "@/lib/personal/events-queries";
 import { listReminders } from "@/lib/personal/reminders-queries";
 import { listClientes } from "@/lib/coaching/clientes-queries";
 import { listOnboardings } from "@/lib/coaching/onboarding-queries";
+import { getHorarioConfig } from "@/lib/personal/asistente-queries";
 import { MiDiaPageClient } from "@/components/shared/cerebro/MiDiaPageClient";
 
 async function safe<T>(p: Promise<T[]>): Promise<T[]> {
@@ -11,7 +12,7 @@ async function safe<T>(p: Promise<T[]>): Promise<T[]> {
 }
 
 export default async function CerebroPage() {
-  const [tasks, goal, events, eventosUnicos, reminders, clientes, onboardings] = await Promise.all([
+  const [tasks, goal, events, eventosUnicos, reminders, clientes, onboardings, horarioConfig] = await Promise.all([
     safe(listTasks()),
     getGoal(),
     safe(listEvents()),
@@ -19,6 +20,7 @@ export default async function CerebroPage() {
     safe(listReminders()),
     safe(listClientes()),
     safe(listOnboardings("en_progreso")),
+    getHorarioConfig().catch(() => null),
   ]);
 
   return (
@@ -30,6 +32,7 @@ export default async function CerebroPage() {
       reminders={reminders}
       clientes={clientes}
       onboardings={onboardings}
+      horarioConfig={horarioConfig}
     />
   );
 }
