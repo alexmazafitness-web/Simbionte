@@ -392,7 +392,7 @@ export function MiDiaPageClient({
                     <div className="pointer-events-none absolute inset-x-0 z-20" style={{ top: nowTop }}>
                       {/* Time badge */}
                       <div
-                        className="absolute left-0 -translate-y-1/2 rounded px-1.5 py-0.5 text-sm font-medium tabular-nums leading-none text-white"
+                        className="absolute left-0 -translate-y-1/2 rounded px-1.5 py-0.5 text-[10px] font-medium tabular-nums leading-none text-white"
                         style={{ backgroundColor: "#C9A96E" }}
                       >
                         {hh}:{mm}
