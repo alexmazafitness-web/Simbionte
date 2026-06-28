@@ -194,7 +194,6 @@ export function MiDiaPageClient({
   clientes: ClienteVM[];
 }) {
   const hoy = todayISO();
-  useAutoRefresh(60_000);
 
   const weekAnchor = hoy;
   const [pending, startTransition]  = useTransition();
@@ -216,6 +215,9 @@ export function MiDiaPageClient({
   const resizeRef      = useRef<{ ev: EventoUnicoVM; iso: string; startMin: number } | null>(null);
   const [resizeEndMin, setResizeEndMin] = useState<number | null>(null);
   const [notasCliente, setNotasCliente] = useState<ClienteVM | null>(null);
+
+  // Pause auto-refresh while any modal/drawer is open so they don't reset
+  useAutoRefresh(60_000, calModal !== null || notasCliente !== null);
 
   // Current time in minutes (updates every minute for the now-line)
   const [nowMin, setNowMin] = useState(() => {
@@ -808,7 +810,7 @@ export function MiDiaPageClient({
 
               const CAT_STYLE: Record<string, { bg: string; text: string; label: string }> = {
                 nutricion:   { bg: "#2A4A38", text: "#4ade80",  label: "Nutrición" },
-                seguimiento: { bg: "#1e3a5f", text: "#60a5fa",  label: "Seguimiento" },
+                seguimiento: { bg: "#1a1a1a", text: "#C9A96E",  label: "Seguimiento" },
                 meso:        { bg: "#243B55", text: "#93c5fd",  label: "Mesociclo" },
                 otros:       { bg: "#2a2a2a", text: "#9ca3af",  label: "Otros" },
               };
