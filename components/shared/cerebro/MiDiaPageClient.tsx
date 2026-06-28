@@ -20,7 +20,7 @@ import {
   eliminarEventoUnico,
 } from "@/lib/personal/events-actions";
 import { calcularMRR, clientesActivos, hasNotas, type ClienteVM } from "@/lib/coaching/clientes";
-import { marcarRevisionHecha } from "@/lib/coaching/clientes-actions";
+import { marcarRevisionHecha, saltarRevision } from "@/lib/coaching/clientes-actions";
 import { CATEGORIAS } from "@/lib/coaching/constants";
 import type { GoalVM } from "@/lib/personal/goal";
 import type { EventBlockVM, EventoUnicoVM } from "@/lib/personal/events";
@@ -336,6 +336,12 @@ export function MiDiaPageClient({
   function handleRevisionHecha(clienteId: string) {
     fadeAndDo(`rev-${clienteId}`, () =>
       startTransition(() => { void marcarRevisionHecha(clienteId); })
+    );
+  }
+
+  function handleSaltarRevision(clienteId: string) {
+    fadeAndDo(`rev-${clienteId}`, () =>
+      startTransition(() => { void saltarRevision(clienteId); })
     );
   }
 
@@ -819,16 +825,27 @@ export function MiDiaPageClient({
                         <path d="M17.5 2.5a2.121 2.121 0 0 1 3 3L12 14l-4 1 1-4 7.5-7.5z" />
                       </svg>
                     </button>
-                    {/* Mark done */}
+                    {/* Revisión hecha */}
                     <button
                       type="button"
                       disabled={pending}
                       onClick={() => handleRevisionHecha(c.id)}
-                      title="Marcar realizada"
-                      className="flex h-7 w-7 items-center justify-center rounded-md text-[13px] text-neutral-500 transition hover:bg-white/[0.08] hover:text-[#C9A96E]"
-                      style={{ backgroundColor: "#242424" }}
+                      title="Revisión hecha"
+                      className="flex h-7 w-7 items-center justify-center rounded-md text-[13px] transition hover:bg-[#2A4A38] hover:text-[#4ade80]"
+                      style={{ backgroundColor: "#242424", color: "#4ade80" }}
                     >
                       ✓
+                    </button>
+                    {/* No subida — saltar ciclo */}
+                    <button
+                      type="button"
+                      disabled={pending}
+                      onClick={() => handleSaltarRevision(c.id)}
+                      title="No subida — saltar ciclo"
+                      className="flex h-7 w-7 items-center justify-center rounded-md text-[13px] text-neutral-500 transition hover:bg-white/[0.08] hover:text-neutral-300"
+                      style={{ backgroundColor: "#242424" }}
+                    >
+                      ⏭
                     </button>
                   </div>
                 </div>

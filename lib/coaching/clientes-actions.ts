@@ -229,6 +229,21 @@ export async function marcarRevisionHecha(clienteId: string) {
   revalidatePath("/personal/cerebro");
 }
 
+// Same date advance as marcarRevisionHecha but semantically "client didn't upload" —
+// kept as a separate action so future history tracking can differentiate.
+export async function saltarRevision(clienteId: string) {
+  const supabase = await createClient();
+  const hoy = todayISO();
+  const { error } = await supabase
+    .schema("coaching")
+    .from("clientes")
+    .update({ proxima_revision: addDaysISO(hoy, 14) })
+    .eq("id", clienteId);
+  if (error) throw error;
+  revalidatePath(PATH);
+  revalidatePath("/personal/cerebro");
+}
+
 export async function marcarCobroHecho(clienteId: string) {
   const supabase = await createClient();
   const hoy = todayISO();
