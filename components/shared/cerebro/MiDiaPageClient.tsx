@@ -18,11 +18,11 @@ import type { ReminderVM } from "@/lib/personal/reminders";
 
 // ── Calendar constants ────────────────────────────────────────────────────────
 
-const H_START  = 6;
+const H_START  = 0;
 const H_END    = 23;
 const HOUR_H   = 52; // px per hour
-const HOURS    = Array.from({ length: H_END - H_START + 1 }, (_, i) => H_START + i);
-const TOTAL_PX = HOURS.length * HOUR_H;
+const HOURS    = Array.from({ length: H_END - H_START + 1 }, (_, i) => H_START + i); // 00..23
+const TOTAL_PX = HOURS.length * HOUR_H; // 24 × 52 = 1248px
 const DAY_HEADS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 
 function unikoMin(startAt: string): number {
@@ -156,7 +156,7 @@ export function MiDiaPageClient({
   // Scroll calendar to H_START + 1 on mount
   useEffect(() => {
     if (calScrollRef.current) {
-      calScrollRef.current.scrollTop = HOUR_H; // start at 07:00
+      calScrollRef.current.scrollTop = 6 * HOUR_H; // start at 06:00
     }
   }, []);
 
@@ -227,32 +227,32 @@ export function MiDiaPageClient({
 
   const calGrid = (
     <div className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-white/[0.06]">
-      {/* Sticky header: days */}
-      <div className="flex shrink-0 border-b border-white/[0.06] bg-[#141414]">
-        <div className="w-10 shrink-0" />
-        {days.map((iso, i) => {
-          const isToday = iso === hoy;
-          const d       = new Date(iso + "T12:00:00");
-          const num     = d.getDate();
-          return (
-            <div key={iso} className={`flex flex-1 flex-col items-center py-2 ${
-              isToday ? "bg-[#C9A96E]/[0.06]" : ""
-            } ${i < 6 ? "border-r border-white/[0.04]" : ""}`}>
-              <span className={`text-[9px] font-bold uppercase tracking-widest ${isToday ? "text-[#C9A96E]" : "text-neutral-600"}`}>
-                {DAY_HEADS[i]}
-              </span>
-              <span className={`mt-0.5 flex h-6 w-6 items-center justify-center rounded-full text-[13px] font-medium ${
-                isToday ? "bg-[#C9A96E] font-bold text-[#1a1208]" : "text-neutral-400"
-              }`}>
-                {num}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Scrollable grid */}
-      <div ref={calScrollRef} className="overflow-y-auto" style={{ maxHeight: "calc(100vh - 240px)" }}>
+      {/* Single scroll container — header is sticky inside so it shares the same width as the grid
+          (avoids scrollbar-width misalignment when header is outside the scroll area) */}
+      <div ref={calScrollRef} className="overflow-y-auto" style={{ maxHeight: "calc(100vh - 210px)" }}>
+        {/* Sticky header */}
+        <div className="sticky top-0 z-10 flex border-b border-white/[0.06] bg-[#141414]">
+          <div className="w-10 shrink-0" />
+          {days.map((iso, i) => {
+            const isToday = iso === hoy;
+            const d       = new Date(iso + "T12:00:00");
+            const num     = d.getDate();
+            return (
+              <div key={iso} className={`flex flex-1 flex-col items-center py-2 ${
+                isToday ? "bg-[#C9A96E]/[0.06]" : ""
+              } ${i < 6 ? "border-r border-white/[0.04]" : ""}`}>
+                <span className={`text-[9px] font-bold uppercase tracking-widest ${isToday ? "text-[#C9A96E]" : "text-neutral-600"}`}>
+                  {DAY_HEADS[i]}
+                </span>
+                <span className={`mt-0.5 flex h-6 w-6 items-center justify-center rounded-full text-[13px] font-medium ${
+                  isToday ? "bg-[#C9A96E] font-bold text-[#1a1208]" : "text-neutral-400"
+                }`}>
+                  {num}
+                </span>
+              </div>
+            );
+          })}
+        </div>
         <div className="relative flex" style={{ height: TOTAL_PX }}>
           {/* Time column */}
           <div className="w-10 shrink-0">
@@ -329,16 +329,20 @@ export function MiDiaPageClient({
                   );
                 })}
 
-                {/* Revisiones dot indicator */}
-                {revClientes.map((c) => (
-                  <div key={c.id}
-                    title={`Rev: ${c.nombre}`}
+                {/* Revisiones indicator — single consolidated block to avoid stacking overlap */}
+                {revClientes.length > 0 && (
+                  <div
                     className="absolute left-0.5 right-0.5 rounded-sm px-1 py-0.5"
-                    style={{ top: 2, height: 14, backgroundColor: "#C9A96E18", borderLeft: "2px solid #C9A96E" }}
+                    style={{ top: 2, height: 16, backgroundColor: "#C9A96E12", borderLeft: "2px solid #C9A96E" }}
+                    title={revClientes.map((c) => `Rev: ${c.nombre}`).join("\n")}
                   >
-                    <div className="truncate text-[8.5px] font-semibold text-[#C9A96E]">{c.nombre.split(",")[0]}</div>
+                    <div className="truncate text-[8.5px] font-semibold text-[#C9A96E]">
+                      {revClientes.length === 1
+                        ? revClientes[0]!.nombre.split(",")[0]
+                        : `${revClientes.length} revisiones`}
+                    </div>
                   </div>
-                ))}
+                )}
               </div>
             );
           })}
