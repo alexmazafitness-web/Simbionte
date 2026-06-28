@@ -107,12 +107,12 @@ export function ClientesTable({
         <table className="w-full border-collapse">
           <thead>
             <tr className="bg-panel-2">
-              {["Cliente", "Cuota", "Equiv. mensual", "Alta", "Permanencia", "Próximo pago", "Próxima revisión", "Mesociclo", "Notas", "LTV"].map(
+              {["Cliente", "Cuota", "Alta", "Permanencia", "Próximo pago", "Próxima revisión", "Mesociclo", "Notas", "LTV"].map(
                 (h, i) => (
                   <th
                     key={h}
                     className={`border-b border-line px-4 py-3 text-[10px] font-semibold tracking-wider text-text-dim uppercase ${
-                      i === 9 ? "text-right" : "text-left"
+                      i === 8 ? "text-right" : "text-left"
                     }`}
                   >
                     {h}
@@ -124,7 +124,7 @@ export function ClientesTable({
           <tbody>
             {list.length === 0 ? (
               <tr>
-                <td colSpan={10} className="px-4 py-9 text-center text-text-dim">
+                <td colSpan={9} className="px-4 py-9 text-center text-text-dim">
                   Sin clientes que coincidan
                 </td>
               </tr>
@@ -149,17 +149,16 @@ export function ClientesTable({
                       </div>
                     </td>
                     <td className="px-4 py-3 text-[13.5px]">
-                      {c.cuota ?? "—"}
-                      {c.cuota !== null && (
-                        <span className="text-[11px] text-text-dim"> € / {c.recurrencia?.toLowerCase()}</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-[13.5px]">
-                      {c.cuota !== null && c.recurrencia ? (
-                        <span className="font-medium" style={{ color: "#C9A96E" }}>
-                          {(c.cuota / { Mensual: 1, Trimestral: 3, Semestral: 6, Anual: 12 }[c.recurrencia]!).toLocaleString("es-ES", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}€
-                        </span>
-                      ) : <span className="text-text-dim">—</span>}
+                      {c.cuota !== null ? (
+                        <>
+                          {c.cuota}<span className="text-[11px] text-text-dim"> € / {c.recurrencia?.toLowerCase()}</span>
+                          {c.cuota !== null && c.recurrencia && c.recurrencia !== "Mensual" && (
+                            <div className="text-xs" style={{ color: "#6b7280" }}>
+                              ≈ {(c.cuota / ({ Trimestral: 3, Semestral: 6, Anual: 12 } as Record<string, number>)[c.recurrencia]!).toLocaleString("es-ES", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}€/mes
+                            </div>
+                          )}
+                        </>
+                      ) : "—"}
                     </td>
                     <td className="px-4 py-3 text-[12.5px] text-text-2">{fmtDateCorta(c.fechaAlta)}</td>
                     <td className="px-4 py-3">
