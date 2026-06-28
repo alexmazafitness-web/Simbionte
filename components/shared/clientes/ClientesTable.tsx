@@ -107,7 +107,7 @@ export function ClientesTable({
         <table className="w-full border-collapse">
           <thead>
             <tr className="bg-panel-2">
-              {["Cliente", "Grupo", "Cuota", "Alta", "Permanencia", "1ª fase", "Próximo pago", "Próxima revisión", "Mesociclo", "Notas", "LTV"].map(
+              {["Cliente", "Cuota", "Equiv. mensual", "Alta", "Permanencia", "1ª fase", "Próximo pago", "Próxima revisión", "Mesociclo", "Notas", "LTV"].map(
                 (h, i) => (
                   <th
                     key={h}
@@ -148,16 +148,18 @@ export function ClientesTable({
                         <div className="font-semibold">{c.nombre}</div>
                       </div>
                     </td>
-                    <td className="px-4 py-3">
-                      <span className="rounded-md bg-panel-3 px-2.5 py-1 font-heading text-[11px] font-bold tracking-wide text-gold-bright">
-                        {c.grupoCodigo ?? "—"}
-                      </span>
-                    </td>
                     <td className="px-4 py-3 text-[13.5px]">
                       {c.cuota ?? "—"}
                       {c.cuota !== null && (
                         <span className="text-[11px] text-text-dim"> € / {c.recurrencia?.toLowerCase()}</span>
                       )}
+                    </td>
+                    <td className="px-4 py-3 text-[13.5px]">
+                      {c.cuota !== null && c.recurrencia ? (
+                        <span className="font-medium" style={{ color: "#C9A96E" }}>
+                          {(c.cuota / { Mensual: 1, Trimestral: 3, Semestral: 6, Anual: 12 }[c.recurrencia]!).toLocaleString("es-ES", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}€
+                        </span>
+                      ) : <span className="text-text-dim">—</span>}
                     </td>
                     <td className="px-4 py-3 text-[12.5px] text-text-2">{fmtDateCorta(c.fechaAlta)}</td>
                     <td className="px-4 py-3">{c.permanencia}m</td>
