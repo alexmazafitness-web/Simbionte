@@ -26,6 +26,7 @@ import type { GoalVM } from "@/lib/personal/goal";
 import type { EventBlockVM, EventoUnicoVM } from "@/lib/personal/events";
 import type { ReminderVM } from "@/lib/personal/reminders";
 import { CalEventModal, type CalModalProps } from "./CalEventModal";
+import { RevisionNotasDrawer } from "./RevisionNotasDrawer";
 
 // ── Calendar constants ────────────────────────────────────────────────────────
 
@@ -214,6 +215,7 @@ export function MiDiaPageClient({
   // Resize state
   const resizeRef      = useRef<{ ev: EventoUnicoVM; iso: string; startMin: number } | null>(null);
   const [resizeEndMin, setResizeEndMin] = useState<number | null>(null);
+  const [notasCliente, setNotasCliente] = useState<ClienteVM | null>(null);
 
   // Current time in minutes (updates every minute for the now-line)
   const [nowMin, setNowMin] = useState(() => {
@@ -758,16 +760,32 @@ export function MiDiaPageClient({
                       </span>
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    disabled={pending}
-                    onClick={() => handleRevisionHecha(c.id)}
-                    title="Marcar realizada"
-                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[13px] text-neutral-500 transition hover:bg-white/[0.08] hover:text-[#C9A96E]"
-                    style={{ backgroundColor: "#242424" }}
-                  >
-                    ✓
-                  </button>
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    {/* Open notes drawer */}
+                    <button
+                      type="button"
+                      onClick={() => setNotasCliente(c)}
+                      title="Ver / añadir notas"
+                      className="flex h-7 w-7 items-center justify-center rounded-md text-neutral-500 transition hover:bg-white/[0.08] hover:text-[#C9A96E]"
+                      style={{ backgroundColor: "#242424" }}
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-3.5 w-3.5">
+                        <path d="M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5" />
+                        <path d="M17.5 2.5a2.121 2.121 0 0 1 3 3L12 14l-4 1 1-4 7.5-7.5z" />
+                      </svg>
+                    </button>
+                    {/* Mark done */}
+                    <button
+                      type="button"
+                      disabled={pending}
+                      onClick={() => handleRevisionHecha(c.id)}
+                      title="Marcar realizada"
+                      className="flex h-7 w-7 items-center justify-center rounded-md text-[13px] text-neutral-500 transition hover:bg-white/[0.08] hover:text-[#C9A96E]"
+                      style={{ backgroundColor: "#242424" }}
+                    >
+                      ✓
+                    </button>
+                  </div>
                 </div>
               </FadeItem>
             ))}
@@ -873,6 +891,12 @@ export function MiDiaPageClient({
 
       {/* Calendar event modal (create / edit) */}
       {calModal && <CalEventModal {...calModal} />}
+
+      {/* Revision notes drawer */}
+      <RevisionNotasDrawer
+        cliente={notasCliente}
+        onClose={() => setNotasCliente(null)}
+      />
     </div>
   );
 }
