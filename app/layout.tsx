@@ -3,6 +3,7 @@ import { Bebas_Neue, Schibsted_Grotesk, DM_Sans } from "next/font/google";
 import { Sidebar } from "@/components/shared/Sidebar";
 import { ServiceWorkerRegister } from "@/components/shared/ServiceWorkerRegister";
 import { AuthProvider } from "@/components/shared/AuthProvider";
+import { PomodoroSetup } from "@/components/shared/pomodoro/PomodoroSetup";
 import { createClient } from "@/lib/supabase/server";
 import { getSidebarData } from "@/lib/personal/sidebar-queries";
 import "./globals.css";
@@ -62,9 +63,11 @@ export default async function RootLayout({
         className="flex h-full min-h-screen bg-[#141414] text-neutral-100"
       >
         <AuthProvider>
-          <ServiceWorkerRegister />
-          <Sidebar name={displayName} email={data.user?.email ?? null} sidebarData={sidebarData} />
-          <main className="flex-1 overflow-y-auto">{children}</main>
+          <PomodoroSetup>
+            <ServiceWorkerRegister />
+            <Sidebar name={displayName} email={data.user?.email ?? null} sidebarData={sidebarData} />
+            <main className="flex-1 overflow-y-auto">{children}</main>
+          </PomodoroSetup>
         </AuthProvider>
       </body>
     </html>

@@ -27,6 +27,7 @@ import type { EventBlockVM, EventoUnicoVM } from "@/lib/personal/events";
 import type { ReminderVM } from "@/lib/personal/reminders";
 import { CalEventModal, type CalModalProps } from "./CalEventModal";
 import { RevisionNotasDrawer } from "./RevisionNotasDrawer";
+import { usePomodoroCtx } from "@/lib/pomodoro/PomodoroContext";
 
 // ── Calendar constants ────────────────────────────────────────────────────────
 
@@ -218,6 +219,8 @@ export function MiDiaPageClient({
 
   // Pause auto-refresh while any modal/drawer is open so they don't reset
   useAutoRefresh(60_000, calModal !== null || notasCliente !== null);
+
+  const pomodoro = usePomodoroCtx();
 
   // Current time in minutes (updates every minute for the now-line)
   const [nowMin, setNowMin] = useState(() => {
@@ -659,22 +662,34 @@ export function MiDiaPageClient({
             const done = taskDoneOn(t, hoy);
             return (
               <FadeItem key={t.id} id={`task-${t.id}`} fadingIds={fadingIds}>
-                <button
-                  type="button"
-                  disabled={pending}
-                  onClick={() => handleCheckTask(t)}
-                  className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition hover:bg-white/[0.03]"
-                >
-                  <CheckboxIcon checked={done} />
-                  <span className={`flex-1 text-[13px] leading-snug ${
-                    done ? "text-neutral-600 line-through" : "font-medium text-[#e5e5e5]"
-                  }`}>
-                    {t.title}
-                  </span>
-                  {t.isPriority && !done && (
-                    <span className="text-[11px] text-[#C9A96E]/50">★</span>
+                <div className="group flex items-center gap-2 rounded-lg px-2 py-2 transition hover:bg-white/[0.03]">
+                  <button
+                    type="button"
+                    disabled={pending}
+                    onClick={() => handleCheckTask(t)}
+                    className="flex flex-1 items-center gap-3 text-left"
+                  >
+                    <CheckboxIcon checked={done} />
+                    <span className={`flex-1 text-[13px] leading-snug ${
+                      done ? "text-neutral-600 line-through" : "font-medium text-[#e5e5e5]"
+                    }`}>
+                      {t.title}
+                    </span>
+                    {t.isPriority && !done && (
+                      <span className="text-[11px] text-[#C9A96E]/50">★</span>
+                    )}
+                  </button>
+                  {!done && (
+                    <button
+                      type="button"
+                      onClick={() => pomodoro.open({ id: t.id, title: t.title })}
+                      title="Iniciar pomodoro"
+                      className="invisible shrink-0 rounded px-1.5 py-0.5 text-[10px] text-neutral-600 transition group-hover:visible hover:bg-white/[0.05] hover:text-[#C9A96E]"
+                    >
+                      ▶
+                    </button>
                   )}
-                </button>
+                </div>
               </FadeItem>
             );
           })}
@@ -854,7 +869,8 @@ export function MiDiaPageClient({
 
       {/* Header */}
       <div className="mb-5 shrink-0">
-        <div>
+        <div className="flex items-start justify-between">
+          <div>
           <h1 className="font-heading text-[30px] font-semibold capitalize leading-none">
             {hoyTexto}
           </h1>
@@ -869,6 +885,26 @@ export function MiDiaPageClient({
               />
             </div>
           </div>
+          </div>
+
+          {/* Pomodoro toggle button */}
+          <button
+            type="button"
+            onClick={() => pomodoro.open()}
+            title="Pomodoro"
+            className={`mt-1 flex h-8 w-8 items-center justify-center rounded-lg border transition hover:brightness-110 ${
+              pomodoro.state.open
+                ? "border-[#C9A96E]/40 bg-[#C9A96E]/10 text-[#C9A96E]"
+                : "border-white/[0.06] text-neutral-600 hover:border-white/10 hover:text-neutral-300"
+            }`}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-4 w-4">
+              <circle cx="12" cy="13" r="8" />
+              <path d="M12 9v4l2 2" />
+              <path d="M9 2h6" strokeLinecap="round" />
+              <path d="M12 2v3" strokeLinecap="round" />
+            </svg>
+          </button>
         </div>
 
       </div>
