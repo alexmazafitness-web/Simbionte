@@ -345,6 +345,9 @@ export function MiDiaPageClient({
       }, proximaMedianoche - ahora.getTime());
     };
 
+    // Corrección inicial: el "hoy" calculado en SSR usa la zona del servidor
+    // (UTC en Vercel). Al montar lo realineamos con el día local del cliente.
+    aplicarCambioDeDia();
     armarMedianoche();
 
     // El equipo pudo estar suspendido o la pestaña en background al pasar la
@@ -366,10 +369,12 @@ export function MiDiaPageClient({
     return n.getHours() * 60 + n.getMinutes();
   });
   useEffect(() => {
-    const id = setInterval(() => {
+    const tick = () => {
       const n = new Date();
       setNowMin(n.getHours() * 60 + n.getMinutes());
-    }, 60_000);
+    };
+    tick(); // corrige al montar: hora LOCAL del cliente, no la UTC del SSR
+    const id = setInterval(tick, 60_000);
     return () => clearInterval(id);
   }, []);
 

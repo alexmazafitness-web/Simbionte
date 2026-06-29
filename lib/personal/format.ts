@@ -7,8 +7,14 @@ export function todayISO(): string {
   return toISO(new Date());
 }
 
+// Fecha local (YYYY-MM-DD) en la zona horaria del entorno donde corre, NO en
+// UTC. Usar toISOString() aquí desfasaba el día en zonas con offset positivo
+// (p. ej. a las 00:13 de Pamplona/UTC+2 devolvía la fecha de ayer).
 export function toISO(d: Date): string {
-  return d.toISOString().slice(0, 10);
+  const y   = d.getFullYear();
+  const m   = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 }
 
 export function addDaysISO(iso: string, days: number): string {
