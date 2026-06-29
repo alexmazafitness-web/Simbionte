@@ -237,7 +237,8 @@ export function MiDiaPageClient({
   onboardings: OnboardingVM[];
   initialVista?: string;
 }) {
-  const hoy = todayISO();
+  // "Hoy" reactivo — se actualiza al cruzar medianoche (efecto más abajo).
+  const [hoy, setHoy] = useState(() => todayISO());
 
   const weekAnchor = hoy;
   const [pending, startTransition]  = useTransition();
@@ -308,14 +309,55 @@ export function MiDiaPageClient({
   // 5-min background refresh; isSafeToRefresh() inside the hook also guards input focus
   useAutoRefresh(300_000, refreshPaused);
 
-  // clientHoy: updates at midnight so day-diff counters stay accurate without router.refresh()
-  const [clientHoy, setClientHoy] = useState(hoy);
+  // Detección de cambio de día. Un timeout calculado al instante exacto de la
+  // próxima medianoche (no polling por segundo). Al dispararse: actualiza `hoy`,
+  // avanza `calCursor` si el usuario seguía viendo el día de hoy, y se re-arma.
+  const hoyRef       = useRef(hoy);
+  const calCursorRef = useRef(calCursor);
+  useEffect(() => { hoyRef.current = hoy; }, [hoy]);
+  useEffect(() => { calCursorRef.current = calCursor; }, [calCursor]);
+
   useEffect(() => {
-    const id = setInterval(() => {
-      const newHoy = todayISO();
-      setClientHoy((prev) => (prev !== newHoy ? newHoy : prev));
-    }, 60_000);
-    return () => clearInterval(id);
+    let timer: ReturnType<typeof setTimeout>;
+
+    const aplicarCambioDeDia = () => {
+      const nuevoHoy = todayISO();
+      if (hoyRef.current === nuevoHoy) return;
+      const previoHoy = hoyRef.current;
+      hoyRef.current = nuevoHoy; // evita doble aplicación (timeout + visibility)
+      setHoy(nuevoHoy);
+      // Avanzar la vista solo si seguía anclada al día de "hoy"
+      if (calCursorRef.current === previoHoy) {
+        calCursorRef.current = nuevoHoy;
+        setCalCursor(nuevoHoy);
+      }
+    };
+
+    const armarMedianoche = () => {
+      const ahora = new Date();
+      // +2s de margen para garantizar que ya cruzó la medianoche local
+      const proximaMedianoche = new Date(
+        ahora.getFullYear(), ahora.getMonth(), ahora.getDate() + 1, 0, 0, 2, 0,
+      ).getTime();
+      timer = setTimeout(() => {
+        aplicarCambioDeDia();
+        armarMedianoche();
+      }, proximaMedianoche - ahora.getTime());
+    };
+
+    armarMedianoche();
+
+    // El equipo pudo estar suspendido o la pestaña en background al pasar la
+    // medianoche (el timeout no dispara fiable dormido) — revalidar al volver.
+    const onVisible = () => {
+      if (document.visibilityState === "visible") aplicarCambioDeDia();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, []);
 
   // Current time in minutes (updates every minute for the now-line)
@@ -378,8 +420,8 @@ export function MiDiaPageClient({
   // without requiring a router.refresh() for that purpose alone.
   const activos  = useMemo(() => clientesActivos(clientes), [clientes]);
   const revPend  = useMemo(
-    () => activos.filter((c) => c.proximaRevision !== null && daysDiffFromToday(c.proximaRevision, clientHoy) <= 0),
-    [activos, clientHoy],
+    () => activos.filter((c) => c.proximaRevision !== null && daysDiffFromToday(c.proximaRevision, hoy) <= 0),
+    [activos, hoy],
   );
   const conNotas = activos.filter(hasNotas).slice(0, 4);
   const mesoRenovar = useMemo(
@@ -684,7 +726,7 @@ export function MiDiaPageClient({
 
             const iso        = isoDate(y, m, day);
             const { blocks, unicos: uDay } = eventsOn(iso, events, eventosUnicos);
-            const isToday    = iso === clientHoy;
+            const isToday    = iso === hoy;
             const frontTypes = [...new Set([...blocks.map((b) => b.type), ...uDay.map((u) => u.type)])];
             const totalEv    = blocks.length + uDay.length;
 
@@ -754,7 +796,7 @@ export function MiDiaPageClient({
                     const inM = day >= 1 && day <= numDays;
                     if (!inM) return <div key={i} className="h-5" />;
                     const iso      = isoDate(y, mIdx, day);
-                    const isToday  = iso === clientHoy;
+                    const isToday  = iso === hoy;
                     const { blocks, unicos: uDay } = eventsOn(iso, events, eventosUnicos);
                     const fTypes   = [...new Set([...blocks.map((b) => b.type), ...uDay.map((u) => u.type)])];
                     return (
@@ -1105,7 +1147,7 @@ export function MiDiaPageClient({
                               Revisión
                             </span>
                             <span className="text-[12px] tabular-nums text-[#f87171]">
-                              {Math.abs(daysDiffFromToday(c.proximaRevision!, clientHoy))}d vencida
+                              {Math.abs(daysDiffFromToday(c.proximaRevision!, hoy))}d vencida
                             </span>
                           </div>
                         </div>
@@ -1401,7 +1443,7 @@ export function MiDiaPageClient({
                 </button>
                 <button
                   type="button"
-                  onClick={() => setCalCursor(clientHoy)}
+                  onClick={() => setCalCursor(hoy)}
                   className="rounded px-2 py-0.5 text-[10px] text-neutral-600 hover:text-neutral-300 hover:bg-white/[0.06]"
                 >
                   Hoy

@@ -1,53 +1,67 @@
 export type BloqueStyle = { bg: string; text: string; border: string };
 
-// rgba-based backgrounds so the tint is clearly visible over #141414
-// format: bg = rgba(r,g,b,0.18), border = rgba(r,g,b,0.55), text = light tint
+// Paleta dark + neón premium para los bloques recurrentes del calendario.
+// Cada entrada mapea un regex de título → { bg, text, border }, aplicado como
+// inline style sobre el grid (#141414).
+//   bg     → fondo oscuro semitransparente (rgba, opacidad .12–.20)
+//   text   → versión neón clara del tono
+//   border → versión vibrante del tono (borde izquierdo de 3px)
 
-const SURFACE_0: BloqueStyle = { bg: "transparent",          text: "#374151", border: "transparent" };
-const SURFACE_1: BloqueStyle = { bg: "rgba(255,255,255,.04)", text: "#6b7280", border: "rgba(255,255,255,.08)" };
+// ── tokens neutros ──────────────────────────────────────────────────────────
+// surface-1 = bloques de relleno (buffer, comida): tinte mínimo, sin borde.
+// recessed  = bloques "recesivos" (transición, tiempo libre, semana cerrada).
+const SURFACE_1: BloqueStyle = { bg: "rgba(255,255,255,.04)", text: "#9ca3af", border: "transparent" };
+const RECESSED:  BloqueStyle = { bg: "transparent",           text: "#4b5563", border: "transparent" };
 
+// ── mapa de paleta (primer match gana — específico antes que general) ────────
 const MAP: [RegExp, BloqueStyle][] = [
-  // Admin — revisión de pagos → purple
-  // Keep before /revisi[oó]n/ — title contains both words
-  [/admin/i,              { bg: "rgba(124,58,237,.18)",   text: "#c4b5fd", border: "rgba(124,58,237,.55)" }],
+  // Admin — índigo. ANTES de /revisi/: "Admin — revisión de pagos" contiene
+  // ambas palabras y debe caer aquí, no en rosa.
+  [/admin/i,              { bg: "rgba(99,102,241,.13)",  text: "#818cf8", border: "#6366f1" }],
 
-  // Revisión semanal → rose/pink
-  [/revisi[oó]n/i,        { bg: "rgba(219,39,119,.18)",   text: "#f472b6", border: "rgba(219,39,119,.55)" }],
+  // Revisión semanal — rosa neón
+  [/revisi[oó]n/i,        { bg: "rgba(236,72,153,.13)",  text: "#f472b6", border: "#ec4899" }],
 
-  // Ritual de mañana → warm brown
-  [/ritual/i,             { bg: "rgba(120,100,80,.18)",   text: "#d4cabf", border: "rgba(120,100,80,.55)" }],
+  // Ritual de mañana — ámbar cálido
+  [/ritual/i,             { bg: "rgba(251,191,36,.13)",  text: "#fbbf24", border: "#fbbf24" }],
 
-  // Simbionte → orange-brick
-  [/simbionte/i,          { bg: "rgba(194,65,12,.18)",    text: "#fb923c", border: "rgba(194,65,12,.55)" }],
+  // Simbionte — rojo-naranja
+  [/simbionte/i,          { bg: "rgba(239,68,68,.13)",   text: "#f87171", border: "#ef4444" }],
 
-  // Contenido Tipo A / Batch → indigo vivid
-  [/contenido tipo a/i,   { bg: "rgba(99,102,241,.18)",   text: "#a5b4fc", border: "rgba(99,102,241,.55)" }],
-  [/batch/i,              { bg: "rgba(99,102,241,.18)",   text: "#a5b4fc", border: "rgba(99,102,241,.55)" }],
+  // Clientes batch — ámbar-naranja. ANTES de /batch/: "Clientes batch 1/2"
+  // contiene "batch" y debe caer aquí, no en el patrón de contenido.
+  [/clientes/i,           { bg: "rgba(245,158,11,.13)",  text: "#fcd34d", border: "#f59e0b" }],
 
-  // Contenido Tipo B / Métricas → indigo softer
-  [/contenido tipo b/i,   { bg: "rgba(79,70,229,.18)",    text: "#818cf8", border: "rgba(79,70,229,.55)" }],
-  [/m[eé]tricas/i,        { bg: "rgba(79,70,229,.18)",    text: "#818cf8", border: "rgba(79,70,229,.55)" }],
+  // Contenido Tipo A — violeta neón
+  [/contenido tipo a/i,   { bg: "rgba(139,92,246,.15)",  text: "#a78bfa", border: "#8b5cf6" }],
 
-  // Formación → sky blue
-  [/formaci[oó]n/i,       { bg: "rgba(37,99,235,.18)",    text: "#93c5fd", border: "rgba(37,99,235,.55)" }],
+  // Contenido Tipo B — púrpura suave
+  [/contenido tipo b/i,   { bg: "rgba(168,85,247,.13)",  text: "#c084fc", border: "#a855f7" }],
 
-  // Clientes batch → amber
-  [/clientes/i,           { bg: "rgba(217,119,6,.18)",    text: "#fbbf24", border: "rgba(217,119,6,.55)" }],
+  // Batch de contenido — mismo tono que Contenido Tipo A (violeta neón).
+  // Seguro tras /clientes/: el único "batch" restante es el de contenido.
+  [/batch/i,              { bg: "rgba(139,92,246,.15)",  text: "#a78bfa", border: "#8b5cf6" }],
 
-  // Gym → emerald green
-  [/gym/i,                { bg: "rgba(5,150,105,.18)",    text: "#34d399", border: "rgba(5,150,105,.55)" }],
+  // Métricas Instagram — púrpura suave (familia contenido)
+  [/m[eé]tricas/i,        { bg: "rgba(168,85,247,.13)",  text: "#c084fc", border: "#a855f7" }],
 
-  // Comida → surface neutral
+  // Formación — azul eléctrico
+  [/formaci[oó]n/i,       { bg: "rgba(59,130,246,.13)",  text: "#60a5fa", border: "#3b82f6" }],
+
+  // Gym — verde neón
+  [/gym/i,                { bg: "rgba(16,185,129,.13)",  text: "#34d399", border: "#10b981" }],
+
+  // Comida — surface-1 (relleno neutro, sin borde)
   [/comida/i,             SURFACE_1],
 
-  // Buffer libre → surface neutral (before /libre/ catch-all)
+  // Buffer libre — surface-1. ANTES del grupo recesivo (que matchea "libre").
   [/buffer/i,             SURFACE_1],
 
-  // Apagado total → near-invisible
-  [/apagado/i,            { bg: "rgba(0,0,0,.35)",        text: "#374151", border: "rgba(255,255,255,.04)" }],
+  // Apagado total — casi invisible (día de descanso)
+  [/apagado/i,            { bg: "rgba(0,0,0,.35)",       text: "#374151", border: "transparent" }],
 
-  // Semana cerrada / Transición / Tiempo libre → recessed
-  [/semana cerrada|transici[oó]n|tiempo|libre/i, SURFACE_0],
+  // Semana cerrada / Transición / Tiempo libre — recesivos
+  [/semana cerrada|transici[oó]n|tiempo libre/i, RECESSED],
 ];
 
 const DEFAULT_STYLE: BloqueStyle = SURFACE_1;
