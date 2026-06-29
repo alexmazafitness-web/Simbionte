@@ -1,6 +1,6 @@
 // Subir este número en cada despliegue invalida la caché vieja de los
 // usuarios automáticamente (vía skipWaiting + clients.claim más abajo).
-const CACHE_VERSION = "v3";
+const CACHE_VERSION = "v4";
 const CACHE_NAME = `simbionte-cache-${CACHE_VERSION}`;
 
 // Solo assets verdaderamente estáticos — nunca rutas HTML (son dinámicas y

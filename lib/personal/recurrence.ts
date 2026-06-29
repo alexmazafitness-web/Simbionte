@@ -12,6 +12,7 @@ export type RecurRule = {
   endType: EndType;
   until?: string | null; // ISO, solo si endType === 'until'
   count?: number | null; // solo si endType === 'count'
+  exceptDates?: string[]; // ISO dates where this block is suppressed (one-off exceptions)
 };
 
 export function recurEndISO(r: RecurRule | null): string | null {
@@ -46,6 +47,7 @@ export function recurOccursOn(r: RecurRule | null, iso: string, dow: number): bo
   if (r.start && iso < r.start) return false;
   const end = recurEndISO(r);
   if (end && iso > end) return false;
+  if (r.exceptDates?.includes(iso)) return false;
   return true;
 }
 

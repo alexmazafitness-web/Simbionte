@@ -8,6 +8,7 @@ import { crearTarea, marcarTareaHecha } from "@/lib/personal/tasks-actions";
 import { taskDoneOn, taskShowToday, type TaskVM } from "@/lib/personal/tasks";
 import { addDaysISO, dowOf, minToStr, todayISO } from "@/lib/personal/format";
 import { recurOccursOn } from "@/lib/personal/recurrence";
+import { getBloqueStyle } from "@/lib/personal/bloque-colors";
 import {
   crearRecordatorio,
   editarRecordatorio,
@@ -15,10 +16,12 @@ import {
   marcarRecordatorioHecho,
 } from "@/lib/personal/reminders-actions";
 import {
-  crearEventoUnico,
-  editarEventoUnico,
-  eliminarEventoUnico,
+  crearBloque, editarBloque, eliminarBloque,
+  crearEventoUnico, editarEventoUnico, eliminarEventoUnico,
+  moverBloqueHoy, moverBloqueTodos,
 } from "@/lib/personal/events-actions";
+import { guardarVistaCalendario } from "@/lib/personal/meta-actions";
+import { DAYS_SH, FRONT_COLOR } from "@/lib/personal/constants";
 import { calcularMRR, clientesActivos, hasNotas, type ClienteVM } from "@/lib/coaching/clientes";
 import { marcarRevisionHecha, saltarRevision } from "@/lib/coaching/clientes-actions";
 import { CATEGORIAS } from "@/lib/coaching/constants";
@@ -28,11 +31,11 @@ import type { GoalVM } from "@/lib/personal/goal";
 import type { EventBlockVM, EventoUnicoVM } from "@/lib/personal/events";
 import type { ReminderVM } from "@/lib/personal/reminders";
 import { CalEventModal, type CalModalProps } from "./CalEventModal";
+import { BloqueModal } from "./BloqueModal";
+import { CalMovDialog } from "./CalMovDialog";
 import { RevisionNotasDrawer } from "./RevisionNotasDrawer";
-import { PlanificadorDrawer } from "./PlanificadorDrawer";
+import { AsistenteChat } from "./AsistenteChat";
 import { usePomodoroCtx } from "@/lib/pomodoro/PomodoroContext";
-import type { HorarioConfig } from "@/lib/personal/asistente-types";
-import { HORARIO_DEFAULT } from "@/lib/personal/asistente-types";
 
 // ── Calendar constants ────────────────────────────────────────────────────────
 
@@ -48,8 +51,6 @@ const DAY_HEADS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 const EVENTO_BG     = "#1e3a5f";
 const EVENTO_BORDER = "#C9A96E";
 const REMINDER_BG   = "#2a1f0e";
-const BLOQUE_BG     = "#1a1a1a";
-const BLOQUE_BORDER = "#4b5563";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -73,6 +74,23 @@ type DragVisual = {
   startMin: number;
   endMin: number;
 };
+
+// ── Month/Year view constants ─────────────────────────────────────────────────
+
+const MESES_L = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+
+type Vista = "dia" | "semana" | "mes" | "año";
+
+function isoDate(y: number, m: number, d: number): string {
+  return `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+}
+
+function addMonthsISO(iso: string, n: number): string {
+  const d = new Date(iso + "T00:00:00");
+  d.setDate(1);
+  d.setMonth(d.getMonth() + n);
+  return isoDate(d.getFullYear(), d.getMonth(), 1);
+}
 
 // ── helpers (module-level) ────────────────────────────────────────────────────
 
@@ -208,7 +226,7 @@ export function MiDiaPageClient({
   reminders,
   clientes,
   onboardings,
-  horarioConfig,
+  initialVista = "dia",
 }: {
   tasks: TaskVM[];
   goal: GoalVM;
@@ -217,7 +235,7 @@ export function MiDiaPageClient({
   reminders: ReminderVM[];
   clientes: ClienteVM[];
   onboardings: OnboardingVM[];
-  horarioConfig: HorarioConfig | null;
+  initialVista?: string;
 }) {
   const hoy = todayISO();
 
@@ -244,7 +262,37 @@ export function MiDiaPageClient({
   const resizeRef      = useRef<{ ev: EventoUnicoVM; iso: string; startMin: number } | null>(null);
   const [resizeEndMin, setResizeEndMin] = useState<number | null>(null);
   const [notasCliente, setNotasCliente] = useState<ClienteVM | null>(null);
-  const [planificadorOpen, setPlanificadorOpen] = useState(false);
+  const [asistenteChatOpen, setAsistenteChatOpen] = useState(false);
+
+  // Vista del calendario — persisted in personal.meta, locked to "dia" on mobile
+  const safeInitial = (["dia","semana","mes","año"].includes(initialVista) ? initialVista : "dia") as Vista;
+  const [vista, setVistaState] = useState<Vista>(safeInitial);
+  const [isMobile, setIsMobile] = useState(false);
+  const [calCursor, setCalCursor] = useState(() => todayISO());
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  // On mobile always force "dia" regardless of saved preference
+  const vistaEfectiva: Vista = isMobile ? "dia" : vista;
+
+  function setVista(v: Vista) {
+    setVistaState(v);
+    guardarVistaCalendario(v).catch(() => {});
+  }
+
+  // Edición de bloque recurrente
+  const [bloqueEditId, setBloqueEditId] = useState<string | null>(null);
+  const bloqueEditar = bloqueEditId ? events.find((e) => e.id === bloqueEditId) ?? null : null;
+
+  // Diálogo de mover bloque
+  const [movDialog, setMovDialog] = useState<{
+    bloqueId: string; dow: number; iso: string; newStartMin: number; newEndMin: number;
+  } | null>(null);
 
   const pomodoro = usePomodoroCtx();
 
@@ -252,7 +300,9 @@ export function MiDiaPageClient({
   const refreshPaused =
     calModal !== null ||
     notasCliente !== null ||
-    planificadorOpen ||
+    asistenteChatOpen ||
+    bloqueEditId !== null ||
+    movDialog !== null ||
     (pomodoro.state.running && pomodoro.state.linkedTask !== null);
 
   // 5-min background refresh; isSafeToRefresh() inside the hook also guards input focus
@@ -301,8 +351,12 @@ export function MiDiaPageClient({
   // Realtime sync
   useCalendarRealtime();
 
-  // Week days
-  const days = useMemo(() => weekDays(weekAnchor), [weekAnchor]);
+  // Week days — changes based on vistaEfectiva
+  const days = useMemo(() => {
+    if (vistaEfectiva === "dia") return [calCursor];
+    if (vistaEfectiva === "semana") return weekDays(weekAnchor);
+    return []; // mes/año don't use the hour grid
+  }, [vistaEfectiva, calCursor, weekAnchor]);
   useEffect(() => { daysRef.current = days; }, [days]);
 
   // Tasks for today
@@ -413,9 +467,10 @@ export function MiDiaPageClient({
     const relY = clientY - rect.top - GRID_PAD;
     if (relX < 40) return null; // time column
     const colAreaW = rect.width - 40;
-    const colW     = colAreaW / 7;
+    const nCols    = daysRef.current.length || 1;
+    const colW     = colAreaW / nCols;
     const colIdx   = Math.floor((relX - 40) / colW);
-    if (colIdx < 0 || colIdx > 6) return null;
+    if (colIdx < 0 || colIdx >= nCols) return null;
     const iso = daysRef.current[colIdx];
     if (!iso) return null;
     const min = Math.max(0, Math.min(23 * 60 + 59, Math.round((relY / HOUR_H) * 60 / 15) * 15));
@@ -549,6 +604,187 @@ export function MiDiaPageClient({
     setCalModal({ mode: "create", iso, startMin, onClose: () => setCalModal(null) });
   }
 
+  // Drag handler for recurring blocks — click = edit modal, drag = move dialog
+  function handleBloquePointerDown(e: React.MouseEvent, bloqueId: string, startMin: number, endMin: number, iso: string) {
+    e.stopPropagation();
+    e.preventDefault(); // blocks browser-native drag that would interfere with custom drag
+    const startX = e.clientX;
+    const startY = e.clientY;
+    let didDrag = false;
+    const elRect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const grabOffsetMin = Math.round(((startY - elRect.top) / HOUR_H) * 60);
+
+    function onMove(mv: MouseEvent) {
+      if (!didDrag && (Math.abs(mv.clientX - startX) > 5 || Math.abs(mv.clientY - startY) > 5)) {
+        didDrag = true;
+      }
+      if (!didDrag) return;
+      document.body.style.cursor = "grabbing";
+      const slot = screenToSlot(mv.clientX, mv.clientY);
+      if (slot) {
+        const dur = endMin - startMin;
+        const newStart = Math.max(0, Math.min(23 * 60, slot.min - grabOffsetMin));
+        setDragVisual({ id: bloqueId, kind: "evento", iso: slot.iso, startMin: newStart, endMin: newStart + dur });
+      } else {
+        setDragVisual(null);
+      }
+    }
+
+    function onUp(up: MouseEvent) {
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseup", onUp);
+      document.body.style.cursor = "";
+      setDragVisual(null); // always restore block opacity first
+      if (!didDrag) {
+        setBloqueEditId(bloqueId);
+      } else {
+        const slot = screenToSlot(up.clientX, up.clientY);
+        if (slot) {
+          const dur = endMin - startMin;
+          const newStart = Math.max(0, Math.min(23 * 60, slot.min - grabOffsetMin));
+          const dow = dowOf(iso);
+          setMovDialog({ bloqueId, dow, iso, newStartMin: newStart, newEndMin: newStart + dur });
+        }
+        // if slot is null: cursor was outside grid on release — drag cancelled silently
+      }
+    }
+
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onUp);
+  }
+
+  // ── Month/Year sub-renders ────────────────────────────────────────────────
+
+  function renderMes() {
+    const d0      = new Date(calCursor + "T00:00:00");
+    const y       = d0.getFullYear();
+    const m       = d0.getMonth();
+    const numDays = new Date(y, m + 1, 0).getDate();
+    let   fdow    = new Date(y, m, 1).getDay();
+    fdow = fdow === 0 ? 6 : fdow - 1;
+    const cells   = Math.ceil((fdow + numDays) / 7) * 7;
+
+    return (
+      <div className="overflow-hidden rounded-xl border border-white/[0.06]" style={{ background: "#141414" }}>
+        <div className="grid grid-cols-7 border-b border-white/[0.06]">
+          {["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"].map((dh) => (
+            <div key={dh} className="border-r border-white/[0.04] py-2.5 text-center text-[10px] font-semibold tracking-wider text-neutral-600 uppercase last:border-r-0">
+              {dh}
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-7">
+          {Array.from({ length: cells }, (_, i) => {
+            const day     = i - fdow + 1;
+            const inMonth = day >= 1 && day <= numDays;
+            const isLastRow = Math.floor(i / 7) === Math.floor((cells - 1) / 7);
+            const isLastCol = (i + 1) % 7 === 0;
+            const borders   = `${!isLastRow ? "border-b border-white/[0.04]" : ""} ${!isLastCol ? "border-r border-white/[0.04]" : ""}`;
+            if (!inMonth) return <div key={i} className={`min-h-[80px] ${borders}`} style={{ background: "rgba(0,0,0,.12)" }} />;
+
+            const iso        = isoDate(y, m, day);
+            const { blocks, unicos: uDay } = eventsOn(iso, events, eventosUnicos);
+            const isToday    = iso === clientHoy;
+            const frontTypes = [...new Set([...blocks.map((b) => b.type), ...uDay.map((u) => u.type)])];
+            const totalEv    = blocks.length + uDay.length;
+
+            return (
+              <div
+                key={i}
+                onClick={() => { setCalCursor(iso); setVista("dia"); }}
+                className={`min-h-[80px] cursor-pointer p-2.5 transition hover:bg-white/[0.03] ${borders}`}
+              >
+                <span className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-[12px] font-medium ${
+                  isToday ? "font-bold text-[#1a1208]" : "text-neutral-400"
+                }`} style={isToday ? { backgroundColor: "#C9A96E" } : {}}>
+                  {day}
+                </span>
+                {frontTypes.length > 0 && (
+                  <div className="mt-1.5 flex flex-wrap gap-[3px]">
+                    {frontTypes.slice(0, 3).map((ft) => (
+                      <span key={ft} className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: FRONT_COLOR[ft] }} />
+                    ))}
+                    {totalEv > 3 && <span className="text-[9px] leading-none text-neutral-600">+{totalEv - 3}</span>}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  function renderAño() {
+    const y    = new Date(calCursor + "T00:00:00").getFullYear();
+    const curM = new Date(calCursor + "T00:00:00").getMonth();
+
+    return (
+      <div className="grid grid-cols-4 gap-3">
+        {Array.from({ length: 12 }, (_, mIdx) => {
+          const numDays = new Date(y, mIdx + 1, 0).getDate();
+          let   fdow    = new Date(y, mIdx, 1).getDay();
+          fdow = fdow === 0 ? 6 : fdow - 1;
+          const cells   = Math.ceil((fdow + numDays) / 7) * 7;
+
+          return (
+            <div
+              key={mIdx}
+              className="overflow-hidden rounded-xl border"
+              style={{ background: "#141414", borderColor: curM === mIdx ? "rgba(201,169,110,.4)" : "rgba(255,255,255,.06)" }}
+            >
+              <button
+                type="button"
+                onClick={() => { setCalCursor(isoDate(y, mIdx, 1)); setVista("mes"); }}
+                className="w-full border-b border-white/[0.06] px-3 py-2 text-left hover:bg-white/[0.03]"
+              >
+                <span className="text-[12px] font-semibold" style={{ color: curM === mIdx ? "#C9A96E" : "#a3a3a3" }}>
+                  {MESES_L[mIdx]}
+                </span>
+              </button>
+              <div className="p-2">
+                <div className="mb-1 grid grid-cols-7 text-center">
+                  {["L","M","X","J","V","S","D"].map((dh) => (
+                    <div key={dh} className="text-[7.5px] text-neutral-600">{dh}</div>
+                  ))}
+                </div>
+                <div className="grid grid-cols-7">
+                  {Array.from({ length: cells }, (_, i) => {
+                    const day = i - fdow + 1;
+                    const inM = day >= 1 && day <= numDays;
+                    if (!inM) return <div key={i} className="h-5" />;
+                    const iso      = isoDate(y, mIdx, day);
+                    const isToday  = iso === clientHoy;
+                    const { blocks, unicos: uDay } = eventsOn(iso, events, eventosUnicos);
+                    const fTypes   = [...new Set([...blocks.map((b) => b.type), ...uDay.map((u) => u.type)])];
+                    return (
+                      <div
+                        key={i}
+                        onClick={() => { setCalCursor(iso); setVista("dia"); }}
+                        className="flex h-5 cursor-pointer flex-col items-center justify-center rounded hover:bg-white/[0.04]"
+                      >
+                        <span className="text-[9px] leading-none" style={{ color: isToday ? "#C9A96E" : "#6b7280", fontWeight: isToday ? 700 : 400 }}>
+                          {day}
+                        </span>
+                        {fTypes.length > 0 && (
+                          <div className="flex gap-px">
+                            {fTypes.slice(0, 2).map((ft) => (
+                              <span key={ft} className="h-[3px] w-[3px] rounded-full" style={{ backgroundColor: FRONT_COLOR[ft] }} />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
   // ── Calendar render ───────────────────────────────────────────────────────
 
   const calGrid = (
@@ -563,12 +799,13 @@ export function MiDiaPageClient({
             const isToday = iso === hoy;
             const d       = new Date(iso + "T12:00:00");
             const num     = d.getDate();
+            const dayName = DAYS_SH[dowOf(iso)] ?? DAY_HEADS[i] ?? "";
             return (
               <div key={iso} className={`flex flex-1 flex-col items-center py-2 ${
                 isToday ? "bg-[#C9A96E]/[0.06]" : ""
-              } ${i < 6 ? "border-r border-white/[0.04]" : ""}`}>
+              } ${i < days.length - 1 ? "border-r border-white/[0.04]" : ""}`}>
                 <span className={`text-[9px] font-bold uppercase tracking-widest ${isToday ? "text-[#C9A96E]" : "text-neutral-600"}`}>
-                  {DAY_HEADS[i]}
+                  {dayName}
                 </span>
                 <span className={`mt-0.5 flex h-6 w-6 items-center justify-center rounded-full text-[13px] font-medium ${
                   isToday ? "bg-[#C9A96E] font-bold text-[#1a1208]" : "text-neutral-400"
@@ -626,23 +863,27 @@ export function MiDiaPageClient({
                   />
                 )}
 
-                {/* Recurring blocks (bloque style — gray, no interaction) */}
+                {/* Recurring blocks — colored, click to edit, drag to move */}
                 {blocks.map((ev) => {
-                  const topMin = Math.max(ev.startMin, 0);
-                  const top    = GRID_PAD + (topMin / 60) * HOUR_H + 1;
-                  const botMin = Math.min(ev.endMin, HOURS.length * 60);
-                  const height = Math.max(((botMin - topMin) / 60) * HOUR_H - 2, 18);
+                  const topMin  = Math.max(ev.startMin, 0);
+                  const top     = GRID_PAD + (topMin / 60) * HOUR_H + 1;
+                  const botMin  = Math.min(ev.endMin, HOURS.length * 60);
+                  const height  = Math.max(((botMin - topMin) / 60) * HOUR_H - 2, 18);
+                  const style   = getBloqueStyle(ev.title);
+                  const isDraggingThis = dragVisual?.id === ev.id;
                   return (
                     <div
                       key={ev.id}
-                      className="absolute left-0.5 right-0.5 select-none overflow-hidden rounded-md px-1.5 py-0.5"
-                      style={{ top, height, backgroundColor: BLOQUE_BG, borderLeft: `3px solid ${BLOQUE_BORDER}` }}
+                      className={`absolute left-0.5 right-0.5 select-none overflow-hidden rounded-md px-1.5 py-0.5 transition-opacity ${isDraggingThis ? "opacity-30" : "cursor-grab hover:brightness-110"}`}
+                      style={{ top, height, backgroundColor: style.bg, borderLeft: `3px solid ${style.border}` }}
+                      onMouseDown={(e) => handleBloquePointerDown(e, ev.id, ev.startMin, ev.endMin, iso)}
+                      onClick={(e) => e.stopPropagation()}
                     >
-                      <div className="truncate text-[10px] font-semibold leading-snug text-[#9ca3af]">
+                      <div className="truncate text-[10px] font-semibold leading-snug" style={{ color: style.text }}>
                         {ev.title}
                       </div>
                       {height > 30 && (
-                        <div className="text-[9px] text-neutral-700">
+                        <div className="text-[9px]" style={{ color: style.text, opacity: 0.6 }}>
                           {minToStr(ev.startMin)}–{minToStr(ev.endMin)}
                         </div>
                       )}
@@ -713,10 +954,11 @@ export function MiDiaPageClient({
                   const hh = String(Math.floor(nowMin / 60)).padStart(2, "0");
                   const mm = String(nowMin % 60).padStart(2, "0");
                   return (
-                    <div className="pointer-events-none absolute inset-x-0 z-20" style={{ top: nowTop }}>
+                    <div className="pointer-events-none absolute inset-x-0 z-20" style={{ top: nowTop }} suppressHydrationWarning>
                       <div
                         className="absolute left-0 -translate-y-1/2 rounded px-1.5 py-0.5 text-[10px] font-medium tabular-nums leading-none text-white"
                         style={{ backgroundColor: "#C9A96E" }}
+                        suppressHydrationWarning
                       >
                         {hh}:{mm}
                       </div>
@@ -1074,15 +1316,15 @@ export function MiDiaPageClient({
 
           {/* Header actions */}
           <div className="mt-1 flex items-center gap-2">
-            {/* Planificar mi día */}
+            {/* Asistente conversacional */}
             <button
               type="button"
-              onClick={() => setPlanificadorOpen(true)}
+              onClick={() => setAsistenteChatOpen(true)}
               className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-semibold transition hover:brightness-110"
-              style={{ backgroundColor: "rgba(201,169,110,.12)", color: "#C9A96E", border: "1px solid rgba(201,169,110,.2)" }}
+              style={{ backgroundColor: "rgba(201,169,110,.15)", color: "#C9A96E", border: "1px solid rgba(201,169,110,.25)" }}
             >
               <span className="text-[13px] leading-none">✨</span>
-              Planificar
+              Asistente
             </button>
 
             {/* Pomodoro toggle */}
@@ -1112,8 +1354,66 @@ export function MiDiaPageClient({
       <div className="flex min-h-0 flex-1 gap-5">
 
         {/* Left: calendar */}
-        <div className="flex min-h-0 flex-col" style={{ width: "65%" }}>
-          {calGrid}
+        <div className="flex min-h-0 flex-col gap-3" style={{ width: "65%" }}>
+          {/* Vista selector + navigation — hidden on mobile (always "día") */}
+          {!isMobile && (
+            <div className="flex items-center gap-2">
+              {/* Vista tabs */}
+              <div className="flex overflow-hidden rounded-lg border border-white/[0.08] text-[11.5px]">
+                {(["dia","semana","mes","año"] as Vista[]).map((v, i) => (
+                  <button
+                    key={v}
+                    type="button"
+                    onClick={() => setVista(v)}
+                    className={`px-3 py-1.5 transition capitalize ${
+                      vista === v ? "text-[#C9A96E]" : "text-neutral-500 hover:text-neutral-300"
+                    } ${i > 0 ? "border-l border-white/[0.08]" : ""}`}
+                    style={vista === v ? { background: "rgba(201,169,110,.08)" } : {}}
+                  >
+                    {v === "dia" ? "Día" : v === "semana" ? "Semana" : v === "mes" ? "Mes" : "Año"}
+                  </button>
+                ))}
+              </div>
+
+              {/* Navigation arrows */}
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (vistaEfectiva === "dia")  setCalCursor((c) => addDaysLocal(c, -1));
+                    if (vistaEfectiva === "mes")  setCalCursor((c) => addMonthsISO(c, -1));
+                    if (vistaEfectiva === "año")  setCalCursor((c) => addMonthsISO(c, -12));
+                  }}
+                  className="flex h-6 w-6 items-center justify-center rounded text-neutral-500 hover:text-neutral-300 hover:bg-white/[0.06]"
+                >
+                  ‹
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (vistaEfectiva === "dia")  setCalCursor((c) => addDaysLocal(c, 1));
+                    if (vistaEfectiva === "mes")  setCalCursor((c) => addMonthsISO(c, 1));
+                    if (vistaEfectiva === "año")  setCalCursor((c) => addMonthsISO(c, 12));
+                  }}
+                  className="flex h-6 w-6 items-center justify-center rounded text-neutral-500 hover:text-neutral-300 hover:bg-white/[0.06]"
+                >
+                  ›
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCalCursor(clientHoy)}
+                  className="rounded px-2 py-0.5 text-[10px] text-neutral-600 hover:text-neutral-300 hover:bg-white/[0.06]"
+                >
+                  Hoy
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Grid for dia/semana, or month/year views */}
+          {(vistaEfectiva === "dia" || vistaEfectiva === "semana") && calGrid}
+          {vistaEfectiva === "mes" && renderMes()}
+          {vistaEfectiva === "año" && renderAño()}
         </div>
 
         {/* Separator */}
@@ -1129,19 +1429,57 @@ export function MiDiaPageClient({
       {/* Calendar event modal (create / edit) */}
       {calModal && <CalEventModal {...calModal} />}
 
+      {/* Recurring block edit modal */}
+      <BloqueModal
+        key={bloqueEditId ?? "none"}
+        open={bloqueEditId !== null}
+        onClose={() => setBloqueEditId(null)}
+        bloque={bloqueEditar ?? null}
+        pending={pending}
+        onSubmit={(input) => {
+          if (!bloqueEditId) return;
+          startTransition(async () => {
+            await editarBloque(bloqueEditId, input);
+            setBloqueEditId(null);
+          });
+        }}
+        onDelete={bloqueEditId ? () => {
+          startTransition(async () => {
+            await eliminarBloque(bloqueEditId!);
+            setBloqueEditId(null);
+          });
+        } : undefined}
+      />
+
+      {/* Move dialog for recurring blocks */}
+      <CalMovDialog
+        open={movDialog !== null}
+        dow={movDialog?.dow ?? 0}
+        onCancel={() => setMovDialog(null)}
+        onHoy={() => {
+          if (!movDialog) return;
+          const { bloqueId, iso, newStartMin, newEndMin } = movDialog;
+          setMovDialog(null);
+          startTransition(async () => { await moverBloqueHoy(bloqueId, iso, newStartMin, newEndMin); });
+        }}
+        onTodos={() => {
+          if (!movDialog) return;
+          const { bloqueId, newStartMin, newEndMin } = movDialog;
+          setMovDialog(null);
+          startTransition(async () => { await moverBloqueTodos(bloqueId, newStartMin, newEndMin); });
+        }}
+      />
+
       {/* Revision notes drawer */}
       <RevisionNotasDrawer
         cliente={notasCliente}
         onClose={() => setNotasCliente(null)}
       />
 
-      {/* Daily planner drawer */}
-      <PlanificadorDrawer
-        open={planificadorOpen}
-        onClose={() => setPlanificadorOpen(false)}
-        horarioConfig={horarioConfig ?? HORARIO_DEFAULT}
-        hoyISO={hoy}
-        hoyTexto={hoyTexto}
+      {/* Conversational AI assistant */}
+      <AsistenteChat
+        open={asistenteChatOpen}
+        onClose={() => setAsistenteChatOpen(false)}
       />
     </div>
   );
