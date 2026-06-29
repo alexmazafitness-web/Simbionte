@@ -226,6 +226,9 @@ export function MiDiaPageClient({
   const [isAdding, setIsAdding]     = useState(false);
   const [newTitle, setNewTitle]     = useState("");
   const [fadingIds, setFadingIds]   = useState<Set<string>>(new Set());
+  // Permanent suppression set for revision items — prevents reappearing due to
+  // stale-data re-renders that arrive between the fade-out and RSC revalidation.
+  const [removingRevIds, setRemovingRevIds] = useState<Set<string>>(new Set());
   const calScrollRef                = useRef<HTMLDivElement>(null);
   const calGridInnerRef             = useRef<HTMLDivElement>(null);
 
@@ -330,6 +333,15 @@ export function MiDiaPageClient({
     [activos],
   );
 
+  // revPend filtered through the permanent suppression set:
+  //   - show items NOT being removed
+  //   - also show items being removed IF they're still mid-fade (to play the animation)
+  //   This prevents stale-prop re-renders from resurrecting items the user already dismissed.
+  const revPendVisible = useMemo(
+    () => revPend.filter((c) => !removingRevIds.has(c.id) || fadingIds.has(`rev-${c.id}`)),
+    [revPend, removingRevIds, fadingIds],
+  );
+
   // Fade-out helper
   function fadeAndDo(id: string, action: () => void) {
     setFadingIds((s) => new Set(s).add(id));
@@ -357,15 +369,29 @@ export function MiDiaPageClient({
   }
 
   function handleRevisionHecha(clienteId: string) {
-    fadeAndDo(`rev-${clienteId}`, () =>
-      startTransition(() => { void marcarRevisionHecha(clienteId); })
-    );
+    const key = `rev-${clienteId}`;
+    // 1. Start fade animation
+    setFadingIds((s) => new Set(s).add(key));
+    // 2. Permanently suppress from list — stays even if stale props arrive mid-transition
+    setRemovingRevIds((s) => new Set(s).add(clienteId));
+    // 3. Remove from fadingIds after animation completes (removingRevIds keeps it gone)
+    setTimeout(() => setFadingIds((s) => { const n = new Set(s); n.delete(key); return n; }), 700);
+    // 4. Fire server action immediately; clean suppression set once RSC data is fresh
+    startTransition(async () => {
+      await marcarRevisionHecha(clienteId);
+      setRemovingRevIds((s) => { const n = new Set(s); n.delete(clienteId); return n; });
+    });
   }
 
   function handleSaltarRevision(clienteId: string) {
-    fadeAndDo(`rev-${clienteId}`, () =>
-      startTransition(() => { void saltarRevision(clienteId); })
-    );
+    const key = `rev-${clienteId}`;
+    setFadingIds((s) => new Set(s).add(key));
+    setRemovingRevIds((s) => new Set(s).add(clienteId));
+    setTimeout(() => setFadingIds((s) => { const n = new Set(s); n.delete(key); return n; }), 700);
+    startTransition(async () => {
+      await saltarRevision(clienteId);
+      setRemovingRevIds((s) => { const n = new Set(s); n.delete(clienteId); return n; });
+    });
   }
 
   function handleAddTask() {
@@ -810,18 +836,18 @@ export function MiDiaPageClient({
       )}
 
       {/* ════ BLOQUE: SERVICIO ════════════════════════════════════════════ */}
-      {(revPend.length > 0 || mesoRenovar.length > 0 || onboardings.length > 0 || conNotas.length > 0) && (
+      {(revPendVisible.length > 0 || mesoRenovar.length > 0 || onboardings.length > 0 || conNotas.length > 0) && (
         <div>
           <SectionLabel>Servicio</SectionLabel>
 
           <div className="flex flex-col gap-6">
 
             {/* 1. Revisiones pendientes */}
-            {revPend.length > 0 && (
+            {revPendVisible.length > 0 && (
               <div>
                 <SubLabel>Revisiones pendientes</SubLabel>
                 <div className="flex flex-col gap-2">
-                  {revPend.map((c) => (
+                  {revPendVisible.map((c) => (
                     <FadeItem key={c.id} id={`rev-${c.id}`} fadingIds={fadingIds}>
                       <div
                         className="flex items-center gap-3 rounded-lg border p-3"
