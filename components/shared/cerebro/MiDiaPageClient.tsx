@@ -80,6 +80,7 @@ type DragVisual = {
 const MESES_L = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 
 type Vista = "dia" | "semana" | "mes" | "año";
+const VISTA_LABEL: Record<Vista, string> = { dia: "Día", semana: "Semana", mes: "Mes", año: "Año" };
 
 function isoDate(y: number, m: number, d: number): string {
   return `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
@@ -281,9 +282,32 @@ export function MiDiaPageClient({
   // On mobile always force "dia" regardless of saved preference
   const vistaEfectiva: Vista = isMobile ? "dia" : vista;
 
+  // navStack: pila de niveles de origen para navegación jerárquica (zoom).
+  // Vacía = navegación libre por tabs, sin breadcrumb.
+  const [navStack, setNavStack] = useState<Vista[]>([]);
+
+  // Cambio por tabs → navegación libre: se descarta el breadcrumb.
   function setVista(v: Vista) {
     setVistaState(v);
+    setNavStack([]);
     guardarVistaCalendario(v).catch(() => {});
+  }
+
+  // Drill-down por click (Año→Mes, Mes→Día…): apila el nivel actual como origen.
+  function drillTo(target: Vista, cursor: string) {
+    setCalCursor(cursor);
+    setNavStack((s) => [...s, vista]);
+    setVistaState(target);
+    guardarVistaCalendario(target).catch(() => {});
+  }
+
+  // Volver: sube al nivel de origen más reciente y lo desapila.
+  function volverNivel() {
+    const prev = navStack[navStack.length - 1];
+    if (!prev) return;
+    setVistaState(prev);
+    setNavStack((s) => s.slice(0, -1));
+    guardarVistaCalendario(prev).catch(() => {});
   }
 
   // Edición de bloque recurrente
@@ -741,7 +765,7 @@ export function MiDiaPageClient({
             return (
               <div
                 key={i}
-                onClick={() => { setCalCursor(iso); setVista("dia"); }}
+                onClick={() => drillTo("dia", iso)}
                 className={`min-h-[80px] cursor-pointer p-2.5 transition hover:bg-white/[0.03] ${borders}`}
               >
                 <span className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-[12px] font-medium ${
@@ -785,7 +809,7 @@ export function MiDiaPageClient({
             >
               <button
                 type="button"
-                onClick={() => { setCalCursor(isoDate(y, mIdx, 1)); setVista("mes"); }}
+                onClick={() => drillTo("mes", isoDate(y, mIdx, 1))}
                 className="w-full border-b border-white/[0.06] px-3 py-2 text-left hover:bg-white/[0.03]"
               >
                 <span className="text-[12px] font-semibold" style={{ color: curM === mIdx ? "#C9A96E" : "#a3a3a3" }}>
@@ -811,7 +835,7 @@ export function MiDiaPageClient({
                     return (
                       <div
                         key={i}
-                        onClick={() => { setCalCursor(iso); setVista("dia"); }}
+                        onClick={() => drillTo("dia", iso)}
                         className="flex h-5 cursor-pointer flex-col items-center justify-center rounded hover:bg-white/[0.04]"
                       >
                         <span className="text-[9px] leading-none" style={{ color: isToday ? "#C9A96E" : "#6b7280", fontWeight: isToday ? 700 : 400 }}>
@@ -1425,6 +1449,17 @@ export function MiDiaPageClient({
                   </button>
                 ))}
               </div>
+
+              {/* Breadcrumb "Volver" — solo tras drill-down por click (no por tabs) */}
+              {navStack.length > 0 && (
+                <button
+                  type="button"
+                  onClick={volverNivel}
+                  className="flex items-center gap-1 rounded-lg border border-white/[0.08] px-2.5 py-1.5 text-[11.5px] text-neutral-400 transition hover:bg-white/[0.04] hover:text-neutral-200"
+                >
+                  ← Volver a {VISTA_LABEL[navStack[navStack.length - 1]!]}
+                </button>
+              )}
 
               {/* Navigation arrows */}
               <div className="flex items-center gap-1">
