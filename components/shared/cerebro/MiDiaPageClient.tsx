@@ -730,10 +730,13 @@ export function MiDiaPageClient({
             if (!inMonth) return <div key={i} className={`min-h-[80px] ${borders}`} style={{ background: "rgba(0,0,0,.12)" }} />;
 
             const iso        = isoDate(y, m, day);
-            const { blocks, unicos: uDay } = eventsOn(iso, events, eventosUnicos);
+            // Solo eventos únicos (start_at). Los bloques recurrentes de la
+            // plantilla semanal se omiten en Mes/Año: se repiten a diario y
+            // saturan la vista sin aportar info útil.
+            const { unicos: uDay } = eventsOn(iso, events, eventosUnicos);
             const isToday    = iso === hoy;
-            const frontTypes = [...new Set([...blocks.map((b) => b.type), ...uDay.map((u) => u.type)])];
-            const totalEv    = blocks.length + uDay.length;
+            const frontTypes = [...new Set(uDay.map((u) => u.type))];
+            const totalEv    = uDay.length;
 
             return (
               <div
@@ -802,8 +805,9 @@ export function MiDiaPageClient({
                     if (!inM) return <div key={i} className="h-5" />;
                     const iso      = isoDate(y, mIdx, day);
                     const isToday  = iso === hoy;
-                    const { blocks, unicos: uDay } = eventsOn(iso, events, eventosUnicos);
-                    const fTypes   = [...new Set([...blocks.map((b) => b.type), ...uDay.map((u) => u.type)])];
+                    // Solo eventos únicos (start_at) — sin bloques recurrentes.
+                    const { unicos: uDay } = eventsOn(iso, events, eventosUnicos);
+                    const fTypes   = [...new Set(uDay.map((u) => u.type))];
                     return (
                       <div
                         key={i}
