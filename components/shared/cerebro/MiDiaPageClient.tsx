@@ -736,7 +736,12 @@ export function MiDiaPageClient({
     const cells   = Math.ceil((fdow + numDays) / 7) * 7;
 
     return (
-      <div className="overflow-hidden rounded-xl border border-white/[0.06]" style={{ background: "#141414" }}>
+      <>
+        {/* Título dinámico del periodo — leído del estado (calCursor) */}
+        <h2 className="font-heading text-[30px] font-semibold capitalize leading-none text-white">
+          {MESES_L[m]} {y}
+        </h2>
+        <div className="overflow-hidden rounded-xl border border-white/[0.06]" style={{ background: "#141414" }}>
         <div className="grid grid-cols-7 border-b border-white/[0.06]">
           {["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"].map((dh) => (
             <div key={dh} className="border-r border-white/[0.04] py-2.5 text-center text-[10px] font-semibold tracking-wider text-neutral-600 uppercase last:border-r-0">
@@ -786,6 +791,7 @@ export function MiDiaPageClient({
           })}
         </div>
       </div>
+      </>
     );
   }
 
@@ -794,7 +800,12 @@ export function MiDiaPageClient({
     const curM = new Date(calCursor + "T00:00:00").getMonth();
 
     return (
-      <div className="grid grid-cols-4 gap-3">
+      <>
+        {/* Título dinámico del año — leído del estado (calCursor) */}
+        <h2 className="font-heading text-[30px] font-semibold leading-none text-white">
+          {y}
+        </h2>
+        <div className="grid grid-cols-4 gap-3">
         {Array.from({ length: 12 }, (_, mIdx) => {
           const numDays = new Date(y, mIdx + 1, 0).getDate();
           let   fdow    = new Date(y, mIdx, 1).getDay();
@@ -857,6 +868,7 @@ export function MiDiaPageClient({
           );
         })}
       </div>
+      </>
     );
   }
 
