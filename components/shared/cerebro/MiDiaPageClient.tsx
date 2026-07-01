@@ -310,6 +310,19 @@ export function MiDiaPageClient({
     guardarVistaCalendario(prev).catch(() => {});
   }
 
+  // Navegación temporal según la vista activa. Usada por las flechas de la
+  // barra (Día/Semana) y por las que rodean el título (Mes/Año).
+  function navPrev() {
+    if (vistaEfectiva === "dia") setCalCursor((c) => addDaysLocal(c, -1));
+    if (vistaEfectiva === "mes") setCalCursor((c) => addMonthsISO(c, -1));
+    if (vistaEfectiva === "año") setCalCursor((c) => addMonthsISO(c, -12));
+  }
+  function navNext() {
+    if (vistaEfectiva === "dia") setCalCursor((c) => addDaysLocal(c, 1));
+    if (vistaEfectiva === "mes") setCalCursor((c) => addMonthsISO(c, 1));
+    if (vistaEfectiva === "año") setCalCursor((c) => addMonthsISO(c, 12));
+  }
+
   // Edición de bloque recurrente
   const [bloqueEditId, setBloqueEditId] = useState<string | null>(null);
   const bloqueEditar = bloqueEditId ? events.find((e) => e.id === bloqueEditId) ?? null : null;
@@ -737,10 +750,14 @@ export function MiDiaPageClient({
 
     return (
       <>
-        {/* Título dinámico del periodo — leído del estado (calCursor) */}
-        <h2 className="text-center text-sm uppercase tracking-widest text-[#6b7280]">
-          {MESES_L[m]} {y}
-        </h2>
+        {/* Título con flechas a los lados, centrado sobre el grid */}
+        <div className="flex items-center justify-center gap-4">
+          <button type="button" onClick={navPrev} className="flex h-6 w-6 items-center justify-center rounded text-neutral-500 hover:bg-white/[0.06] hover:text-neutral-200">‹</button>
+          <h2 className="min-w-[150px] text-center text-sm uppercase tracking-widest text-[#f5f5f5]">
+            {MESES_L[m]} {y}
+          </h2>
+          <button type="button" onClick={navNext} className="flex h-6 w-6 items-center justify-center rounded text-neutral-500 hover:bg-white/[0.06] hover:text-neutral-200">›</button>
+        </div>
         <div className="overflow-hidden rounded-xl border border-white/[0.06]" style={{ background: "#141414" }}>
         <div className="grid grid-cols-7 border-b border-white/[0.06]">
           {["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"].map((dh) => (
@@ -801,10 +818,14 @@ export function MiDiaPageClient({
 
     return (
       <>
-        {/* Título dinámico del año — leído del estado (calCursor) */}
-        <h2 className="text-center text-sm uppercase tracking-widest text-[#6b7280]">
-          {y}
-        </h2>
+        {/* Título con flechas a los lados, centrado sobre el grid */}
+        <div className="flex items-center justify-center gap-4">
+          <button type="button" onClick={navPrev} className="flex h-6 w-6 items-center justify-center rounded text-neutral-500 hover:bg-white/[0.06] hover:text-neutral-200">‹</button>
+          <h2 className="min-w-[80px] text-center text-sm uppercase tracking-widest text-[#f5f5f5]">
+            {y}
+          </h2>
+          <button type="button" onClick={navNext} className="flex h-6 w-6 items-center justify-center rounded text-neutral-500 hover:bg-white/[0.06] hover:text-neutral-200">›</button>
+        </div>
         <div className="grid grid-cols-4 gap-3">
         {Array.from({ length: 12 }, (_, mIdx) => {
           const numDays = new Date(y, mIdx + 1, 0).getDate();
@@ -1473,30 +1494,26 @@ export function MiDiaPageClient({
                 </button>
               )}
 
-              {/* Navigation arrows */}
+              {/* Navigation — flechas solo en Día/Semana (en Mes/Año van junto al título) */}
               <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (vistaEfectiva === "dia")  setCalCursor((c) => addDaysLocal(c, -1));
-                    if (vistaEfectiva === "mes")  setCalCursor((c) => addMonthsISO(c, -1));
-                    if (vistaEfectiva === "año")  setCalCursor((c) => addMonthsISO(c, -12));
-                  }}
-                  className="flex h-6 w-6 items-center justify-center rounded text-neutral-500 hover:text-neutral-300 hover:bg-white/[0.06]"
-                >
-                  ‹
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (vistaEfectiva === "dia")  setCalCursor((c) => addDaysLocal(c, 1));
-                    if (vistaEfectiva === "mes")  setCalCursor((c) => addMonthsISO(c, 1));
-                    if (vistaEfectiva === "año")  setCalCursor((c) => addMonthsISO(c, 12));
-                  }}
-                  className="flex h-6 w-6 items-center justify-center rounded text-neutral-500 hover:text-neutral-300 hover:bg-white/[0.06]"
-                >
-                  ›
-                </button>
+                {(vistaEfectiva === "dia" || vistaEfectiva === "semana") && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={navPrev}
+                      className="flex h-6 w-6 items-center justify-center rounded text-neutral-500 hover:text-neutral-300 hover:bg-white/[0.06]"
+                    >
+                      ‹
+                    </button>
+                    <button
+                      type="button"
+                      onClick={navNext}
+                      className="flex h-6 w-6 items-center justify-center rounded text-neutral-500 hover:text-neutral-300 hover:bg-white/[0.06]"
+                    >
+                      ›
+                    </button>
+                  </>
+                )}
                 <button
                   type="button"
                   onClick={() => setCalCursor(hoy)}
