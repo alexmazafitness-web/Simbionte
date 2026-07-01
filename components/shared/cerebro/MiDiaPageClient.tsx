@@ -738,7 +738,7 @@ export function MiDiaPageClient({
     return (
       <>
         {/* Título dinámico del periodo — leído del estado (calCursor) */}
-        <h2 className="font-heading text-[30px] font-semibold capitalize leading-none text-white">
+        <h2 className="text-center text-sm uppercase tracking-widest text-[#6b7280]">
           {MESES_L[m]} {y}
         </h2>
         <div className="overflow-hidden rounded-xl border border-white/[0.06]" style={{ background: "#141414" }}>
@@ -802,7 +802,7 @@ export function MiDiaPageClient({
     return (
       <>
         {/* Título dinámico del año — leído del estado (calCursor) */}
-        <h2 className="font-heading text-[30px] font-semibold leading-none text-white">
+        <h2 className="text-center text-sm uppercase tracking-widest text-[#6b7280]">
           {y}
         </h2>
         <div className="grid grid-cols-4 gap-3">
