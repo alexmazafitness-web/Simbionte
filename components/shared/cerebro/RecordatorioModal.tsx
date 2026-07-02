@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { FRONTS, FRONT_LABEL, type Front } from "@/lib/personal/constants";
-import { todayISO } from "@/lib/personal/format";
+import { todayISO, toISO } from "@/lib/personal/format";
 import type { ReminderVM } from "@/lib/personal/reminders";
 
 const inputClass = "w-full rounded-lg border border-line bg-panel-2 px-3 py-2.5 text-[13.5px] outline-none focus:border-gold-dim";
@@ -21,8 +21,14 @@ export function RecordatorioModal({
   pending: boolean;
   onSubmit: (text: string, whenISO: string, front: Front) => void;
 }) {
-  const initialDate = recordatorio ? recordatorio.whenISO.slice(0, 10) : todayISO();
-  const initialTime = recordatorio ? recordatorio.whenISO.slice(11, 16) : "09:00";
+  // IMPORTANTE: usar siempre hora local, nunca UTC. whenISO es un timestamp UTC;
+  // al editar se muestran fecha/hora en la zona local del navegador (no con
+  // slice() sobre el ISO, que devolvería la fecha/hora UTC — el bug original).
+  const rd = recordatorio ? new Date(recordatorio.whenISO) : null;
+  const initialDate = rd ? toISO(rd) : todayISO();
+  const initialTime = rd
+    ? `${String(rd.getHours()).padStart(2, "0")}:${String(rd.getMinutes()).padStart(2, "0")}`
+    : "09:00";
 
   const [text, setText] = useState(recordatorio?.text ?? "");
   const [date, setDate] = useState(initialDate);

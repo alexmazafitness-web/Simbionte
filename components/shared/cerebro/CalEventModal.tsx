@@ -23,12 +23,15 @@ function minToHHMM(min: number): string {
   return `${String(Math.floor(Math.max(0, min) / 60)).padStart(2, "0")}:${String(Math.max(0, min) % 60).padStart(2, "0")}`;
 }
 
+// Guarda la hora local de pared como timestamp UTC: el Date se construye con
+// componentes LOCALES, así que toISOString() es correcto aquí (no tocar).
 function buildIsoForDB(iso: string, hhmm: string): string {
   const [h, m] = hhmm.split(":").map(Number);
   const [y, mo, d] = iso.split("-").map(Number);
   return new Date(y!, mo! - 1, d!, h ?? 0, m ?? 0, 0).toISOString();
 }
 
+// IMPORTANTE: usar siempre hora local, nunca UTC
 function tsToHHMM(isoTs: string): string {
   const d = new Date(isoTs);
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;

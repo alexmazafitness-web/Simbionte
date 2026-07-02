@@ -6,7 +6,7 @@ import { useAutoRefresh } from "@/lib/hooks/useAutoRefresh";
 import { useCalendarRealtime } from "@/lib/hooks/useCalendarRealtime";
 import { crearTarea, marcarTareaHecha } from "@/lib/personal/tasks-actions";
 import { taskDoneOn, taskShowToday, type TaskVM } from "@/lib/personal/tasks";
-import { addDaysISO, dowOf, minToStr, todayISO } from "@/lib/personal/format";
+import { addDaysISO, dowOf, minToStr, todayISO, toISO } from "@/lib/personal/format";
 import { recurOccursOn } from "@/lib/personal/recurrence";
 import { getBloqueStyle } from "@/lib/personal/bloque-colors";
 import {
@@ -103,16 +103,20 @@ function daysDiffFromToday(targetISO: string, todayISO: string): number {
   return Math.round((b - a) / 86_400_000);
 }
 
+// IMPORTANTE: usar siempre hora local, nunca UTC
 function tsToMin(isoTs: string): number {
   const d = new Date(isoTs);
   return d.getHours() * 60 + d.getMinutes();
 }
 
+// Guarda la hora local de pared como timestamp UTC: el Date se construye con
+// componentes LOCALES, así que toISOString() es correcto aquí (no tocar).
 function buildIsoForDB(iso: string, min: number): string {
   const [y, mo, d] = iso.split("-").map(Number);
   return new Date(y!, mo! - 1, d!, Math.floor(min / 60), min % 60, 0).toISOString();
 }
 
+// IMPORTANTE: usar siempre hora local, nunca UTC
 function unikoMin(startAt: string): number {
   const d = new Date(startAt);
   return d.getHours() * 60 + d.getMinutes();
@@ -122,10 +126,14 @@ function eventsOn(iso: string, ev: EventBlockVM[], unicos: EventoUnicoVM[]) {
   const dow = dowOf(iso);
   return {
     blocks: ev.filter((e) => e.recur && recurOccursOn(e.recur, iso, dow)).sort((a, b) => a.startMin - b.startMin),
-    unicos: unicos.filter((u) => u.startAt.slice(0, 10) === iso),
+    // IMPORTANTE: usar siempre hora local, nunca UTC. Comparamos por fecha
+    // LOCAL del startAt (toISO(new Date(...))), no por slice del ISO (que daría
+    // la fecha UTC y desfasaría un día en la franja de medianoche).
+    unicos: unicos.filter((u) => toISO(new Date(u.startAt)) === iso),
   };
 }
 
+// IMPORTANTE: usar siempre hora local, nunca UTC
 function remHasTiempo(r: ReminderVM): boolean {
   const d = new Date(r.whenISO);
   return d.getHours() !== 0 || d.getMinutes() !== 0;
@@ -401,6 +409,7 @@ export function MiDiaPageClient({
   }, []);
 
   // Current time in minutes (updates every minute for the now-line)
+  // IMPORTANTE: usar siempre hora local, nunca UTC
   const [nowMin, setNowMin] = useState(() => {
     const n = new Date();
     return n.getHours() * 60 + n.getMinutes();
@@ -454,7 +463,7 @@ export function MiDiaPageClient({
   // Reminders for today — split by whether they have a specific time
   const recHoySinHora = useMemo(() =>
     reminders
-      .filter((r) => !r.done && r.whenISO.slice(0, 10) === hoy && !remHasTiempo(r))
+      .filter((r) => !r.done && toISO(new Date(r.whenISO)) === hoy && !remHasTiempo(r))
       .sort((a, b) => a.whenISO.localeCompare(b.whenISO)),
   [reminders, hoy]);
 
@@ -1036,7 +1045,7 @@ export function MiDiaPageClient({
 
                 {/* Reminders with time (draggable + click-to-edit) */}
                 {reminders
-                  .filter((r) => !r.done && r.whenISO.slice(0, 10) === iso && remHasTiempo(r))
+                  .filter((r) => !r.done && toISO(new Date(r.whenISO)) === iso && remHasTiempo(r))
                   .map((r) => {
                     const rMin     = tsToMin(r.whenISO);
                     const isDragging = dragVisual?.id === r.id;

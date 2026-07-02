@@ -42,6 +42,7 @@ function addMonths(iso: string, n: number): string {
   return isoDate(d.getFullYear(), d.getMonth(), 1);
 }
 
+// IMPORTANTE: usar siempre hora local, nunca UTC
 function unikoMin(startAt: string): number {
   const d = new Date(startAt);
   return d.getHours() * 60 + d.getMinutes();
@@ -51,7 +52,8 @@ function eventsOn(iso: string, ev: EventBlockVM[], unicos: EventoUnicoVM[]) {
   const dow = dowOf(iso);
   return {
     blocks: ev.filter((e) => recurOccursOn(e.recur, iso, dow)).sort((a, b) => a.startMin - b.startMin),
-    unicos: unicos.filter((u) => u.startAt.slice(0, 10) === iso),
+    // IMPORTANTE: usar siempre hora local, nunca UTC (fecha local del startAt).
+    unicos: unicos.filter((u) => toISO(new Date(u.startAt)) === iso),
   };
 }
 
@@ -498,7 +500,7 @@ export function CalendarioPageClient({
             return (
               <div key={ev.id} className="flex items-center gap-3 rounded-lg border border-line-soft bg-panel px-4 py-2.5">
                 <div className="min-w-[110px]">
-                  <div className="font-heading text-sm font-bold text-gold">{fmtDateCorta(fecha.toISOString().slice(0, 10))}</div>
+                  <div className="font-heading text-sm font-bold text-gold">{fmtDateCorta(toISO(fecha))}</div>
                   <div className="text-[11px] text-text-dim">{fecha.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}</div>
                 </div>
                 <span className="flex-1 text-sm text-text-2">{ev.title}</span>
