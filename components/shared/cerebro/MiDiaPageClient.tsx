@@ -52,6 +52,10 @@ const EVENTO_BG     = "#1e3a5f";
 const EVENTO_BORDER = "#C9A96E";
 const REMINDER_BG   = "#2a1f0e";
 
+// Desplazamiento mínimo (px) para considerar un mousedown como drag y no click.
+// Evita que un click con micro-movimiento (trackpad) dispare el diálogo de mover.
+const DRAG_THRESHOLD_PX = 10;
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 type CalModal = CalModalProps | null;
@@ -708,7 +712,9 @@ export function MiDiaPageClient({
     const grabOffsetMin = Math.round(((startY - elRect.top) / HOUR_H) * 60);
 
     function onMove(mv: MouseEvent) {
-      if (!didDrag && (Math.abs(mv.clientX - startX) > 5 || Math.abs(mv.clientY - startY) > 5)) {
+      // Solo es drag si el cursor se aleja al menos DRAG_THRESHOLD_PX del inicio
+      // (en X o en Y). Por debajo de ese umbral, el mouseup se trata como click.
+      if (!didDrag && (Math.abs(mv.clientX - startX) >= DRAG_THRESHOLD_PX || Math.abs(mv.clientY - startY) >= DRAG_THRESHOLD_PX)) {
         didDrag = true;
       }
       if (!didDrag) return;
