@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import type { KnCategoryVM, KnNoteVM, FuenteTipo } from "@/lib/personal/knowledge";
+import type { KnCategoryVM, KnNoteVM, FuenteTipo, SesionPausadaVM } from "@/lib/personal/knowledge";
 import { FUENTE_LABELS } from "@/lib/personal/knowledge";
 import {
   crearCategoria,
@@ -74,16 +74,33 @@ function CatRow({
 function NotaCard({ nota, catLabel, onClick }: { nota: KnNoteVM; catLabel: string | null; onClick: () => void }) {
   const fuenteLabel = nota.fuenteTipo ? FUENTE_LABELS[nota.fuenteTipo] : null;
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
-      className="flex flex-col rounded-xl border border-line-soft bg-panel p-4 text-left transition hover:border-gold-dim hover:bg-panel-2"
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } }}
+      className="flex cursor-pointer flex-col rounded-xl border border-line-soft bg-panel p-4 text-left transition hover:border-gold-dim hover:bg-panel-2"
     >
       <div className="mb-2.5 flex items-center justify-between gap-2">
         {fuenteLabel ? (
           <span className="rounded-md bg-panel-3 px-2 py-0.5 text-[9.5px] font-semibold tracking-[0.18em] text-gold-dim uppercase">{fuenteLabel}</span>
         ) : <span />}
-        <span className="text-[10.5px] text-text-dim">{fmtDate(nota.createdAt)}</span>
+        <div className="flex items-center gap-1.5">
+          {nota.url && (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); window.open(nota.url!, "_blank", "noopener,noreferrer"); }}
+              className="rounded p-0.5 text-text-dim hover:text-gold-dim"
+              title="Abrir enlace"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-3.5 w-3.5">
+                <path d="M10 13a5 5 0 007.07 0l2.83-2.83a5 5 0 00-7.07-7.07l-1.72 1.71" />
+                <path d="M14 11a5 5 0 00-7.07 0l-2.83 2.83a5 5 0 007.07 7.07l1.71-1.71" />
+              </svg>
+            </button>
+          )}
+          <span className="text-[10.5px] text-text-dim">{fmtDate(nota.createdAt)}</span>
+        </div>
       </div>
       <h3 className="mb-1 font-heading text-[15px] font-bold leading-snug">{nota.title}</h3>
       {nota.fuenteNombre && <p className="mb-2.5 text-[11.5px] text-text-dim">{nota.fuenteNombre}</p>}
@@ -103,7 +120,7 @@ function NotaCard({ nota, catLabel, onClick }: { nota: KnNoteVM; catLabel: strin
           <span className="rounded-md bg-panel-3 px-2 py-0.5 text-[10.5px] text-text-dim">{catLabel}</span>
         </div>
       )}
-    </button>
+    </div>
   );
 }
 
@@ -204,14 +221,17 @@ type ModalState = null | { type: "nueva" } | { type: "detalle"; id: string } | {
 export function KnowledgePageClient({
   categorias,
   notas,
+  sesionesPausadas,
 }: {
   categorias: KnCategoryVM[];
   notas: KnNoteVM[];
+  sesionesPausadas: SesionPausadaVM[];
 }) {
   const [selectedCat,   setSelectedCat]   = useState<string | null>(null);
   const [search,        setSearch]        = useState("");
   const [chatOpen,      setChatOpen]      = useState(false);
   const [sesionActiva,  setSesionActiva]  = useState(false);
+  const [resumeSesion,  setResumeSesion]  = useState<SesionPausadaVM | null>(null);
   const [modal,         setModal]         = useState<ModalState>(null);
   const [editingCatId, setEditingCatId] = useState<string | null>(null);
   const [editDraft,    setEditDraft]    = useState({ emoji: "", name: "" });
@@ -292,10 +312,30 @@ export function KnowledgePageClient({
           <SesionModo
             categorias={categorias}
             defaultCategoriaId={selectedCat}
-            onGuardada={() => setSesionActiva(false)}
-            onCerrar={() => setSesionActiva(false)}
+            resumeFrom={resumeSesion}
+            onGuardada={() => { setSesionActiva(false); setResumeSesion(null); }}
+            onCerrar={() => { setSesionActiva(false); setResumeSesion(null); }}
           />
         ) : (<>
+        {sesionesPausadas.length > 0 && (
+          <div className="flex flex-wrap gap-2 border-b border-line-soft bg-[#161310] px-6 py-3">
+            {sesionesPausadas.map((s) => (
+              <button
+                key={s.sesionId}
+                type="button"
+                onClick={() => { setResumeSesion(s); setSesionActiva(true); }}
+                className="flex items-center gap-2 rounded-lg border border-gold/25 bg-gold/[0.06] px-3 py-1.5 text-left transition hover:border-gold-dim hover:bg-gold/[0.1]"
+              >
+                <span className="text-[12px]">⏸</span>
+                <span className="text-[12px] text-foreground">
+                  {s.fuenteNombre || (s.fuenteTipo ? FUENTE_LABELS[s.fuenteTipo] : "Sesión sin título")}
+                </span>
+                <span className="text-[10.5px] text-text-dim">· {s.notas.length} nota{s.notas.length !== 1 ? "s" : ""}</span>
+                <span className="ml-1 text-[11px] font-semibold text-gold-dim">Continuar sesión →</span>
+              </button>
+            ))}
+          </div>
+        )}
         <div className="flex items-center gap-3 border-b border-line-soft px-6 py-3.5">
           <h2 className="font-heading text-[16px] font-bold">{headerTitle}</h2>
           <span className="rounded-full bg-panel-2 px-2 py-0.5 text-[11px] text-text-dim">{filteredNotas.length}</span>
@@ -308,7 +348,7 @@ export function KnowledgePageClient({
             </div>
             <button
               type="button"
-              onClick={() => setSesionActiva(true)}
+              onClick={() => { setResumeSesion(null); setSesionActiva(true); }}
               className="flex items-center gap-1.5 rounded-lg border border-line px-3.5 py-1.5 text-[12px] font-semibold text-text-2 transition hover:border-gold-dim hover:text-foreground"
             >
               🎙 Sesión

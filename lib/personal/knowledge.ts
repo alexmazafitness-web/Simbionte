@@ -43,7 +43,19 @@ export type KnNoteVM = {
   puntosClave: string[];
   source: string | null;
   categoryId: string | null;
+  url: string | null;
   createdAt: string;
+};
+
+// Sesión guardada sin finalizar ("Guardar y salir"), pendiente de retomar.
+export type SesionPausadaVM = {
+  sesionId: string;
+  fuenteTipo: FuenteTipo | null;
+  fuenteNombre: string;
+  url: string | null;
+  categoriaId: string | null;
+  notas: { id: string; contenido: string; orden: number; createdAt: string }[];
+  updatedAt: string;
 };
 
 export type KnPrincipleVM = {

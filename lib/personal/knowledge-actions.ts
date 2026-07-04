@@ -38,6 +38,7 @@ export async function crearNotaIA(params: {
   notaBruta: string;
   fuenteTipo: string;
   fuenteNombre: string;
+  url?: string;
   puntosClave: string[];
   categoryId: string | null;
   fuenteLongitud?: "corta" | "larga" | "sesion";
@@ -52,6 +53,7 @@ export async function crearNotaIA(params: {
     nota_bruta:       isLarga ? null : (params.notaBruta || null),
     fuente_tipo:      params.fuenteTipo,
     fuente_nombre:    params.fuenteNombre,
+    url:              params.url || null,
     puntos_clave:     params.puntosClave,
     source:           params.fuenteNombre
       ? `${params.fuenteTipo}: ${params.fuenteNombre}`
@@ -109,6 +111,30 @@ export async function eliminarSesionNota(id: string) {
 export async function limpiarSesionNotas(sesionId: string) {
   const supabase = await createClient();
   await supabase.schema("personal").from("knowledge_sesion_notas").delete().eq("sesion_id", sesionId);
+  revalidatePath(PATH);
+}
+
+// Pausa la sesión: persiste la fuente/categoría/link elegidos sobre todas las
+// notas ya capturadas (estado 'en_progreso') y sale sin procesar. Se retoma
+// después desde "Continuar sesión" en la pantalla principal de Knowledge.
+export async function guardarSesionYSalir(
+  sesionId: string,
+  meta: { fuenteTipo: string; fuenteNombre: string; url: string; categoriaId: string | null },
+) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .schema("personal")
+    .from("knowledge_sesion_notas")
+    .update({
+      estado:        "en_progreso",
+      fuente_tipo:   meta.fuenteTipo,
+      fuente_nombre: meta.fuenteNombre,
+      url:           meta.url || null,
+      categoria_id:  meta.categoriaId,
+    })
+    .eq("sesion_id", sesionId);
+  if (error) throw error;
+  revalidatePath(PATH);
 }
 
 export async function eliminarNota(id: string) {

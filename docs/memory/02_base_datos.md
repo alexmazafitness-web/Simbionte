@@ -153,8 +153,27 @@ personal.kn_notes (
   nota_bruta text,                       -- aprendizaje en bruto tal como lo escribió el usuario
   fuente_tipo text,                      -- 'libro'|'podcast'|'video'|'articulo'|'estudio'|'blog'|'experiencia'|'otro'
   fuente_nombre text NOT NULL DEFAULT '', -- nombre concreto ("Huberman Lab", "Atomic Habits"…)
+  fuente_longitud text NOT NULL DEFAULT 'corta', -- 'corta'|'larga'|'sesion' (añadido en 11)
   puntos_clave jsonb NOT NULL DEFAULT '[]', -- string[]
+  -- añadido en 21_knowledge_sesion_pausa.sql:
+  url text,                              -- link opcional de la fuente (podcast/vídeo/artículo…)
   created_at, updated_at
+)
+
+personal.knowledge_sesion_notas (
+  id uuid PK,
+  owner_id uuid FK auth.users,
+  sesion_id uuid NOT NULL,               -- agrupa las notas de una misma sesión (no hay tabla de sesiones aparte)
+  contenido text NOT NULL,
+  orden integer NOT NULL DEFAULT 0,
+  -- añadidos en 21_knowledge_sesion_pausa.sql (denormalizados: se escriben
+  -- en bloque sobre TODAS las filas de la sesión al pulsar "Guardar y salir"):
+  estado text NOT NULL DEFAULT 'en_progreso', -- 'en_progreso'|'completada' (en la práctica 'completada' no se persiste: las filas se borran al procesar)
+  fuente_tipo text,
+  fuente_nombre text,
+  url text,
+  categoria_id uuid FK personal.kn_categories ON DELETE SET NULL,
+  created_at
 )
 
 personal.kn_principles (
@@ -459,3 +478,7 @@ coaching.roadmap_subtasks (
 | `09_ventas_contenido_negocio_schema.sql` | 4 | ALTER en `llamadas`, `contenido_ig`, `roadmap_items` + CREATE `contenido_checklist`, `roadmap_subtasks` + seed roadmap |
 | `10_tarifas_recurrencia.sql` | post-1 | ALTER `coaching.tarifas` añade `recurrencia` + UPDATE tarifas reales |
 | `knowledge_notes_ai_fields` | Knowledge | ALTER `personal.kn_notes` añade `nota_bruta`, `fuente_tipo`, `fuente_nombre`, `puntos_clave` (aplicado via MCP 2026-06-27) |
+| `11_knowledge_fuente_longitud.sql` | Knowledge | ALTER `personal.kn_notes` añade `fuente_longitud` |
+| `12_knowledge_sesion.sql` | Knowledge | CREATE `personal.knowledge_sesion_notas` (notas temporales de sesión) |
+| `13_weekly_reviews.sql` – `20_bloques_horario_v2.sql` | varios | Weekly reviews, sidebar dinámica, finanzas subsección, onboarding, Drive, asistente memoria, bloques horario v2 |
+| `21_knowledge_sesion_pausa.sql` | Knowledge | ALTER `knowledge_sesion_notas` añade `estado`, `fuente_tipo`, `fuente_nombre`, `url`, `categoria_id` (pausar/retomar sesión); ALTER `kn_notes` añade `url` |

@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useTransition, useRef, useEffect } from "react";
-import type { KnCategoryVM, FuenteTipo } from "@/lib/personal/knowledge";
+import type { KnCategoryVM, FuenteTipo, SesionPausadaVM } from "@/lib/personal/knowledge";
 import { FUENTE_LIST } from "@/lib/personal/knowledge";
 import {
   crearNotaIA,
   crearSesionNota,
   eliminarSesionNota,
   limpiarSesionNotas,
+  guardarSesionYSalir,
 } from "@/lib/personal/knowledge-actions";
 
 type Step = "activa" | "procesando" | "preview";
@@ -29,22 +30,27 @@ function fmtTime(d: Date) {
 export function SesionModo({
   categorias,
   defaultCategoriaId,
+  resumeFrom,
   onGuardada,
   onCerrar,
 }: {
   categorias: KnCategoryVM[];
   defaultCategoriaId: string | null;
+  resumeFrom?: SesionPausadaVM | null;
   onGuardada: () => void;
   onCerrar: () => void;
 }) {
-  const sesionId = useRef(crypto.randomUUID());
+  const sesionId = useRef(resumeFrom?.sesionId ?? crypto.randomUUID());
 
   const [step, setStep]             = useState<Step>("activa");
-  const [notas, setNotas]           = useState<SesionNota[]>([]);
+  const [notas, setNotas]           = useState<SesionNota[]>(() =>
+    (resumeFrom?.notas ?? []).map((n) => ({ id: n.id, contenido: n.contenido, ts: new Date(n.createdAt) })),
+  );
   const [draft, setDraft]           = useState("");
-  const [fuenteTipo, setFuenteTipo] = useState<FuenteTipo>("podcast");
-  const [fuenteNombre, setFuenteNombre] = useState("");
-  const [categoriaId, setCategoriaId]   = useState<string | null>(defaultCategoriaId);
+  const [fuenteTipo, setFuenteTipo] = useState<FuenteTipo>(resumeFrom?.fuenteTipo ?? "podcast");
+  const [fuenteNombre, setFuenteNombre] = useState(resumeFrom?.fuenteNombre ?? "");
+  const [url, setUrl]                   = useState(resumeFrom?.url ?? "");
+  const [categoriaId, setCategoriaId]   = useState<string | null>(resumeFrom?.categoriaId ?? defaultCategoriaId);
   const [errorMsg, setErrorMsg]         = useState("");
 
   const [titulo,        setTitulo]        = useState("");
@@ -80,6 +86,13 @@ export function SesionModo({
   function cerrarSinGuardar() {
     void limpiarSesionNotas(sesionId.current);
     onCerrar();
+  }
+
+  function guardarYSalir() {
+    startTransition(async () => {
+      await guardarSesionYSalir(sesionId.current, { fuenteTipo, fuenteNombre, url, categoriaId });
+      onCerrar();
+    });
   }
 
   async function procesarSesion() {
@@ -125,6 +138,7 @@ export function SesionModo({
         notaBruta:        "",
         fuenteTipo,
         fuenteNombre,
+        url,
         puntosClave,
         categoryId:       categoriaPrev,
         fuenteLongitud:   "sesion",
@@ -247,17 +261,27 @@ export function SesionModo({
             </span>
           )}
         </div>
-        <button
-          type="button"
-          onClick={cerrarSinGuardar}
-          className="text-[12px] text-text-dim hover:text-foreground"
-        >
-          Cerrar sin guardar
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={guardarYSalir}
+            disabled={notas.length === 0}
+            className="text-[12px] text-text-dim hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:text-text-dim"
+          >
+            Guardar y salir
+          </button>
+          <button
+            type="button"
+            onClick={cerrarSinGuardar}
+            className="text-[12px] text-text-dim hover:text-foreground"
+          >
+            Cerrar sin guardar
+          </button>
+        </div>
       </div>
 
       {/* Source config */}
-      <div className="grid grid-cols-3 gap-3 border-b border-line-soft px-6 py-3.5">
+      <div className="grid grid-cols-4 gap-3 border-b border-line-soft px-6 py-3.5">
         <div>
           <label className="mb-1 block text-[10px] font-semibold tracking-[0.18em] text-text-dim uppercase">
             Fuente
@@ -280,6 +304,18 @@ export function SesionModo({
             value={fuenteNombre}
             onChange={(e) => setFuenteNombre(e.target.value)}
             placeholder="Ej: Huberman Lab — Ep. 42"
+            className="w-full rounded-lg border border-line bg-panel-2 px-3 py-1.5 text-[12.5px] outline-none focus:border-gold-dim placeholder:text-text-dim"
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-[10px] font-semibold tracking-[0.18em] text-text-dim uppercase">
+            URL / Link <span className="normal-case font-normal tracking-normal text-text-dim">— opcional</span>
+          </label>
+          <input
+            type="url"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder="https://…"
             className="w-full rounded-lg border border-line bg-panel-2 px-3 py-1.5 text-[12.5px] outline-none focus:border-gold-dim placeholder:text-text-dim"
           />
         </div>
