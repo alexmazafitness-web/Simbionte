@@ -970,12 +970,15 @@ export function MiDiaPageClient({
           })}
         </div>
         <div ref={calGridInnerRef} className="relative flex" style={{ height: TOTAL_PX }}>
-          {/* Time column */}
+          {/* Time column — 25 etiquetas (00..24, la última vuelve a "00:00"),
+              -translate-y-1/2 centra cada etiqueta EXACTAMENTE sobre su línea
+              (mismo patrón que la línea de "ahora" más abajo), en vez de
+              desplazarla hacia el centro de la franja. */}
           <div className="pointer-events-none w-10 shrink-0">
-            {HOURS.map((h, i) => (
-              <div key={h} className="absolute left-0 w-10 pr-2 text-right" style={{ top: GRID_PAD + i * HOUR_H + 3 }}>
+            {Array.from({ length: HOURS.length + 1 }, (_, i) => (
+              <div key={i} className="absolute left-0 w-10 -translate-y-1/2 pr-2 text-right" style={{ top: GRID_PAD + i * HOUR_H }}>
                 <span className="text-[10px] tabular-nums" style={{ color: "#6b7280" }}>
-                  {String(h).padStart(2, "0")}:00
+                  {String(i % 24).padStart(2, "0")}:00
                 </span>
               </div>
             ))}
