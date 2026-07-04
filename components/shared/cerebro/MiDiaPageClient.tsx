@@ -754,11 +754,10 @@ export function MiDiaPageClient({
         return;
       }
       const dest = destAt(up.clientX, up.clientY);
-      if (!dest) return; // soltado fuera del grid → drag cancelado
+      if (!dest) return; // soltado fuera del grid → drag cancelado, no hacer nada
       if (dest.iso === iso && dest.newStart === startMin) {
-        // La posición final es igual a la inicial → es click, no mover →
-        // sin diálogo; se abre el modal de edición del bloque.
-        setBloqueEditId(bloqueId);
+        // Hubo drag (superó el umbral) pero acabó en la misma posición →
+        // no es click ni drag real → no hacer nada (ni modal ni diálogo).
         return;
       }
       setMovDialog({ bloqueId, dow: dowOf(iso), iso, newStartMin: dest.newStart, newEndMin: dest.newStart + dur });
