@@ -20,6 +20,17 @@ export async function crearIdea(text: string, front: Front) {
   revalidatePath(PATH);
 }
 
+export async function editarIdea(id: string, text: string, front: Front) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .schema("personal")
+    .from("ideas")
+    .update({ title: text, front })
+    .eq("id", id);
+  if (error) throw error;
+  revalidatePath(PATH);
+}
+
 export async function archivarIdea(id: string, archivar: boolean) {
   const supabase = await createClient();
   const { error } = await supabase

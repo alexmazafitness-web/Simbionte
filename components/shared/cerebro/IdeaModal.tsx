@@ -3,22 +3,25 @@
 import { useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { FRONTS, FRONT_LABEL, type Front } from "@/lib/personal/constants";
+import type { IdeaVM } from "@/lib/personal/ideas";
 
 const inputClass = "w-full rounded-lg border border-line bg-panel-2 px-3 py-2.5 text-[13.5px] outline-none focus:border-gold-dim";
 
 export function IdeaModal({
   open,
   onClose,
+  idea,
   pending,
   onSubmit,
 }: {
   open: boolean;
   onClose: () => void;
+  idea?: IdeaVM | null;
   pending: boolean;
   onSubmit: (text: string, front: Front) => void;
 }) {
-  const [text, setText] = useState("");
-  const [front, setFront] = useState<Front>("coaching");
+  const [text, setText] = useState(idea?.text ?? "");
+  const [front, setFront] = useState<Front>(idea?.front ?? "coaching");
 
   if (!open) return null;
 
@@ -29,7 +32,7 @@ export function IdeaModal({
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="Nueva idea">
+    <Modal open={open} onClose={onClose} title={idea ? "Editar idea" : "Nueva idea"}>
       <form onSubmit={handleSubmit}>
         <div className="mb-3.5">
           <label className="mb-1.5 block text-[11px] tracking-wide text-text-dim uppercase">Idea</label>
