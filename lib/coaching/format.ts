@@ -3,14 +3,20 @@ const MESES = [
   "jul", "ago", "sep", "oct", "nov", "dic",
 ];
 
+// ⚠️ SIEMPRE hora local - nunca UTC. toISOString() devuelve la fecha UTC y
+// desfasa el día en la franja de medianoche (España va por delante de UTC).
+function localISO(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 export function todayISO(): string {
-  return new Date().toISOString().slice(0, 10);
+  return localISO(new Date());
 }
 
 export function addDaysISO(iso: string, days: number): string {
   const d = new Date(iso + "T00:00:00");
   d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0, 10);
+  return localISO(d);
 }
 
 export function diffDiasDesdeHoy(iso: string | null): number | null {

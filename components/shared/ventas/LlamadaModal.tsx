@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { FASES_LLAMADA } from "@/lib/coaching/ventas-constants";
+import { todayISO } from "@/lib/coaching/format";
 import type { LlamadaInput } from "@/lib/coaching/ventas-actions";
 import type { Lead } from "@/lib/coaching/leads";
 
@@ -22,7 +23,8 @@ export function LlamadaModal({
   onSubmit: (input: LlamadaInput) => void;
 }) {
   const [leadId, setLeadId] = useState("");
-  const [fecha, setFecha] = useState(new Date().toISOString().slice(0, 10));
+  // ⚠️ SIEMPRE hora local - nunca UTC (toISOString daba la fecha UTC del día)
+  const [fecha, setFecha] = useState(todayISO());
   const [fase, setFase] = useState("");
   const [resultado, setResultado] = useState("");
   const [notas, setNotas] = useState("");

@@ -36,6 +36,7 @@ import { CalMovDialog } from "./CalMovDialog";
 import { RevisionNotasDrawer } from "./RevisionNotasDrawer";
 import { AsistenteChat } from "./AsistenteChat";
 import { usePomodoroCtx } from "@/lib/pomodoro/PomodoroContext";
+import { getNowMinutes } from "@/lib/time-utils";
 
 // ── Calendar constants ────────────────────────────────────────────────────────
 
@@ -54,7 +55,7 @@ const REMINDER_BG   = "#2a1f0e";
 
 // Desplazamiento mínimo (px) para considerar un mousedown como drag y no click.
 // Evita que un click con micro-movimiento (trackpad) dispare el diálogo de mover.
-const DRAG_THRESHOLD_PX = 10;
+const DRAG_THRESHOLD_PX = 8;
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -107,7 +108,7 @@ function daysDiffFromToday(targetISO: string, todayISO: string): number {
   return Math.round((b - a) / 86_400_000);
 }
 
-// IMPORTANTE: usar siempre hora local, nunca UTC
+// ⚠️ SIEMPRE hora local - nunca UTC
 function tsToMin(isoTs: string): number {
   const d = new Date(isoTs);
   return d.getHours() * 60 + d.getMinutes();
@@ -120,7 +121,7 @@ function buildIsoForDB(iso: string, min: number): string {
   return new Date(y!, mo! - 1, d!, Math.floor(min / 60), min % 60, 0).toISOString();
 }
 
-// IMPORTANTE: usar siempre hora local, nunca UTC
+// ⚠️ SIEMPRE hora local - nunca UTC
 function unikoMin(startAt: string): number {
   const d = new Date(startAt);
   return d.getHours() * 60 + d.getMinutes();
@@ -130,14 +131,14 @@ function eventsOn(iso: string, ev: EventBlockVM[], unicos: EventoUnicoVM[]) {
   const dow = dowOf(iso);
   return {
     blocks: ev.filter((e) => e.recur && recurOccursOn(e.recur, iso, dow)).sort((a, b) => a.startMin - b.startMin),
-    // IMPORTANTE: usar siempre hora local, nunca UTC. Comparamos por fecha
+    // ⚠️ SIEMPRE hora local - nunca UTC. Comparamos por fecha
     // LOCAL del startAt (toISO(new Date(...))), no por slice del ISO (que daría
     // la fecha UTC y desfasaría un día en la franja de medianoche).
     unicos: unicos.filter((u) => toISO(new Date(u.startAt)) === iso),
   };
 }
 
-// IMPORTANTE: usar siempre hora local, nunca UTC
+// ⚠️ SIEMPRE hora local - nunca UTC
 function remHasTiempo(r: ReminderVM): boolean {
   const d = new Date(r.whenISO);
   return d.getHours() !== 0 || d.getMinutes() !== 0;
@@ -413,17 +414,16 @@ export function MiDiaPageClient({
   }, []);
 
   // Current time in minutes (updates every minute for the now-line)
-  // IMPORTANTE: usar siempre hora local, nunca UTC
-  const [nowMin, setNowMin] = useState(() => {
-    const n = new Date();
-    return n.getHours() * 60 + n.getMinutes();
-  });
+  // ⚠️ SIEMPRE hora local - nunca UTC
+  // Arranca en null: el SSR de Vercel corre en UTC y, si el servidor pintase
+  // la línea, su posición UTC quedaría clavada en el DOM hasta el siguiente
+  // tick (React no parchea mismatches de hidratación). Con null ni el servidor
+  // ni el primer render del cliente pintan nada; el efecto la coloca ya
+  // montado usando getNowMinutes() — el único punto de verdad de "ahora".
+  const [nowMin, setNowMin] = useState<number | null>(null);
   useEffect(() => {
-    const tick = () => {
-      const n = new Date();
-      setNowMin(n.getHours() * 60 + n.getMinutes());
-    };
-    tick(); // corrige al montar: hora LOCAL del cliente, no la UTC del SSR
+    const tick = () => setNowMin(getNowMinutes());
+    tick();
     const id = setInterval(tick, 60_000);
     return () => clearInterval(id);
   }, []);
@@ -707,23 +707,37 @@ export function MiDiaPageClient({
     e.preventDefault(); // blocks browser-native drag that would interfere with custom drag
     const startX = e.clientX;
     const startY = e.clientY;
-    let didDrag = false;
-    const elRect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const grabOffsetMin = Math.round(((startY - elRect.top) / HOUR_H) * 60);
+    let isDragging = false;
+    const dur = endMin - startMin;
+
+    // Destino = start original + desplazamiento del cursor. Con desplazamiento
+    // pequeño devuelve EXACTAMENTE la posición original (mismo start_min y
+    // mismo día): el mouseup decide click vs drag comparando el dato que
+    // importa — ¿cambió la hora del bloque? — no píxeles.
+    function destAt(clientX: number, clientY: number): { iso: string; newStart: number } | null {
+      const slot = screenToSlot(clientX, clientY);
+      if (!slot) return null;
+      // Vertical: trunc, no round — mover un slot exige desplazar los 15 min
+      // COMPLETOS (13px). Un temblor de pocos px se queda en delta 0.
+      const deltaMin = Math.trunc(((clientY - startY) / HOUR_H) * 60 / 15) * 15;
+      const newStart = Math.max(0, Math.min(23 * 60, startMin + deltaMin));
+      // Horizontal: zona muerta de 24px — un temblor sobre el borde de la
+      // columna no cambia de día; más allá, manda la columna bajo el cursor.
+      const destIso = Math.abs(clientX - startX) < 24 ? iso : slot.iso;
+      return { iso: destIso, newStart };
+    }
 
     function onMove(mv: MouseEvent) {
-      // Solo es drag si el cursor se aleja al menos DRAG_THRESHOLD_PX del inicio
-      // (en X o en Y). Por debajo de ese umbral, el mouseup se trata como click.
-      if (!didDrag && (Math.abs(mv.clientX - startX) >= DRAG_THRESHOLD_PX || Math.abs(mv.clientY - startY) >= DRAG_THRESHOLD_PX)) {
-        didDrag = true;
+      // Sigue siendo click mientras el cursor no se aleje DRAG_THRESHOLD_PX
+      // del punto inicial; solo al superar el umbral se activa el drag visual.
+      if (!isDragging) {
+        if (Math.abs(mv.clientX - startX) < DRAG_THRESHOLD_PX && Math.abs(mv.clientY - startY) < DRAG_THRESHOLD_PX) return;
+        isDragging = true;
+        document.body.style.cursor = "grabbing";
       }
-      if (!didDrag) return;
-      document.body.style.cursor = "grabbing";
-      const slot = screenToSlot(mv.clientX, mv.clientY);
-      if (slot) {
-        const dur = endMin - startMin;
-        const newStart = Math.max(0, Math.min(23 * 60, slot.min - grabOffsetMin));
-        setDragVisual({ id: bloqueId, kind: "evento", iso: slot.iso, startMin: newStart, endMin: newStart + dur });
+      const dest = destAt(mv.clientX, mv.clientY);
+      if (dest) {
+        setDragVisual({ id: bloqueId, kind: "evento", iso: dest.iso, startMin: dest.newStart, endMin: dest.newStart + dur });
       } else {
         setDragVisual(null);
       }
@@ -734,18 +748,20 @@ export function MiDiaPageClient({
       document.removeEventListener("mouseup", onUp);
       document.body.style.cursor = "";
       setDragVisual(null); // always restore block opacity first
-      if (!didDrag) {
+      if (!isDragging) {
+        // Nunca se superó el umbral → click puro → modal de edición
         setBloqueEditId(bloqueId);
-      } else {
-        const slot = screenToSlot(up.clientX, up.clientY);
-        if (slot) {
-          const dur = endMin - startMin;
-          const newStart = Math.max(0, Math.min(23 * 60, slot.min - grabOffsetMin));
-          const dow = dowOf(iso);
-          setMovDialog({ bloqueId, dow, iso, newStartMin: newStart, newEndMin: newStart + dur });
-        }
-        // if slot is null: cursor was outside grid on release — drag cancelled silently
+        return;
       }
+      const dest = destAt(up.clientX, up.clientY);
+      if (!dest) return; // soltado fuera del grid → drag cancelado
+      if (dest.iso === iso && dest.newStart === startMin) {
+        // La posición final es igual a la inicial → es click, no mover →
+        // sin diálogo; se abre el modal de edición del bloque.
+        setBloqueEditId(bloqueId);
+        return;
+      }
+      setMovDialog({ bloqueId, dow: dowOf(iso), iso, newStartMin: dest.newStart, newEndMin: dest.newStart + dur });
     }
 
     document.addEventListener("mousemove", onMove);
@@ -1071,17 +1087,17 @@ export function MiDiaPageClient({
                   })}
 
 
-                {/* Now line */}
-                {isToday && (() => {
+                {/* Now line — ⚠️ SIEMPRE hora local - nunca UTC: la posición
+                    sale de nowMin (getNowMinutes), que solo se fija en cliente */}
+                {isToday && nowMin !== null && (() => {
                   const nowTop = GRID_PAD + (nowMin / 60) * HOUR_H;
                   const hh = String(Math.floor(nowMin / 60)).padStart(2, "0");
                   const mm = String(nowMin % 60).padStart(2, "0");
                   return (
-                    <div className="pointer-events-none absolute inset-x-0 z-20" style={{ top: nowTop }} suppressHydrationWarning>
+                    <div className="pointer-events-none absolute inset-x-0 z-20" style={{ top: nowTop }}>
                       <div
                         className="absolute left-0 -translate-y-1/2 rounded px-1.5 py-0.5 text-[10px] font-medium tabular-nums leading-none text-white"
                         style={{ backgroundColor: "#C9A96E" }}
-                        suppressHydrationWarning
                       >
                         {hh}:{mm}
                       </div>

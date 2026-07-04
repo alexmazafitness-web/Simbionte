@@ -42,7 +42,7 @@ function addMonths(iso: string, n: number): string {
   return isoDate(d.getFullYear(), d.getMonth(), 1);
 }
 
-// IMPORTANTE: usar siempre hora local, nunca UTC
+// ⚠️ SIEMPRE hora local - nunca UTC
 function unikoMin(startAt: string): number {
   const d = new Date(startAt);
   return d.getHours() * 60 + d.getMinutes();
