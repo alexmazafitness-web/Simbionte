@@ -309,13 +309,13 @@ export function SesionModo({
         </div>
         <div>
           <label className="mb-1 block text-[10px] font-semibold tracking-[0.18em] text-text-dim uppercase">
-            URL / Link <span className="normal-case font-normal tracking-normal text-text-dim">— opcional</span>
+            Link
           </label>
           <input
             type="url"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            placeholder="https://…"
+            placeholder="Enlace del podcast, vídeo, artículo…"
             className="w-full rounded-lg border border-line bg-panel-2 px-3 py-1.5 text-[12.5px] outline-none focus:border-gold-dim placeholder:text-text-dim"
           />
         </div>
