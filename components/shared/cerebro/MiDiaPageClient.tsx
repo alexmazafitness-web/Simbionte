@@ -465,13 +465,10 @@ export function MiDiaPageClient({
   }, [vistaEfectiva, calCursor]);
   useEffect(() => { daysRef.current = days; }, [days]);
 
-  // Título de periodo para Día/Semana, mismo criterio que Mes/Año: se deriva
-  // de `days` (la fuente de verdad ya usada para renderizar el grid).
+  // Título de periodo para Semana, mismo criterio que Mes/Año: se deriva de
+  // `days` (la fuente de verdad ya usada para renderizar el grid). Día no
+  // tiene título propio aquí — usa el de la cabecera del grid (más abajo).
   const periodoTitulo = useMemo(() => {
-    if (vistaEfectiva === "dia" && days[0]) {
-      const d = new Date(days[0] + "T12:00:00");
-      return `${DAYS[d.getDay()]}, ${d.getDate()} de ${MESES_L[d.getMonth()]}`;
-    }
     if (vistaEfectiva === "semana" && days.length === 7) {
       const d0 = new Date(days[0]! + "T12:00:00");
       const d6 = new Date(days[6]! + "T12:00:00");
@@ -962,9 +959,12 @@ export function MiDiaPageClient({
       {/* Single scroll container — header is sticky inside so it shares the same width as the grid
           (avoids scrollbar-width misalignment when header is outside the scroll area) */}
       <div ref={calScrollRef} className="overflow-y-auto" style={{ maxHeight: "calc(100vh - 210px)" }}>
-        {/* Sticky header */}
-        <div className="sticky top-0 z-10 flex border-b border-white/[0.06] bg-[#141414]">
+        {/* Sticky header — en Día, flechas ‹ › a los lados del título del día */}
+        <div className="sticky top-0 z-10 flex items-center border-b border-white/[0.06] bg-[#141414]">
           <div className="w-10 shrink-0" />
+          {vistaEfectiva === "dia" && (
+            <button type="button" onClick={navPrev} className="flex h-6 w-6 shrink-0 items-center justify-center rounded text-neutral-500 hover:bg-white/[0.06] hover:text-neutral-200">‹</button>
+          )}
           {days.map((iso, i) => {
             const isToday = iso === hoy;
             const d       = new Date(iso + "T12:00:00");
@@ -985,6 +985,9 @@ export function MiDiaPageClient({
               </div>
             );
           })}
+          {vistaEfectiva === "dia" && (
+            <button type="button" onClick={navNext} className="flex h-6 w-6 shrink-0 items-center justify-center rounded text-neutral-500 hover:bg-white/[0.06] hover:text-neutral-200">›</button>
+          )}
         </div>
         <div ref={calGridInnerRef} className="relative flex" style={{ height: TOTAL_PX }}>
           {/* Time column — 25 etiquetas (00..24, la última vuelve a "00:00"),
@@ -1571,8 +1574,10 @@ export function MiDiaPageClient({
           )}
 
           {/* Título de periodo con flechas a los lados, centrado — mismo
-              patrón visual que Mes/Año (ver renderMes/renderAño) */}
-          {(vistaEfectiva === "dia" || vistaEfectiva === "semana") && (
+              patrón visual que Mes/Año (ver renderMes/renderAño). Solo
+              Semana: Día ya muestra su título con flechas en la cabecera
+              del grid (dentro de calGrid, más abajo). */}
+          {vistaEfectiva === "semana" && (
             <div className="flex items-center justify-center gap-4">
               <button type="button" onClick={navPrev} className="flex h-6 w-6 items-center justify-center rounded text-neutral-500 hover:bg-white/[0.06] hover:text-neutral-200">‹</button>
               <h2 className="min-w-[150px] text-center text-sm uppercase tracking-widest text-[#f5f5f5]">
