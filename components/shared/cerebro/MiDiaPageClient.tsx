@@ -472,7 +472,7 @@ export function MiDiaPageClient({
     if (vistaEfectiva === "semana" && days.length === 7) {
       const d0 = new Date(days[0]! + "T12:00:00");
       const d6 = new Date(days[6]! + "T12:00:00");
-      return `${d0.getDate()} ${MESES_L[d0.getMonth()]!.slice(0, 3)} – ${d6.getDate()} ${MESES_L[d6.getMonth()]!.slice(0, 3)}`;
+      return `${d0.getDate()} ${MESES_L[d0.getMonth()]} – ${d6.getDate()} ${MESES_L[d6.getMonth()]}`;
     }
     return "";
   }, [vistaEfectiva, days]);
