@@ -19,6 +19,12 @@ export const FRONT_COLOR: Record<Front, string> = {
 export const DAYS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 export const DAYS_SH = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
 
+// Plural correcto en español, derivado de DAYS: los días que ya terminan en
+// "s" (lunes, martes, miércoles, jueves, viernes) son invariantes en plural;
+// solo sábado y domingo añaden "s". Nunca concatenar "s" a ciegas (produce
+// "Juevess", "Miércoless", etc.).
+export const DAYS_PLURAL = DAYS.map((d) => (d.endsWith("s") ? d : `${d}s`));
+
 export const INFRA_BUCKETS = [
   { id: "marca", name: "Marca / Web pública", emoji: "🌐", sub: "Tu escaparate" },
   { id: "servicio", name: "Procesos del servicio", emoji: "⚙️", sub: "Cara al cliente" },

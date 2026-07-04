@@ -144,6 +144,13 @@ function remHasTiempo(r: ReminderVM): boolean {
   return d.getHours() !== 0 || d.getMinutes() !== 0;
 }
 
+// Traga el "click" fantasma que el navegador dispara justo tras el mouseup
+// de un drag real (ver handleBloquePointerDown).
+function swallowGhostClick(ev: MouseEvent) {
+  ev.stopPropagation();
+  ev.preventDefault();
+}
+
 // Uses local date arithmetic to avoid UTC offset shifting the day
 function localISO(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -753,6 +760,14 @@ export function MiDiaPageClient({
         setBloqueEditId(bloqueId);
         return;
       }
+      // Hubo drag real: mousedown y mouseup casi siempre ocurren sobre
+      // elementos DOM distintos (el bloque vs. la columna del día bajo el
+      // cursor tras moverse). El navegador dispara igualmente un "click"
+      // nativo justo después de este mouseup, sobre el ancestro común más
+      // cercano — la columna del día — que abriría el modal de "crear
+      // evento" (handleSlotClick) a la vez que el diálogo de mover. Se traga
+      // ese único click fantasma antes de que llegue a ningún handler.
+      document.addEventListener("click", swallowGhostClick, { capture: true, once: true });
       const dest = destAt(up.clientX, up.clientY);
       if (!dest) return; // soltado fuera del grid → drag cancelado, no hacer nada
       if (dest.iso === iso && dest.newStart === startMin) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { DAYS } from "@/lib/personal/constants";
+import { DAYS_PLURAL } from "@/lib/personal/constants";
 
 interface Props {
   open: boolean;
@@ -13,7 +13,7 @@ interface Props {
 export function CalMovDialog({ open, dow, onHoy, onTodos, onCancel }: Props) {
   if (!open) return null;
 
-  const diaName = DAYS[dow] ?? "este día";
+  const diaPlural = DAYS_PLURAL[dow] ?? "estos días";
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center">
@@ -27,7 +27,7 @@ export function CalMovDialog({ open, dow, onHoy, onTodos, onCancel }: Props) {
       >
         <p className="mb-1 text-[13px] font-semibold text-white">¿Mover bloque?</p>
         <p className="mb-4 text-[12px] text-neutral-500">
-          ¿Cambiar solo el horario de hoy o todos los {diaName}s?
+          ¿Cambiar solo el horario de hoy o todos los {diaPlural}?
         </p>
 
         <button
@@ -45,7 +45,7 @@ export function CalMovDialog({ open, dow, onHoy, onTodos, onCancel }: Props) {
           className="mb-2 w-full rounded-lg py-2.5 text-[13px] font-semibold transition hover:brightness-110"
           style={{ background: "rgba(255,255,255,.06)", color: "#e5e5e5", border: "1px solid rgba(255,255,255,.1)" }}
         >
-          Todos los {diaName}s
+          Todos los {diaPlural}
         </button>
 
         <button
