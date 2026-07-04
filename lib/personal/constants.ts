@@ -45,3 +45,11 @@ export const KN_CATS_DEFAULT = [
   { id: "contenido", emoji: "📱", name: "Contenido" },
   { id: "otros", emoji: "📚", name: "Otros" },
 ];
+
+export const DESEOS_CATS_DEFAULT = [
+  { emoji: "💻", name: "Tecnología" },
+  { emoji: "👕", name: "Ropa" },
+  { emoji: "🎟️", name: "Experiencias" },
+  { emoji: "🏠", name: "Hogar" },
+  { emoji: "📦", name: "Otros" },
+];

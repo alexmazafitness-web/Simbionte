@@ -97,6 +97,7 @@ export const RUTAS_APP: { label: string; ruta: string; grupo: string }[] = [
   { label: "Crypto",          ruta: "/personal/finanzas/crypto",      grupo: "Personal · Finanzas" },
   { label: "Ahorro",          ruta: "/personal/finanzas/ahorro",      grupo: "Personal · Finanzas" },
   { label: "Deudas",          ruta: "/personal/finanzas/deudas",      grupo: "Personal · Finanzas" },
+  { label: "Lista de deseos", ruta: "/personal/deseos",               grupo: "Personal · Cerebro" },
   { label: "Leads",           ruta: "/coaching/leads",                grupo: "Business" },
   { label: "Ventas",          ruta: "/coaching/ventas",               grupo: "Business" },
   { label: "Contenido",       ruta: "/coaching/contenido",            grupo: "Business" },

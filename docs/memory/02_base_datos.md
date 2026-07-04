@@ -232,6 +232,34 @@ personal.credenciales (
 -- secreto = CREDENTIALS_SECRET (variable de entorno de servidor, ver 04_reglas_desarrollo.md #7)
 ```
 
+### Cerebro — Lista de deseos
+
+```sql
+personal.deseos_categorias (
+  id uuid PK,
+  owner_id uuid FK auth.users,
+  nombre text NOT NULL,
+  emoji text,
+  created_at, updated_at
+)
+-- Auto-sembrada en el primer acceso si está vacía (igual que kn_categories):
+-- Tecnología, Ropa, Experiencias, Hogar, Otros (DESEOS_CATS_DEFAULT en constants.ts)
+
+personal.lista_deseos (
+  id uuid PK,
+  owner_id uuid FK auth.users,
+  nombre text NOT NULL,
+  categoria_id uuid FK personal.deseos_categorias ON DELETE SET NULL,
+  precio numeric(12,2),
+  link text,
+  prioridad text NOT NULL DEFAULT 'media',   -- 'alta'|'media'|'baja'
+  estado text NOT NULL DEFAULT 'pendiente',  -- 'pendiente'|'comprado'
+  notas text,
+  imagen_url text,
+  created_at, updated_at
+)
+```
+
 ### Finanzas
 
 ```sql
@@ -501,3 +529,4 @@ coaching.roadmap_subtasks (
 | `13_weekly_reviews.sql` – `20_bloques_horario_v2.sql` | varios | Weekly reviews, sidebar dinámica, finanzas subsección, onboarding, Drive, asistente memoria, bloques horario v2 |
 | `21_knowledge_sesion_pausa.sql` | Knowledge | ALTER `knowledge_sesion_notas` añade `estado`, `fuente_tipo`, `fuente_nombre`, `url`, `categoria_id` (pausar/retomar sesión); ALTER `kn_notes` añade `url` |
 | `22_credenciales.sql` | Infra | CREATE `personal.credenciales` (bóveda cifrada) + funciones `cifrar_valor`/`descifrar_valor` (pgcrypto) |
+| `23_lista_deseos.sql` | Lista de deseos | CREATE `personal.deseos_categorias` + `personal.lista_deseos`; INSERT sidebar_items ("🎁 Lista de deseos" bajo Personal) |
