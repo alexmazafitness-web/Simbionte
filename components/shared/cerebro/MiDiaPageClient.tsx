@@ -21,7 +21,7 @@ import {
   moverBloqueHoy, moverBloqueTodos,
 } from "@/lib/personal/events-actions";
 import { guardarVistaCalendario } from "@/lib/personal/meta-actions";
-import { DAYS_SH, FRONT_COLOR } from "@/lib/personal/constants";
+import { DAYS, FRONT_COLOR } from "@/lib/personal/constants";
 import { calcularMRR, clientesActivos, hasNotas, type ClienteVM } from "@/lib/coaching/clientes";
 import { marcarRevisionHecha, saltarRevision } from "@/lib/coaching/clientes-actions";
 import { CATEGORIAS } from "@/lib/coaching/constants";
@@ -952,7 +952,7 @@ export function MiDiaPageClient({
             const isToday = iso === hoy;
             const d       = new Date(iso + "T12:00:00");
             const num     = d.getDate();
-            const dayName = DAYS_SH[dowOf(iso)] ?? DAY_HEADS[i] ?? "";
+            const dayName = DAYS[dowOf(iso)] ?? DAY_HEADS[i] ?? "";
             return (
               <div key={iso} className={`flex flex-1 flex-col items-center py-2 ${
                 isToday ? "bg-[#C9A96E]/[0.06]" : ""
