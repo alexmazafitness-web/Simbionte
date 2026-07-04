@@ -3,10 +3,12 @@
 import { useState, useTransition } from "react";
 import { INFRA_BUCKETS, type InfraBucket } from "@/lib/personal/constants";
 import type { InfraItemVM } from "@/lib/personal/infra";
+import type { CredencialVM } from "@/lib/personal/credenciales";
 import { crearInfraItem, editarInfraItem, eliminarInfraItem, type InfraItemInput } from "@/lib/personal/infra-actions";
 import { InfraModal } from "./InfraModal";
+import { CredencialesSection } from "./CredencialesSection";
 
-export function InfraPageClient({ items }: { items: InfraItemVM[] }) {
+export function InfraPageClient({ items, credenciales }: { items: InfraItemVM[]; credenciales: CredencialVM[] }) {
   const [modal, setModal] = useState<null | { bucket: InfraBucket; id?: string }>(null);
   const [pending, startTransition] = useTransition();
 
@@ -71,6 +73,8 @@ export function InfraPageClient({ items }: { items: InfraItemVM[] }) {
         onSubmit={(input: InfraItemInput) => run(() => (editando ? editarInfraItem(editando.id, input) : crearInfraItem(input)), () => setModal(null))}
         onDelete={editando ? () => run(() => eliminarInfraItem(editando.id), () => setModal(null)) : undefined}
       />
+
+      <CredencialesSection credenciales={credenciales} />
     </div>
   );
 }

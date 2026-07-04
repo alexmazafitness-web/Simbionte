@@ -20,6 +20,9 @@ Antes de empezar a construir un módulo nuevo: definir en qué esquema van las t
 ### 6. Migraciones solo hacia adelante
 Nunca editar un fichero SQL de `supabase/` ya aplicado. Cada cambio de esquema añade un nuevo fichero numerado (`11_algo.sql`, `12_algo.sql`, …). Los cambios aplicados vía MCP (`apply_migration`) se documentan también en `docs/memory/02_base_datos.md`.
 
+### 7. Secretos de servidor — nunca al cliente
+`ANTHROPIC_API_KEY` y `CREDENTIALS_SECRET` (clave de cifrado de la bóveda de credenciales en Infra, ver `personal.credenciales`) viven solo como variables de entorno de servidor (Vercel + `.env.local`). Cualquier operación que las use pasa por una ruta API (`app/api/.../route.ts`) o Server Action — nunca se exponen a `NEXT_PUBLIC_*` ni se importan en Client Components. Si `CREDENTIALS_SECRET` cambia, todas las credenciales cifradas con la clave anterior dejan de ser descifrables — no es una rotación trivial.
+
 ---
 
 ## Patrones de código

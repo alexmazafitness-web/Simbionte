@@ -212,6 +212,24 @@ personal.infra (
   note text,
   created_at, updated_at
 )
+
+-- Bóveda de credenciales (añadida en 22_credenciales.sql). El valor real
+-- nunca sale de la BD sin pasar por /api/credenciales/reveal.
+personal.credenciales (
+  id uuid PK,
+  owner_id uuid FK auth.users ON DELETE CASCADE,
+  nombre text NOT NULL,
+  categoria text NOT NULL DEFAULT 'otro',   -- 'api_key'|'password'|'credencial'|'otro'
+  servicio text,
+  valor_cifrado text NOT NULL,              -- pgp_sym_encrypt, base64; nunca se lee fuera del servidor
+  descripcion text,
+  url text,
+  created_at, updated_at
+)
+-- Funciones (sin acceso a tablas, puro texto-entra/texto-sale):
+--   personal.cifrar_valor(valor text, secreto text) returns text
+--   personal.descifrar_valor(valor_cifrado text, secreto text) returns text
+-- secreto = CREDENTIALS_SECRET (variable de entorno de servidor, ver 04_reglas_desarrollo.md #7)
 ```
 
 ### Finanzas
@@ -482,3 +500,4 @@ coaching.roadmap_subtasks (
 | `12_knowledge_sesion.sql` | Knowledge | CREATE `personal.knowledge_sesion_notas` (notas temporales de sesión) |
 | `13_weekly_reviews.sql` – `20_bloques_horario_v2.sql` | varios | Weekly reviews, sidebar dinámica, finanzas subsección, onboarding, Drive, asistente memoria, bloques horario v2 |
 | `21_knowledge_sesion_pausa.sql` | Knowledge | ALTER `knowledge_sesion_notas` añade `estado`, `fuente_tipo`, `fuente_nombre`, `url`, `categoria_id` (pausar/retomar sesión); ALTER `kn_notes` añade `url` |
+| `22_credenciales.sql` | Infra | CREATE `personal.credenciales` (bóveda cifrada) + funciones `cifrar_valor`/`descifrar_valor` (pgcrypto) |
