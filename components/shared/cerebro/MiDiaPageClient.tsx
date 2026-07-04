@@ -42,7 +42,7 @@ import { getNowMinutes } from "@/lib/time-utils";
 
 const H_START    = 0;
 const H_END      = 23;
-const HOUR_H     = 52; // px per hour
+const HOUR_H     = 80; // px per hour
 const GRID_PAD   = 20; // px top & bottom padding inside the grid
 const HOURS      = Array.from({ length: H_END - H_START + 1 }, (_, i) => H_START + i); // 00..23
 const TOTAL_PX   = HOURS.length * HOUR_H + GRID_PAD * 2;
@@ -994,13 +994,11 @@ export function MiDiaPageClient({
                 }`}
                 onClick={(e) => handleSlotClick(e, iso)}
               >
-                {/* Hour lines */}
-                {HOURS.map((_, i) => (
+                {/* Hour lines — 25 líneas (00..24) para cerrar el rango con el
+                    00:00 del día siguiente; con GRID_PAD igual arriba y abajo
+                    queda simétrico respecto al borde del contenedor. */}
+                {Array.from({ length: HOURS.length + 1 }, (_, i) => (
                   <div key={i} className="pointer-events-none absolute inset-x-0 border-t border-white/[0.04]" style={{ top: GRID_PAD + i * HOUR_H }} />
-                ))}
-                {/* Half-hour lines */}
-                {HOURS.map((_, i) => (
-                  <div key={`h${i}`} className="pointer-events-none absolute inset-x-0 border-t border-white/[0.02]" style={{ top: GRID_PAD + i * HOUR_H + HOUR_H / 2 }} />
                 ))}
 
                 {/* Drag target indicator */}
