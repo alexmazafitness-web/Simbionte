@@ -258,17 +258,22 @@ export function Sidebar({
                         );
                       }
 
-                      // ── Direct item (no subsection) — shown as subsection label ──
+                      // ── Direct item (no subsection), junto a otras subsecciones ──
                       const { item } = child;
                       return (
-                        <div
+                        <Link
                           key={item.id}
-                          className={`cursor-default select-none pb-0.5 pl-8 text-[9.5px] font-bold uppercase tracking-widest text-neutral-600 ${
+                          href={item.ruta}
+                          className={`block rounded py-1.5 pl-8 pr-2 text-[12.5px] transition ${
                             cIdx === 0 ? "pt-2" : "mt-2 border-t border-white/[0.06] pt-3"
+                          } ${
+                            pathname === item.ruta
+                              ? "bg-[rgba(201,169,110,.14)] font-medium text-[#E2C892]"
+                              : "text-neutral-400 hover:bg-neutral-900 hover:text-neutral-100"
                           }`}
                         >
                           {item.nombre}
-                        </div>
+                        </Link>
                       );
                     })}
                   </div>
