@@ -959,35 +959,39 @@ export function MiDiaPageClient({
       {/* Single scroll container — header is sticky inside so it shares the same width as the grid
           (avoids scrollbar-width misalignment when header is outside the scroll area) */}
       <div ref={calScrollRef} className="overflow-y-auto" style={{ maxHeight: "calc(100vh - 210px)" }}>
-        {/* Sticky header — en Día, flechas ‹ › a los lados del título del día */}
+        {/* Sticky header — en Día, flechas ‹ › agrupadas y centradas junto al
+            título (el contenedor centra el grupo; el bloque del día NO lleva
+            flex-1 para que las flechas queden pegadas a él, no en los bordes) */}
         <div className="sticky top-0 z-10 flex items-center border-b border-white/[0.06] bg-[#141414]">
           <div className="w-10 shrink-0" />
-          {vistaEfectiva === "dia" && (
-            <button type="button" onClick={navPrev} className="flex h-6 w-6 shrink-0 items-center justify-center rounded text-neutral-500 hover:bg-white/[0.06] hover:text-neutral-200">‹</button>
-          )}
-          {days.map((iso, i) => {
-            const isToday = iso === hoy;
-            const d       = new Date(iso + "T12:00:00");
-            const num     = d.getDate();
-            const dayName = DAYS[dowOf(iso)] ?? DAY_HEADS[i] ?? "";
-            return (
-              <div key={iso} className={`flex flex-1 flex-col items-center py-2 ${
-                isToday ? "bg-[#C9A96E]/[0.06]" : ""
-              } ${i < days.length - 1 ? "border-r border-white/[0.04]" : ""}`}>
-                <span className={`text-[9px] font-bold uppercase tracking-widest ${isToday ? "text-[#C9A96E]" : "text-neutral-600"}`}>
-                  {dayName}
-                </span>
-                <span className={`mt-0.5 flex h-6 w-6 items-center justify-center rounded-full text-[13px] font-medium ${
-                  isToday ? "bg-[#C9A96E] font-bold text-[#1a1208]" : "text-neutral-400"
-                }`}>
-                  {num}
-                </span>
-              </div>
-            );
-          })}
-          {vistaEfectiva === "dia" && (
-            <button type="button" onClick={navNext} className="flex h-6 w-6 shrink-0 items-center justify-center rounded text-neutral-500 hover:bg-white/[0.06] hover:text-neutral-200">›</button>
-          )}
+          <div className={vistaEfectiva === "dia" ? "flex flex-1 items-center justify-center gap-4" : "flex flex-1"}>
+            {vistaEfectiva === "dia" && (
+              <button type="button" onClick={navPrev} className="flex h-6 w-6 shrink-0 items-center justify-center rounded text-neutral-500 hover:bg-white/[0.06] hover:text-neutral-200">‹</button>
+            )}
+            {days.map((iso, i) => {
+              const isToday = iso === hoy;
+              const d       = new Date(iso + "T12:00:00");
+              const num     = d.getDate();
+              const dayName = DAYS[dowOf(iso)] ?? DAY_HEADS[i] ?? "";
+              return (
+                <div key={iso} className={`flex ${vistaEfectiva === "dia" ? "" : "flex-1"} flex-col items-center py-2 ${
+                  isToday ? "bg-[#C9A96E]/[0.06]" : ""
+                } ${i < days.length - 1 ? "border-r border-white/[0.04]" : ""}`}>
+                  <span className={`text-[9px] font-bold uppercase tracking-widest ${isToday ? "text-[#C9A96E]" : "text-neutral-600"}`}>
+                    {dayName}
+                  </span>
+                  <span className={`mt-0.5 flex h-6 w-6 items-center justify-center rounded-full text-[13px] font-medium ${
+                    isToday ? "bg-[#C9A96E] font-bold text-[#1a1208]" : "text-neutral-400"
+                  }`}>
+                    {num}
+                  </span>
+                </div>
+              );
+            })}
+            {vistaEfectiva === "dia" && (
+              <button type="button" onClick={navNext} className="flex h-6 w-6 shrink-0 items-center justify-center rounded text-neutral-500 hover:bg-white/[0.06] hover:text-neutral-200">›</button>
+            )}
+          </div>
         </div>
         <div ref={calGridInnerRef} className="relative flex" style={{ height: TOTAL_PX }}>
           {/* Time column — 25 etiquetas (00..24, la última vuelve a "00:00"),
