@@ -805,7 +805,7 @@ export function MiDiaPageClient({
         </div>
         <div className="overflow-hidden rounded-xl border border-white/[0.06]" style={{ background: "#141414" }}>
         <div className="grid grid-cols-7 border-b border-white/[0.06]">
-          {["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"].map((dh) => (
+          {[...DAYS.slice(1), DAYS[0]].map((dh) => (
             <div key={dh} className="border-r border-white/[0.04] py-2.5 text-center text-[10px] font-semibold tracking-wider text-neutral-600 uppercase last:border-r-0">
               {dh}
             </div>
