@@ -1266,7 +1266,7 @@ export function MiDiaPageClient({
               className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-semibold transition hover:brightness-110"
               style={{ backgroundColor: "rgba(201,169,110,.15)", color: "#C9A96E", border: "1px solid rgba(201,169,110,.25)" }}
             >
-              <span className="text-[13px] leading-none">✨</span>
+              <span className="text-[13px] leading-none">👩🏼‍💼</span>
               Asistente
             </button>
 
