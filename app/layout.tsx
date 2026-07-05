@@ -4,6 +4,7 @@ import { Sidebar } from "@/components/shared/Sidebar";
 import { ServiceWorkerRegister } from "@/components/shared/ServiceWorkerRegister";
 import { AuthProvider } from "@/components/shared/AuthProvider";
 import { PomodoroSetup } from "@/components/shared/pomodoro/PomodoroSetup";
+import { GlobalSearchModal } from "@/components/shared/GlobalSearchModal";
 import { createClient } from "@/lib/supabase/server";
 import { getSidebarData } from "@/lib/personal/sidebar-queries";
 import "./globals.css";
@@ -67,6 +68,7 @@ export default async function RootLayout({
             <ServiceWorkerRegister />
             <Sidebar name={displayName} email={data.user?.email ?? null} sidebarData={sidebarData} />
             <main className="flex-1 overflow-y-auto">{children}</main>
+            {data.user && <GlobalSearchModal />}
           </PomodoroSetup>
         </AuthProvider>
       </body>

@@ -6,7 +6,7 @@ import { ClientesPageClient } from "@/components/shared/clientes/ClientesPageCli
 export default async function ClientesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ leadId?: string; nombre?: string }>;
+  searchParams: Promise<{ leadId?: string; nombre?: string; clienteId?: string }>;
 }) {
   const params = await searchParams;
   const [clientes, tarifas, grupos] = await Promise.all([listClientes(), listTarifas(), listGruposRevision()]);
@@ -22,7 +22,7 @@ export default async function ClientesPage({
           {activos}
         </span>
       </div>
-      <ClientesPageClient clientes={clientes} tarifas={tarifas} grupos={grupos} leadPrefill={leadPrefill} />
+      <ClientesPageClient clientes={clientes} tarifas={tarifas} grupos={grupos} leadPrefill={leadPrefill} drawerPrefillId={params.clienteId} />
     </div>
   );
 }

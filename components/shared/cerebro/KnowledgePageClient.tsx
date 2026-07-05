@@ -222,17 +222,21 @@ export function KnowledgePageClient({
   categorias,
   notas,
   sesionesPausadas,
+  notaPrefillId,
 }: {
   categorias: KnCategoryVM[];
   notas: KnNoteVM[];
   sesionesPausadas: SesionPausadaVM[];
+  notaPrefillId?: string;
 }) {
   const [selectedCat,   setSelectedCat]   = useState<string | null>(null);
   const [search,        setSearch]        = useState("");
   const [chatOpen,      setChatOpen]      = useState(false);
   const [sesionActiva,  setSesionActiva]  = useState(false);
   const [resumeSesion,  setResumeSesion]  = useState<SesionPausadaVM | null>(null);
-  const [modal,         setModal]         = useState<ModalState>(null);
+  const [modal,         setModal]         = useState<ModalState>(() =>
+    notaPrefillId && notas.some((n) => n.id === notaPrefillId) ? { type: "detalle", id: notaPrefillId } : null,
+  );
   const [editingCatId, setEditingCatId] = useState<string | null>(null);
   const [editDraft,    setEditDraft]    = useState({ emoji: "", name: "" });
   const [addEmoji,     setAddEmoji]     = useState("📌");

@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { AjustesModal } from "./ajustes/AjustesModal";
 import { EditSidebarModal } from "./sidebar/EditSidebarModal";
+import { EVENTO_ABRIR_BUSQUEDA } from "./GlobalSearchModal";
 import { buildSectionVMs, type SidebarData } from "@/lib/personal/sidebar";
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
@@ -160,6 +161,24 @@ export function Sidebar({
             <Icon name="panel" />
           </button>
         </div>
+
+        {/* Buscador global */}
+        <button
+          type="button"
+          onClick={() => window.dispatchEvent(new Event(EVENTO_ABRIR_BUSQUEDA))}
+          title="Buscar (⌘K)"
+          className={`mb-4 flex items-center gap-2 rounded-lg border border-white/[0.06] px-2.5 py-2 text-neutral-500 transition hover:border-white/10 hover:bg-neutral-900 hover:text-neutral-300 ${
+            showFull ? "justify-between" : "justify-center"
+          }`}
+        >
+          <span className="flex items-center gap-2 text-[12.5px]">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-3.5 w-3.5 shrink-0">
+              <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+            </svg>
+            {showFull && "Buscar"}
+          </span>
+          {showFull && <span className="text-[10.5px] text-neutral-600">⌘K</span>}
+        </button>
 
         {/* Nav */}
         <nav className="flex flex-1 flex-col gap-1 overflow-y-auto">

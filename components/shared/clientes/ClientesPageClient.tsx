@@ -42,15 +42,17 @@ export function ClientesPageClient({
   tarifas,
   grupos,
   leadPrefill,
+  drawerPrefillId,
 }: {
   clientes: ClienteVM[];
   tarifas: Tarifa[];
   grupos: GrupoRevision[];
   leadPrefill?: { id: string; nombre: string };
+  drawerPrefillId?: string;
 }) {
   useAutoRefresh(300_000);
 
-  const [drawerClienteId, setDrawerClienteId] = useState<string | null>(null);
+  const [drawerClienteId, setDrawerClienteId] = useState<string | null>(drawerPrefillId ?? null);
   const [modal, setModal] = useState<ModalState>(leadPrefill ? { type: "nuevo" } : null);
   const [search, setSearch] = useState("");
   const [filtro, setFiltro] = useState<ClienteFiltro>("all");
