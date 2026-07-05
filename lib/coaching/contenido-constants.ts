@@ -61,22 +61,3 @@ export const CHECKLIST_DEFS: ChecklistDef[] = [
   },
 ];
 
-export const TIPOS_PIEZA = ["reel", "carrusel", "story", "post"] as const;
-export type TipoPieza = (typeof TIPOS_PIEZA)[number];
-
-export const TIPO_PIEZA_LABEL: Record<TipoPieza, string> = {
-  reel: "Reel",
-  carrusel: "Carrusel",
-  story: "Story",
-  post: "Post",
-};
-
-export const ESTADOS_PIEZA = ["idea", "produccion", "programado", "publicado"] as const;
-export type EstadoPieza = (typeof ESTADOS_PIEZA)[number];
-
-export const ESTADO_PIEZA_LABEL: Record<EstadoPieza, string> = {
-  idea: "Idea",
-  produccion: "En producción",
-  programado: "Programado",
-  publicado: "Publicado",
-};

@@ -88,9 +88,9 @@ async function buildSnapshot(supabase: Awaited<ReturnType<typeof createClient>>)
       .gte("proxima_revision", semanaIni)
       .lte("proxima_revision", hoy),
 
-    supabase.schema("coaching").from("contenido_ig")
+    supabase.schema("coaching").from("contenido_ideas")
       .select("estado")
-      .in("estado", ["idea", "produccion"]),
+      .in("estado", ["idea", "seleccionada", "en_produccion", "grabado", "editado"]),
   ]);
 
   const clientes    = clientesRes.status === "fulfilled" ? (clientesRes.value.data ?? []) : [];

@@ -463,6 +463,9 @@ coaching.tarifas (
 -- Tarifas reales: 115€ Mensual, 300€ Trimestral, 570€ Semestral, 1080€ Anual
 
 coaching.contenido_ig (
+  -- HUÉRFANA desde 24_contenido.sql: sustituida por contenido_ideas.
+  -- No se usa en ningún código; se conserva por "migraciones solo hacia
+  -- adelante" (nunca se borra una tabla ya aplicada).
   id uuid PK,
   owner_id uuid FK auth.users,
   titulo text NOT NULL,
@@ -470,6 +473,24 @@ coaching.contenido_ig (
   estado text DEFAULT 'idea',            -- 'idea'|'produccion'|'programado'|'publicado'
   fecha_publicacion date,
   url text,
+  created_at, updated_at
+)
+
+-- Sistema de contenido en 3 capas (añadida en 24_contenido.sql):
+-- captura de ideas → banco semanal → calendario de producción con estados.
+coaching.contenido_ideas (
+  id uuid PK,
+  owner_id uuid FK auth.users,
+  titulo text NOT NULL,
+  descripcion text,
+  fuente text,        -- 'revision_cliente'|'podcast'|'gym'|'estudio'|'otro'
+  formato text,        -- 'reel_camara'|'reel_texto_voz'|'carrusel'|'story'
+  estado text NOT NULL DEFAULT 'idea',
+    -- 'idea'|'seleccionada'|'en_produccion'|'grabado'|'editado'|'publicado'|'descartado'
+  semana_asignada date,    -- lunes de la semana asignada
+  fecha_publicacion date,  -- día objetivo mientras no está publicado; fecha real al publicar
+  url_publicado text,
+  notas text,
   created_at, updated_at
 )
 
@@ -529,4 +550,5 @@ coaching.roadmap_subtasks (
 | `13_weekly_reviews.sql` – `20_bloques_horario_v2.sql` | varios | Weekly reviews, sidebar dinámica, finanzas subsección, onboarding, Drive, asistente memoria, bloques horario v2 |
 | `21_knowledge_sesion_pausa.sql` | Knowledge | ALTER `knowledge_sesion_notas` añade `estado`, `fuente_tipo`, `fuente_nombre`, `url`, `categoria_id` (pausar/retomar sesión); ALTER `kn_notes` añade `url` |
 | `22_credenciales.sql` | Infra | CREATE `personal.credenciales` (bóveda cifrada) + funciones `cifrar_valor`/`descifrar_valor` (pgcrypto) |
-| `23_lista_deseos.sql` | Lista de deseos | CREATE `personal.deseos_categorias` + `personal.lista_deseos`; INSERT sidebar_items ("🎁 Lista de deseos" bajo Personal) |
+| `23_lista_deseos.sql` | Lista de deseos | CREATE `personal.deseos_categorias` + `personal.lista_deseos`; INSERT sidebar_items ("🎁 Lista de deseos", movida después de Personal a Finanzas vía UPDATE directo) |
+| `24_contenido.sql` | Contenido | CREATE `coaching.contenido_ideas` (sistema de 3 capas). Sustituye a `contenido_ig` en UI y en `/api/asistente/{chat,planificar}` — `contenido_ig` queda huérfana |

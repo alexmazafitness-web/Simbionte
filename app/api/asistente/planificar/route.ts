@@ -112,9 +112,9 @@ export async function POST(req: Request) {
     // Contenido pendiente
     supabase
       .schema("coaching")
-      .from("contenido_ig")
-      .select("titulo, tipo, estado")
-      .in("estado", ["idea", "produccion"])
+      .from("contenido_ideas")
+      .select("titulo, formato, estado")
+      .in("estado", ["idea", "seleccionada", "en_produccion", "grabado", "editado"])
       .limit(8),
   ]);
 
@@ -192,8 +192,8 @@ export async function POST(req: Request) {
 
   const contenidoStr = contenido.length === 0
     ? "Ninguno"
-    : contenido.map((c: { titulo: string; tipo: string | null; estado: string }) =>
-        `• ${c.titulo} (${c.tipo ?? "?"}, ${c.estado})`
+    : contenido.map((c: { titulo: string; formato: string | null; estado: string }) =>
+        `• ${c.titulo} (${c.formato ?? "?"}, ${c.estado})`
       ).join("\n");
 
   // ── Build prompt ─────────────────────────────────────────────────────────────
