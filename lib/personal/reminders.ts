@@ -6,6 +6,7 @@ export type ReminderVM = {
   whenISO: string; // timestamptz ISO completo (fecha+hora)
   front: Front;
   done: boolean;
+  allDay: boolean;
 };
 
 // Recordatorios de hoy sin completar — para la portada "Hoy". No existía

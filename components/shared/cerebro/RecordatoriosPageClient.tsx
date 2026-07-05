@@ -63,8 +63,8 @@ export function RecordatoriosPageClient({ reminders }: { reminders: ReminderVM[]
                 <div className="mt-1 flex items-center gap-1.5">
                   <FrontChip front={r.front} />
                   <span className="text-[11px] text-text-dim">
-                    {fecha.toLocaleDateString("es-ES", { day: "2-digit", month: "short" })} ·{" "}
-                    {fecha.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}
+                    {fecha.toLocaleDateString("es-ES", { day: "2-digit", month: "short" })}
+                    {r.allDay ? " · Todo el día" : ` · ${fecha.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}`}
                   </span>
                   <span className={`text-[11px] font-semibold ${estado.cls}`}>{estado.label}</span>
                 </div>
@@ -85,8 +85,8 @@ export function RecordatoriosPageClient({ reminders }: { reminders: ReminderVM[]
         onClose={() => setModal(null)}
         recordatorio={editando}
         pending={pending}
-        onSubmit={(text: string, whenISO: string, front: Front) =>
-          run(() => (editando ? editarRecordatorio(editando.id, text, whenISO, front) : crearRecordatorio(text, whenISO, front)), () => setModal(null))
+        onSubmit={(text: string, whenISO: string, front: Front, allDay: boolean) =>
+          run(() => (editando ? editarRecordatorio(editando.id, text, whenISO, front, allDay) : crearRecordatorio(text, whenISO, front, allDay)), () => setModal(null))
         }
       />
     </div>

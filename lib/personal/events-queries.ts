@@ -41,6 +41,7 @@ type EventoUnicoRow = {
   end_at: string | null;
   event_type: Front;
   description: string | null;
+  all_day: boolean;
 };
 
 export async function listEventosUnicos(): Promise<EventoUnicoVM[]> {
@@ -48,7 +49,7 @@ export async function listEventosUnicos(): Promise<EventoUnicoVM[]> {
   const { data, error } = await supabase
     .schema("personal")
     .from("events")
-    .select("id, title, start_at, end_at, event_type, description")
+    .select("id, title, start_at, end_at, event_type, description, all_day")
     .not("start_at", "is", null)
     .order("start_at");
 
@@ -60,6 +61,7 @@ export async function listEventosUnicos(): Promise<EventoUnicoVM[]> {
     endAt: row.end_at,
     type: row.event_type,
     notes: row.description,
+    allDay: row.all_day,
   }));
 }
 

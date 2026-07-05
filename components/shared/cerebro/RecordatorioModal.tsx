@@ -19,7 +19,7 @@ export function RecordatorioModal({
   onClose: () => void;
   recordatorio: ReminderVM | null;
   pending: boolean;
-  onSubmit: (text: string, whenISO: string, front: Front) => void;
+  onSubmit: (text: string, whenISO: string, front: Front, allDay: boolean) => void;
 }) {
   // IMPORTANTE: usar siempre hora local, nunca UTC. whenISO es un timestamp UTC;
   // al editar se muestran fecha/hora en la zona local del navegador (no con
@@ -34,13 +34,14 @@ export function RecordatorioModal({
   const [date, setDate] = useState(initialDate);
   const [time, setTime] = useState(initialTime);
   const [front, setFront] = useState<Front>(recordatorio?.front ?? "personal");
+  const [allDay, setAllDay] = useState(recordatorio?.allDay ?? false);
 
   if (!open) return null;
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!text.trim() || !date || !time) return;
-    onSubmit(text.trim(), new Date(`${date}T${time}`).toISOString(), front);
+    if (!text.trim() || !date || (!allDay && !time)) return;
+    onSubmit(text.trim(), new Date(`${date}T${allDay ? "00:00" : time}`).toISOString(), front, allDay);
   }
 
   return (
@@ -50,15 +51,26 @@ export function RecordatorioModal({
           <label className="mb-1.5 block text-[11px] tracking-wide text-text-dim uppercase">Recordatorio</label>
           <input className={inputClass} value={text} onChange={(e) => setText(e.target.value)} autoFocus />
         </div>
-        <div className="mb-3.5 grid grid-cols-2 gap-3">
+        <label className="mb-3.5 flex cursor-pointer select-none items-center gap-2.5">
+          <input
+            type="checkbox"
+            checked={allDay}
+            onChange={(e) => setAllDay(e.target.checked)}
+            className="h-4 w-4 rounded border-line accent-gold"
+          />
+          <span className="text-[13px] text-text-2">Todo el día — sin horario</span>
+        </label>
+        <div className={`mb-3.5 grid gap-3 ${allDay ? "grid-cols-1" : "grid-cols-2"}`}>
           <div>
             <label className="mb-1.5 block text-[11px] tracking-wide text-text-dim uppercase">Fecha</label>
             <input type="date" className={inputClass} value={date} onChange={(e) => setDate(e.target.value)} />
           </div>
-          <div>
-            <label className="mb-1.5 block text-[11px] tracking-wide text-text-dim uppercase">Hora</label>
-            <input type="time" className={inputClass} value={time} onChange={(e) => setTime(e.target.value)} />
-          </div>
+          {!allDay && (
+            <div>
+              <label className="mb-1.5 block text-[11px] tracking-wide text-text-dim uppercase">Hora</label>
+              <input type="time" className={inputClass} value={time} onChange={(e) => setTime(e.target.value)} />
+            </div>
+          )}
         </div>
         <div className="mb-3.5">
           <label className="mb-1.5 block text-[11px] tracking-wide text-text-dim uppercase">Frente</label>

@@ -61,6 +61,8 @@ personal.reminders (
   done boolean DEFAULT false,
   -- añadido en 06:
   front text NOT NULL DEFAULT 'personal',
+  -- añadido en 27_all_day.sql:
+  all_day boolean NOT NULL DEFAULT false,  -- remind_at guarda medianoche local; sin hora específica
   created_at, updated_at
 )
 ```
@@ -116,6 +118,8 @@ personal.events (
   end_min integer,
   event_type text,                       -- 'coaching'|'formacion'|'personal'|'contenido'
   recur jsonb,
+  -- añadido en 27_all_day.sql:
+  all_day boolean NOT NULL DEFAULT false,  -- solo aplica a eventos únicos (start_at); end_at queda NULL
   created_at, updated_at
 )
 
@@ -592,3 +596,4 @@ coaching.roadmap_subtasks (
 | `24_contenido.sql` | Contenido | CREATE `coaching.contenido_ideas` (sistema de 3 capas). Sustituye a `contenido_ig` en UI y en `/api/asistente/{chat,planificar}` — `contenido_ig` queda huérfana |
 | `25_lead_contexto.sql` | Ventas — script de llamada | CREATE `coaching.lead_contexto` (cuestionario/datos manuales + script IA por lead). Sección "Preparar llamada" añadida a `LeadModal.tsx` (`/coaching/leads`, no `/coaching/ventas` — ver nota abajo) |
 | `26_push_subscriptions.sql` | Notificaciones push | CREATE `personal.push_subscriptions` (endpoint UNIQUE). Cron diario en `vercel.json` (`/api/push/cron`, 6:00 UTC = 8:00 España) manda avisos de revisiones/mesociclos/pagos/onboarding vía `web-push` |
+| `27_all_day.sql` | Calendario | ALTER `personal.events`/`personal.reminders` añaden `all_day`. Franja especial en `calGrid` (CalEventModal + RecordatorioModal), chips en vista Mes; Año conserva solo los puntos de color existentes |

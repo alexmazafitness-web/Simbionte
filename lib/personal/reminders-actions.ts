@@ -7,7 +7,7 @@ import type { Front } from "./constants";
 
 const PATH = "/personal/cerebro/recordatorios";
 
-export async function crearRecordatorio(text: string, whenISO: string, front: Front) {
+export async function crearRecordatorio(text: string, whenISO: string, front: Front, allDay = false) {
   const supabase = await createClient();
   const ownerId = await requireUserId(supabase);
   const { error } = await supabase.schema("personal").from("reminders").insert({
@@ -16,18 +16,19 @@ export async function crearRecordatorio(text: string, whenISO: string, front: Fr
     remind_at: whenISO,
     front,
     done: false,
+    all_day: allDay,
   });
   if (error) throw error;
   revalidatePath(PATH);
   revalidatePath("/personal/cerebro");
 }
 
-export async function editarRecordatorio(id: string, text: string, whenISO: string, front: Front) {
+export async function editarRecordatorio(id: string, text: string, whenISO: string, front: Front, allDay = false) {
   const supabase = await createClient();
   const { error } = await supabase
     .schema("personal")
     .from("reminders")
-    .update({ title: text, remind_at: whenISO, front })
+    .update({ title: text, remind_at: whenISO, front, all_day: allDay })
     .eq("id", id);
   if (error) throw error;
   revalidatePath(PATH);

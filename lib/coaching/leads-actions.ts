@@ -75,6 +75,7 @@ export async function agendarLlamada(leadId: string, nombreLead: string, contact
     endAt: endAt.toISOString(),
     type: "coaching",
     notes: contacto ? `Contacto: ${contacto}` : "",
+    allDay: false,
   });
 
   const supabase = await createClient();

@@ -90,6 +90,12 @@ export function CalEventModal(props: CalModalProps) {
     props.mode === "evento" ? (props.ev.notes ?? "") : ""
   );
 
+  const [allDay, setAllDay] = useState<boolean>(() => {
+    if (props.mode === "evento")   return props.ev.allDay;
+    if (props.mode === "reminder") return props.r.allDay;
+    return false;
+  });
+
   useEffect(() => { titleRef.current?.focus(); }, []);
 
   useEffect(() => {
@@ -102,29 +108,32 @@ export function CalEventModal(props: CalModalProps) {
 
   function handleSave() {
     if (!titulo.trim()) return;
+    const horaInicio = allDay ? "00:00" : startHHMM;
     startTransition(async () => {
       if (props.mode === "reminder") {
-        await editarRecordatorio(props.r.id, titulo.trim(), buildIsoForDB(iso, startHHMM), props.r.front);
+        await editarRecordatorio(props.r.id, titulo.trim(), buildIsoForDB(iso, horaInicio), props.r.front, allDay);
       } else if (props.mode === "evento") {
         const input: EventoUnicoInput = {
           title: titulo.trim(),
-          startAt: buildIsoForDB(iso, startHHMM),
-          endAt: endHHMM ? buildIsoForDB(iso, endHHMM) : null,
+          startAt: buildIsoForDB(iso, horaInicio),
+          endAt: !allDay && endHHMM ? buildIsoForDB(iso, endHHMM) : null,
           type: front,
           notes: notas,
+          allDay,
         };
         await editarEventoUnico(props.ev.id, input);
       } else {
         // create mode
         if (tipo === "recordatorio") {
-          await crearRecordatorio(titulo.trim(), buildIsoForDB(iso, startHHMM), "personal");
+          await crearRecordatorio(titulo.trim(), buildIsoForDB(iso, horaInicio), "personal", allDay);
         } else {
           const input: EventoUnicoInput = {
             title: titulo.trim(),
-            startAt: buildIsoForDB(iso, startHHMM),
-            endAt: endHHMM ? buildIsoForDB(iso, endHHMM) : null,
+            startAt: buildIsoForDB(iso, horaInicio),
+            endAt: !allDay && endHHMM ? buildIsoForDB(iso, endHHMM) : null,
             type: front,
             notes: notas,
+            allDay,
           };
           await crearEventoUnico(input);
         }
@@ -207,7 +216,19 @@ export function CalEventModal(props: CalModalProps) {
             className="w-full rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-2.5 text-[14px] text-[#e5e5e5] outline-none placeholder:text-neutral-600 focus:border-[#C9A96E]/40 transition" />
         </div>
 
+        {/* Todo el día */}
+        <label className="mb-4 flex cursor-pointer select-none items-center gap-2.5">
+          <input
+            type="checkbox"
+            checked={allDay}
+            onChange={(e) => setAllDay(e.target.checked)}
+            className="h-4 w-4 rounded border-white/20 bg-white/[0.03] accent-[#C9A96E]"
+          />
+          <span className="text-[13px] text-neutral-300">Todo el día — sin horario</span>
+        </label>
+
         {/* Horas */}
+        {!allDay && (
         <div className="mb-4 flex gap-3">
           <div className="flex-1">
             <label className="mb-1.5 block text-[10px] uppercase tracking-[0.12em] text-neutral-600">
@@ -224,6 +245,7 @@ export function CalEventModal(props: CalModalProps) {
             </div>
           )}
         </div>
+        )}
 
         {/* Área (solo eventos) */}
         {showFrontSelector && (

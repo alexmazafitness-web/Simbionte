@@ -2,14 +2,14 @@ import { createClient } from "@/lib/supabase/server";
 import type { Front } from "./constants";
 import type { ReminderVM } from "./reminders";
 
-type ReminderRow = { id: string; title: string; remind_at: string; front: Front; done: boolean };
+type ReminderRow = { id: string; title: string; remind_at: string; front: Front; done: boolean; all_day: boolean };
 
 export async function listReminders(): Promise<ReminderVM[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .schema("personal")
     .from("reminders")
-    .select("id, title, remind_at, front, done")
+    .select("id, title, remind_at, front, done, all_day")
     .order("done")
     .order("remind_at");
 
@@ -20,5 +20,6 @@ export async function listReminders(): Promise<ReminderVM[]> {
     whenISO: row.remind_at,
     front: row.front,
     done: row.done,
+    allDay: row.all_day,
   }));
 }

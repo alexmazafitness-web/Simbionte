@@ -3,7 +3,6 @@ import { getGoal } from "@/lib/personal/goal-queries";
 import { listEvents, listEventosUnicos } from "@/lib/personal/events-queries";
 import { listReminders } from "@/lib/personal/reminders-queries";
 import { listClientes } from "@/lib/coaching/clientes-queries";
-import { listOnboardings } from "@/lib/coaching/onboarding-queries";
 import { getVistaCalendario } from "@/lib/personal/meta-queries";
 import { MiDiaPageClient } from "@/components/shared/cerebro/MiDiaPageClient";
 
@@ -12,14 +11,13 @@ async function safe<T>(p: Promise<T[]>): Promise<T[]> {
 }
 
 export default async function CerebroPage() {
-  const [tasks, goal, events, eventosUnicos, reminders, clientes, onboardings, savedVista] = await Promise.all([
+  const [tasks, goal, events, eventosUnicos, reminders, clientes, savedVista] = await Promise.all([
     safe(listTasks()),
     getGoal(),
     safe(listEvents()),
     safe(listEventosUnicos()),
     safe(listReminders()),
     safe(listClientes()),
-    safe(listOnboardings("en_progreso")),
     getVistaCalendario().catch(() => "dia"),
   ]);
 
@@ -31,7 +29,6 @@ export default async function CerebroPage() {
       eventosUnicos={eventosUnicos}
       reminders={reminders}
       clientes={clientes}
-      onboardings={onboardings}
       initialVista={savedVista}
     />
   );

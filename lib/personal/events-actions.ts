@@ -82,6 +82,7 @@ export type EventoUnicoInput = {
   endAt: string | null;
   type: Front;
   notes: string;
+  allDay: boolean;
 };
 
 // Evento de fecha única — usa start_at/end_at en vez de start_min/end_min+recur.
@@ -96,6 +97,7 @@ export async function crearEventoUnico(input: EventoUnicoInput) {
     end_at: input.endAt,
     event_type: input.type,
     description: input.notes || null,
+    all_day: input.allDay,
   });
   if (error) throw error;
   revalidatePath(PATH);
@@ -113,6 +115,7 @@ export async function editarEventoUnico(id: string, input: EventoUnicoInput) {
       end_at: input.endAt,
       event_type: input.type,
       description: input.notes || null,
+      all_day: input.allDay,
     })
     .eq("id", id);
   if (error) throw error;

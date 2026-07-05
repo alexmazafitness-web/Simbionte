@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
-import Link from "next/link";
 import { useAutoRefresh } from "@/lib/hooks/useAutoRefresh";
 import { useCalendarRealtime } from "@/lib/hooks/useCalendarRealtime";
 import { crearTarea, marcarTareaHecha } from "@/lib/personal/tasks-actions";
@@ -13,7 +12,6 @@ import {
   crearRecordatorio,
   editarRecordatorio,
   eliminarRecordatorio,
-  marcarRecordatorioHecho,
 } from "@/lib/personal/reminders-actions";
 import {
   crearBloque, editarBloque, eliminarBloque,
@@ -22,11 +20,7 @@ import {
 } from "@/lib/personal/events-actions";
 import { guardarVistaCalendario } from "@/lib/personal/meta-actions";
 import { DAYS, FRONT_COLOR } from "@/lib/personal/constants";
-import { calcularMRR, clientesActivos, hasNotas, type ClienteVM } from "@/lib/coaching/clientes";
-import { marcarRevisionHecha, saltarRevision } from "@/lib/coaching/clientes-actions";
-import { CATEGORIAS } from "@/lib/coaching/constants";
-import { fmtDateCorta } from "@/lib/coaching/format";
-import type { OnboardingVM } from "@/lib/coaching/onboarding-queries";
+import { calcularMRR, type ClienteVM } from "@/lib/coaching/clientes";
 import type { GoalVM } from "@/lib/personal/goal";
 import type { EventBlockVM, EventoUnicoVM } from "@/lib/personal/events";
 import type { ReminderVM } from "@/lib/personal/reminders";
@@ -34,7 +28,6 @@ import { CalEventModal, type CalModalProps } from "./CalEventModal";
 import { DiaPopover } from "./DiaPopover";
 import { BloqueModal } from "./BloqueModal";
 import { CalMovDialog } from "./CalMovDialog";
-import { RevisionNotasDrawer } from "./RevisionNotasDrawer";
 import { AsistenteChat } from "./AsistenteChat";
 import { usePomodoroCtx } from "@/lib/pomodoro/PomodoroContext";
 import { getNowMinutes } from "@/lib/time-utils";
@@ -101,14 +94,6 @@ function addMonthsISO(iso: string, n: number): string {
 
 // ── helpers (module-level) ────────────────────────────────────────────────────
 
-// Compute days-until/since a target ISO date relative to a given today ISO.
-// Negative = overdue.
-function daysDiffFromToday(targetISO: string, todayISO: string): number {
-  const a = new Date(todayISO  + "T12:00:00").getTime();
-  const b = new Date(targetISO + "T12:00:00").getTime();
-  return Math.round((b - a) / 86_400_000);
-}
-
 // ⚠️ SIEMPRE hora local - nunca UTC
 function tsToMin(isoTs: string): number {
   const d = new Date(isoTs);
@@ -143,6 +128,15 @@ function eventsOn(iso: string, ev: EventBlockVM[], unicos: EventoUnicoVM[]) {
 function remHasTiempo(r: ReminderVM): boolean {
   const d = new Date(r.whenISO);
   return d.getHours() !== 0 || d.getMinutes() !== 0;
+}
+
+// Eventos y recordatorios "todo el día" de un día concreto — van en la
+// franja especial encima del grid de horas, nunca dentro de él.
+function allDayItemsOn(iso: string, eventosUnicos: EventoUnicoVM[], reminders: ReminderVM[]) {
+  return {
+    eventos: eventosUnicos.filter((e) => e.allDay && toISO(new Date(e.startAt)) === iso),
+    recordatorios: reminders.filter((r) => r.allDay && !r.done && toISO(new Date(r.whenISO)) === iso),
+  };
 }
 
 // Traga el "click" fantasma que el navegador dispara justo tras el mouseup
@@ -194,15 +188,6 @@ function CheckboxIcon({ checked }: { checked: boolean }) {
   );
 }
 
-function BellIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="#C9A96E" strokeWidth={1.8}
-      className="h-[14px] w-[14px] shrink-0">
-      <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" />
-    </svg>
-  );
-}
-
 function ChevronIcon({ dir = "right" }: { dir?: "left" | "right" }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}
@@ -230,14 +215,6 @@ function FadeItem({ id, fadingIds, children }: { id: string; fadingIds: Set<stri
   );
 }
 
-function SubLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-neutral-600">
-      {children}
-    </div>
-  );
-}
-
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function MiDiaPageClient({
@@ -247,7 +224,6 @@ export function MiDiaPageClient({
   eventosUnicos,
   reminders,
   clientes,
-  onboardings,
   initialVista = "dia",
 }: {
   tasks: TaskVM[];
@@ -256,7 +232,6 @@ export function MiDiaPageClient({
   eventosUnicos: EventoUnicoVM[];
   reminders: ReminderVM[];
   clientes: ClienteVM[];
-  onboardings: OnboardingVM[];
   initialVista?: string;
 }) {
   // "Hoy" reactivo — se actualiza al cruzar medianoche (efecto más abajo).
@@ -266,9 +241,6 @@ export function MiDiaPageClient({
   const [isAdding, setIsAdding]     = useState(false);
   const [newTitle, setNewTitle]     = useState("");
   const [fadingIds, setFadingIds]   = useState<Set<string>>(new Set());
-  // Permanent suppression set for revision items — prevents reappearing due to
-  // stale-data re-renders that arrive between the fade-out and RSC revalidation.
-  const [removingRevIds, setRemovingRevIds] = useState<Set<string>>(new Set());
   const calScrollRef                = useRef<HTMLDivElement>(null);
   const calGridInnerRef             = useRef<HTMLDivElement>(null);
 
@@ -287,7 +259,6 @@ export function MiDiaPageClient({
   // Resize state
   const resizeRef      = useRef<{ ev: EventoUnicoVM; iso: string; startMin: number } | null>(null);
   const [resizeEndMin, setResizeEndMin] = useState<number | null>(null);
-  const [notasCliente, setNotasCliente] = useState<ClienteVM | null>(null);
   const [asistenteChatOpen, setAsistenteChatOpen] = useState(false);
 
   // Vista del calendario — persisted in personal.meta, locked to "dia" on mobile
@@ -371,7 +342,6 @@ export function MiDiaPageClient({
   // Pause when any modal/drawer is open OR pomodoro is running on a task
   const refreshPaused =
     calModal !== null ||
-    notasCliente !== null ||
     asistenteChatOpen ||
     bloqueEditId !== null ||
     movDialog !== null ||
@@ -498,35 +468,6 @@ export function MiDiaPageClient({
       .sort((a, b) => (a.isPriority === b.isPriority ? 0 : a.isPriority ? -1 : 1)),
   [tasks, hoy, todayDow]);
 
-  // Reminders for today — split by whether they have a specific time
-  const recHoySinHora = useMemo(() =>
-    reminders
-      .filter((r) => !r.done && toISO(new Date(r.whenISO)) === hoy && !remHasTiempo(r))
-      .sort((a, b) => a.whenISO.localeCompare(b.whenISO)),
-  [reminders, hoy]);
-
-  // Coaching data — revPend computed client-side so day counters stay current
-  // without requiring a router.refresh() for that purpose alone.
-  const activos  = useMemo(() => clientesActivos(clientes), [clientes]);
-  const revPend  = useMemo(
-    () => activos.filter((c) => c.proximaRevision !== null && daysDiffFromToday(c.proximaRevision, hoy) <= 0),
-    [activos, hoy],
-  );
-  const conNotas = activos.filter(hasNotas).slice(0, 4);
-  const mesoRenovar = useMemo(
-    () => activos.filter((c) => c.mesociclo !== null && c.mesociclo.diasRestantes !== null && c.mesociclo.diasRestantes <= 7),
-    [activos],
-  );
-
-  // revPend filtered through the permanent suppression set:
-  //   - show items NOT being removed
-  //   - also show items being removed IF they're still mid-fade (to play the animation)
-  //   This prevents stale-prop re-renders from resurrecting items the user already dismissed.
-  const revPendVisible = useMemo(
-    () => revPend.filter((c) => !removingRevIds.has(c.id) || fadingIds.has(`rev-${c.id}`)),
-    [revPend, removingRevIds, fadingIds],
-  );
-
   // Fade-out helper
   function fadeAndDo(id: string, action: () => void) {
     setFadingIds((s) => new Set(s).add(id));
@@ -545,38 +486,6 @@ export function MiDiaPageClient({
     } else {
       startTransition(() => { void marcarTareaHecha(t.id, !!t.recur, hoy, false); });
     }
-  }
-
-  function handleCheckReminder(r: ReminderVM) {
-    fadeAndDo(`rem-${r.id}`, () =>
-      startTransition(() => { void marcarRecordatorioHecho(r.id, true); })
-    );
-  }
-
-  function handleRevisionHecha(clienteId: string) {
-    const key = `rev-${clienteId}`;
-    // 1. Start fade animation
-    setFadingIds((s) => new Set(s).add(key));
-    // 2. Permanently suppress from list — stays even if stale props arrive mid-transition
-    setRemovingRevIds((s) => new Set(s).add(clienteId));
-    // 3. Remove from fadingIds after animation completes (removingRevIds keeps it gone)
-    setTimeout(() => setFadingIds((s) => { const n = new Set(s); n.delete(key); return n; }), 700);
-    // 4. Fire server action immediately; clean suppression set once RSC data is fresh
-    startTransition(async () => {
-      await marcarRevisionHecha(clienteId);
-      setRemovingRevIds((s) => { const n = new Set(s); n.delete(clienteId); return n; });
-    });
-  }
-
-  function handleSaltarRevision(clienteId: string) {
-    const key = `rev-${clienteId}`;
-    setFadingIds((s) => new Set(s).add(key));
-    setRemovingRevIds((s) => new Set(s).add(clienteId));
-    setTimeout(() => setFadingIds((s) => { const n = new Set(s); n.delete(key); return n; }), 700);
-    startTransition(async () => {
-      await saltarRevision(clienteId);
-      setRemovingRevIds((s) => { const n = new Set(s); n.delete(clienteId); return n; });
-    });
   }
 
   function handleAddTask() {
@@ -659,7 +568,7 @@ export function MiDiaPageClient({
           const newEnd   = newStart + dur;
           if (kind === "evento" && d.ev) {
             void editarEventoUnico(d.ev.id, {
-              title: d.ev.title, type: d.ev.type, notes: d.ev.notes ?? "",
+              title: d.ev.title, type: d.ev.type, notes: d.ev.notes ?? "", allDay: d.ev.allDay,
               startAt: buildIsoForDB(slot.iso, newStart),
               endAt:   buildIsoForDB(slot.iso, newEnd),
             });
@@ -712,7 +621,7 @@ export function MiDiaPageClient({
           const relY = ev_.clientY - rect.top - GRID_PAD;
           const newEnd = Math.max(resize.startMin + 15, Math.min(24 * 60, Math.round((relY / HOUR_H) * 60 / 15) * 15));
           void editarEventoUnico(resize.ev.id, {
-            title: resize.ev.title, type: resize.ev.type, notes: resize.ev.notes ?? "",
+            title: resize.ev.title, type: resize.ev.type, notes: resize.ev.notes ?? "", allDay: resize.ev.allDay,
             startAt: buildIsoForDB(resize.iso, resize.startMin),
             endAt:   buildIsoForDB(resize.iso, newEnd),
           });
@@ -855,6 +764,7 @@ export function MiDiaPageClient({
             const isToday    = iso === hoy;
             const frontTypes = [...new Set(uDay.map((u) => u.type))];
             const totalEv    = uDay.length;
+            const allDayEv   = uDay.filter((u) => u.allDay);
 
             return (
               <div
@@ -867,6 +777,23 @@ export function MiDiaPageClient({
                 }`} style={isToday ? { backgroundColor: "#C9A96E" } : {}}>
                   {day}
                 </span>
+                {allDayEv.length > 0 && (
+                  <div className="mt-1 flex flex-col gap-0.5">
+                    {allDayEv.slice(0, 2).map((ev) => (
+                      <button
+                        key={ev.id}
+                        type="button"
+                        title={ev.title}
+                        onClick={(e) => { e.stopPropagation(); setCalModal({ mode: "evento", ev, iso, onClose: () => setCalModal(null) }); }}
+                        className="truncate rounded px-1 py-0.5 text-left text-[8.5px] font-semibold text-white transition hover:brightness-110"
+                        style={{ backgroundColor: FRONT_COLOR[ev.type] }}
+                      >
+                        {ev.title}
+                      </button>
+                    ))}
+                    {allDayEv.length > 2 && <span className="text-[8px] leading-none text-neutral-600">+{allDayEv.length - 2} más</span>}
+                  </div>
+                )}
                 {frontTypes.length > 0 && (
                   <div className="mt-1.5 flex flex-wrap gap-[3px]">
                     {frontTypes.slice(0, 3).map((ft) => (
@@ -967,44 +894,94 @@ export function MiDiaPageClient({
 
   // ── Calendar render ───────────────────────────────────────────────────────
 
+  // ¿Hay algún "todo el día" en los días visibles? Solo entonces se renderiza
+  // la franja especial (evita una fila vacía la mayoría de las veces).
+  const hayAllDay = days.some((iso) => {
+    const { eventos, recordatorios } = allDayItemsOn(iso, eventosUnicos, reminders);
+    return eventos.length > 0 || recordatorios.length > 0;
+  });
+
   const calGrid = (
     <div className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-white/[0.06]">
       {/* Single scroll container — header is sticky inside so it shares the same width as the grid
           (avoids scrollbar-width misalignment when header is outside the scroll area) */}
       <div ref={calScrollRef} className="overflow-y-auto" style={{ maxHeight: "calc(100vh - 210px)" }}>
-        {/* Sticky header — en Día, flechas ‹ › agrupadas y centradas junto al
-            título (el contenedor centra el grupo; el bloque del día NO lleva
-            flex-1 para que las flechas queden pegadas a él, no en los bordes) */}
-        <div className="sticky top-0 z-10 flex items-center border-b border-white/[0.06] bg-[#141414]">
-          <div className="w-10 shrink-0" />
-          <div className={vistaEfectiva === "dia" ? "flex flex-1 items-center justify-center gap-4" : "flex flex-1"}>
-            {vistaEfectiva === "dia" && (
-              <button type="button" onClick={navPrev} className="flex h-6 w-6 shrink-0 items-center justify-center rounded text-neutral-500 hover:bg-white/[0.06] hover:text-neutral-200">‹</button>
-            )}
-            {days.map((iso, i) => {
-              const isToday = iso === hoy;
-              const d       = new Date(iso + "T12:00:00");
-              const num     = d.getDate();
-              const dayName = DAYS[dowOf(iso)] ?? DAY_HEADS[i] ?? "";
-              return (
-                <div key={iso} className={`flex ${vistaEfectiva === "dia" ? "" : "flex-1"} flex-col items-center py-2 ${
-                  isToday ? "bg-[#C9A96E]/[0.06]" : ""
-                } ${i < days.length - 1 ? "border-r border-white/[0.04]" : ""}`}>
-                  <span className={`text-[9px] font-bold uppercase tracking-widest ${isToday ? "text-[#C9A96E]" : "text-neutral-600"}`}>
-                    {dayName}
-                  </span>
-                  <span className={`mt-0.5 flex h-6 w-6 items-center justify-center rounded-full text-[13px] font-medium ${
-                    isToday ? "bg-[#C9A96E] font-bold text-[#1a1208]" : "text-neutral-400"
-                  }`}>
-                    {num}
-                  </span>
-                </div>
-              );
-            })}
-            {vistaEfectiva === "dia" && (
-              <button type="button" onClick={navNext} className="flex h-6 w-6 shrink-0 items-center justify-center rounded text-neutral-500 hover:bg-white/[0.06] hover:text-neutral-200">›</button>
-            )}
+        {/* Sticky header + franja "todo el día" en un único contenedor sticky
+            (así ambas filas quedan fijas al hacer scroll, sin necesitar
+            calcular el offset "top" de la segunda fila). En Día, flechas ‹ ›
+            agrupadas y centradas junto al título (el contenedor centra el
+            grupo; el bloque del día NO lleva flex-1 para que las flechas
+            queden pegadas a él, no en los bordes). */}
+        <div className="sticky top-0 z-10 bg-[#141414]">
+          <div className={`flex items-center ${hayAllDay ? "" : "border-b border-white/[0.06]"}`}>
+            <div className="w-10 shrink-0" />
+            <div className={vistaEfectiva === "dia" ? "flex flex-1 items-center justify-center gap-4" : "flex flex-1"}>
+              {vistaEfectiva === "dia" && (
+                <button type="button" onClick={navPrev} className="flex h-6 w-6 shrink-0 items-center justify-center rounded text-neutral-500 hover:bg-white/[0.06] hover:text-neutral-200">‹</button>
+              )}
+              {days.map((iso, i) => {
+                const isToday = iso === hoy;
+                const d       = new Date(iso + "T12:00:00");
+                const num     = d.getDate();
+                const dayName = DAYS[dowOf(iso)] ?? DAY_HEADS[i] ?? "";
+                return (
+                  <div key={iso} className={`flex ${vistaEfectiva === "dia" ? "" : "flex-1"} flex-col items-center py-2 ${
+                    isToday ? "bg-[#C9A96E]/[0.06]" : ""
+                  } ${i < days.length - 1 ? "border-r border-white/[0.04]" : ""}`}>
+                    <span className={`text-[9px] font-bold uppercase tracking-widest ${isToday ? "text-[#C9A96E]" : "text-neutral-600"}`}>
+                      {dayName}
+                    </span>
+                    <span className={`mt-0.5 flex h-6 w-6 items-center justify-center rounded-full text-[13px] font-medium ${
+                      isToday ? "bg-[#C9A96E] font-bold text-[#1a1208]" : "text-neutral-400"
+                    }`}>
+                      {num}
+                    </span>
+                  </div>
+                );
+              })}
+              {vistaEfectiva === "dia" && (
+                <button type="button" onClick={navNext} className="flex h-6 w-6 shrink-0 items-center justify-center rounded text-neutral-500 hover:bg-white/[0.06] hover:text-neutral-200">›</button>
+              )}
+            </div>
           </div>
+
+          {/* Franja "todo el día" — como en Google Calendar, fuera del grid de horas */}
+          {hayAllDay && (
+            <div className="flex items-stretch border-b border-white/[0.06]">
+              <div className="w-10 shrink-0" />
+              {days.map((iso, i) => {
+                const { eventos, recordatorios } = allDayItemsOn(iso, eventosUnicos, reminders);
+                return (
+                  <div key={iso} className={`flex flex-1 flex-col gap-1 p-1 ${i < days.length - 1 ? "border-r border-white/[0.04]" : ""}`}>
+                    {eventos.map((ev) => (
+                      <button
+                        key={ev.id}
+                        type="button"
+                        title={ev.title}
+                        onClick={() => setCalModal({ mode: "evento", ev, iso, onClose: () => setCalModal(null) })}
+                        className="truncate rounded px-1.5 py-0.5 text-left text-[9.5px] font-semibold text-white transition hover:brightness-110"
+                        style={{ backgroundColor: EVENTO_BG, borderLeft: `2px solid ${EVENTO_BORDER}` }}
+                      >
+                        {ev.title}
+                      </button>
+                    ))}
+                    {recordatorios.map((r) => (
+                      <button
+                        key={r.id}
+                        type="button"
+                        title={r.text}
+                        onClick={() => setCalModal({ mode: "reminder", r, iso, onClose: () => setCalModal(null) })}
+                        className="truncate rounded px-1.5 py-0.5 text-left text-[9.5px] font-semibold transition hover:brightness-110"
+                        style={{ backgroundColor: REMINDER_BG, color: "#C9A96E", borderLeft: "2px solid #C9A96E" }}
+                      >
+                        {r.text}
+                      </button>
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
         <div ref={calGridInnerRef} className="relative flex" style={{ height: TOTAL_PX }}>
           {/* Time column — 25 etiquetas (00..24, la última vuelve a "00:00"),
@@ -1082,8 +1059,9 @@ export function MiDiaPageClient({
                   );
                 })}
 
-                {/* One-time events (draggable + resizable + click-to-edit) */}
-                {unicos.map((ev) => {
+                {/* One-time events (draggable + resizable + click-to-edit) — los
+                    "todo el día" se muestran en la franja especial de arriba, no aquí */}
+                {unicos.filter((ev) => !ev.allDay).map((ev) => {
                   const evStartMin   = tsToMin(ev.startAt);
                   const evEndMin     = ev.endAt ? tsToMin(ev.endAt) : evStartMin + 60;
                   const isResizing   = resizeRef.current?.ev.id === ev.id;
@@ -1117,9 +1095,10 @@ export function MiDiaPageClient({
                   );
                 })}
 
-                {/* Reminders with time (draggable + click-to-edit) */}
+                {/* Reminders with time (draggable + click-to-edit) — los "todo
+                    el día" se muestran en la franja especial de arriba, no aquí */}
                 {reminders
-                  .filter((r) => !r.done && toISO(new Date(r.whenISO)) === iso && remHasTiempo(r))
+                  .filter((r) => !r.done && !r.allDay && toISO(new Date(r.whenISO)) === iso && remHasTiempo(r))
                   .map((r) => {
                     const rMin     = tsToMin(r.whenISO);
                     const isDragging = dragVisual?.id === r.id;
@@ -1245,233 +1224,6 @@ export function MiDiaPageClient({
           )}
         </div>
       </div>
-
-      {/* ── Recordatorios (sin hora — los que tienen hora van al calendario) ── */}
-      {recHoySinHora.length > 0 && (
-        <div>
-          <SectionLabel>Recordatorios</SectionLabel>
-          <div className="flex flex-col gap-1">
-            {recHoySinHora.map((r) => (
-              <FadeItem key={r.id} id={`rem-${r.id}`} fadingIds={fadingIds}>
-                <button
-                  type="button"
-                  disabled={pending}
-                  onClick={() => handleCheckReminder(r)}
-                  className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition hover:bg-white/[0.03]"
-                >
-                  <BellIcon />
-                  <span className="flex-1 text-[13px] font-medium text-[#e5e5e5]">{r.text}</span>
-                </button>
-              </FadeItem>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ════ BLOQUE: SERVICIO ════════════════════════════════════════════ */}
-      {(revPendVisible.length > 0 || mesoRenovar.length > 0 || onboardings.length > 0 || conNotas.length > 0) && (
-        <div>
-          <SectionLabel>Servicio</SectionLabel>
-
-          <div className="flex flex-col gap-6">
-
-            {/* 1. Revisiones pendientes */}
-            {revPendVisible.length > 0 && (
-              <div>
-                <SubLabel>Revisiones pendientes</SubLabel>
-                <div className="flex flex-col gap-2">
-                  {revPendVisible.map((c) => (
-                    <FadeItem key={c.id} id={`rev-${c.id}`} fadingIds={fadingIds}>
-                      <div
-                        className="flex items-center gap-3 rounded-lg border p-3"
-                        style={{ backgroundColor: "#1a1a1a", borderColor: "#2a2a2a" }}
-                      >
-                        <div className="min-w-0 flex-1">
-                          <div className="mb-1.5 text-[13px] font-medium text-white">{c.nombre}</div>
-                          <div className="flex items-center gap-2">
-                            <span
-                              className="shrink-0 rounded px-1.5 py-0.5 text-[9.5px] font-semibold uppercase tracking-wide"
-                              style={{ backgroundColor: "#3b1f1f", color: "#f87171" }}
-                            >
-                              Revisión
-                            </span>
-                            <span className="text-[12px] tabular-nums text-[#f87171]">
-                              {Math.abs(daysDiffFromToday(c.proximaRevision!, hoy))}d vencida
-                            </span>
-                          </div>
-                        </div>
-                        <div className="flex shrink-0 items-center gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => setNotasCliente(c)}
-                            title="Ver / añadir notas"
-                            className="flex h-7 w-7 items-center justify-center rounded-md text-neutral-500 transition hover:bg-white/[0.08] hover:text-[#C9A96E]"
-                            style={{ backgroundColor: "#242424" }}
-                          >
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-3.5 w-3.5">
-                              <path d="M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5" />
-                              <path d="M17.5 2.5a2.121 2.121 0 0 1 3 3L12 14l-4 1 1-4 7.5-7.5z" />
-                            </svg>
-                          </button>
-                          <button
-                            type="button"
-                            disabled={pending}
-                            onClick={() => handleRevisionHecha(c.id)}
-                            title="Revisión hecha"
-                            className="flex h-7 w-7 items-center justify-center rounded-md text-[13px] transition hover:bg-[#2A4A38] hover:text-[#4ade80]"
-                            style={{ backgroundColor: "#242424", color: "#4ade80" }}
-                          >
-                            ✓
-                          </button>
-                          <button
-                            type="button"
-                            disabled={pending}
-                            onClick={() => handleSaltarRevision(c.id)}
-                            title="No subida — saltar ciclo"
-                            className="flex h-7 w-7 items-center justify-center rounded-md text-[13px] text-neutral-500 transition hover:bg-white/[0.08] hover:text-neutral-300"
-                            style={{ backgroundColor: "#242424" }}
-                          >
-                            ⏭
-                          </button>
-                        </div>
-                      </div>
-                    </FadeItem>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* 2. Mesociclos a renovar */}
-            {mesoRenovar.length > 0 && (
-              <div>
-                <SubLabel>Mesociclos a renovar</SubLabel>
-                <div className="flex flex-col gap-2">
-                  {mesoRenovar.map((c) => {
-                    const dias = c.mesociclo!.diasRestantes!;
-                    const vencido = dias < 0;
-                    return (
-                      <Link
-                        key={c.id}
-                        href="/coaching/clientes"
-                        className="flex items-center gap-3 rounded-lg border p-3 transition hover:border-white/10 hover:brightness-110"
-                        style={{ backgroundColor: "#1a1a1a", borderColor: "#2a2a2a" }}
-                      >
-                        <div className="min-w-0 flex-1">
-                          <div className="mb-0.5 text-[13px] font-medium text-white">{c.nombre}</div>
-                          <div className="text-[11.5px] text-neutral-600">
-                            Fin: {fmtDateCorta(c.mesociclo!.fechaFin)}
-                          </div>
-                        </div>
-                        <span
-                          className="shrink-0 rounded px-2 py-0.5 text-[11px] font-semibold tabular-nums"
-                          style={
-                            vencido
-                              ? { backgroundColor: "#3b1f1f", color: "#f87171" }
-                              : dias === 0
-                              ? { backgroundColor: "#2A2210", color: "#C9A96E" }
-                              : { backgroundColor: "#2A2210", color: "#C9A96E" }
-                          }
-                        >
-                          {vencido ? "Vencido" : dias === 0 ? "Hoy" : `${dias}d`}
-                        </span>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* 3. Onboarding activo */}
-            {onboardings.length > 0 && (
-              <div>
-                <SubLabel>Onboarding activo</SubLabel>
-                <div className="flex flex-col gap-2">
-                  {onboardings.map((ob) => {
-                    const pct = ob.totalPasos > 0 ? Math.round((ob.pasosCompletados / ob.totalPasos) * 100) : 0;
-                    const planPendiente = ob.pasos.some((p) => p.titulo.includes("plan de entrenamiento") && !p.completado);
-                    return (
-                      <Link
-                        key={ob.id}
-                        href="/coaching/onboarding"
-                        className="block rounded-lg border p-3 transition hover:border-white/10 hover:brightness-110"
-                        style={{ backgroundColor: "#1a1a1a", borderColor: "#2a2a2a" }}
-                      >
-                        <div className="mb-2 flex items-center justify-between">
-                          <div className="text-[13px] font-medium text-white">{ob.clienteNombre}</div>
-                          <span className="shrink-0 text-[11.5px] tabular-nums" style={{ color: "#C9A96E" }}>
-                            D+{ob.diasDesdeInicio}
-                          </span>
-                        </div>
-                        <div className="h-1 overflow-hidden rounded-full" style={{ backgroundColor: "#2a2a2a" }}>
-                          <div
-                            className="h-full rounded-full transition-[width]"
-                            style={{ width: `${pct}%`, backgroundColor: pct === 100 ? "#4ade80" : "#C9A96E" }}
-                          />
-                        </div>
-                        <div className="mt-1.5 flex items-center justify-between">
-                          <span className="text-[11px] text-neutral-600">{ob.pasosCompletados}/{ob.totalPasos} pasos</span>
-                          {planPendiente && (
-                            <span className="text-[10.5px]" style={{ color: "#f87171" }}>⚠ Plan pendiente</span>
-                          )}
-                        </div>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* 4. Anotaciones de clientes */}
-            {conNotas.length > 0 && (
-              <div>
-                <SubLabel>Anotaciones de clientes</SubLabel>
-                <div className="flex flex-col gap-2">
-                  {conNotas.map((c) => {
-                    const entry = CATEGORIAS
-                      .map((cat) => ({ cat, nota: (c.notas[cat] ?? [])[0] }))
-                      .find(({ nota }) => nota !== undefined);
-                    const cat  = entry?.cat ?? null;
-                    const nota = entry?.nota ?? null;
-
-                    const CAT_STYLE: Record<string, { bg: string; text: string; label: string }> = {
-                      nutricion:   { bg: "#2A4A38", text: "#4ade80",  label: "Nutrición" },
-                      seguimiento: { bg: "#1a1a1a", text: "#C9A96E",  label: "Seguimiento" },
-                      meso:        { bg: "#243B55", text: "#93c5fd",  label: "Mesociclo" },
-                      otros:       { bg: "#2a2a2a", text: "#9ca3af",  label: "Otros" },
-                    };
-                    const style = cat ? (CAT_STYLE[cat] ?? CAT_STYLE.otros) : CAT_STYLE.otros;
-
-                    return (
-                      <Link
-                        key={c.id}
-                        href="/coaching/clientes"
-                        className="block rounded-lg border p-3 transition hover:border-white/10 hover:brightness-110"
-                        style={{ backgroundColor: "#1a1a1a", borderColor: "#2a2a2a" }}
-                      >
-                        <div className="mb-1.5 text-[13px] font-medium text-white">{c.nombre}</div>
-                        {nota && (
-                          <div className="flex items-start gap-2">
-                            <span
-                              className="shrink-0 rounded px-1.5 py-0.5 text-[9.5px] font-semibold uppercase tracking-wide"
-                              style={{ backgroundColor: style.bg, color: style.text }}
-                            >
-                              {style.label}
-                            </span>
-                            <p className="min-w-0 truncate text-[12px] leading-snug text-[#9ca3af]">
-                              {nota.texto}
-                            </p>
-                          </div>
-                        )}
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-          </div>
-        </div>
-      )}
 
       {/* ════ BLOQUE: CONTENIDO (futuro) ══════════════════════════════════ */}
       {/* ════ BLOQUE: ESTUDIO (futuro) ════════════════════════════════════ */}
@@ -1685,12 +1437,6 @@ export function MiDiaPageClient({
           setMovDialog(null);
           startTransition(async () => { await moverBloqueTodos(bloqueId, newStartMin, newEndMin); });
         }}
-      />
-
-      {/* Revision notes drawer */}
-      <RevisionNotasDrawer
-        cliente={notasCliente}
-        onClose={() => setNotasCliente(null)}
       />
 
       {/* Conversational AI assistant */}

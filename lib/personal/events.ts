@@ -27,4 +27,5 @@ export type EventoUnicoVM = {
   endAt: string | null;
   type: Front;
   notes: string | null;
+  allDay: boolean;
 };
