@@ -260,6 +260,24 @@ personal.lista_deseos (
 )
 ```
 
+### Notificaciones push
+
+```sql
+-- Suscripciones Web Push (añadida en 26_push_subscriptions.sql). endpoint es
+-- UNIQUE: el upsert del cliente en /api/push/subscribe usa onConflict:
+-- "endpoint" para renovar sin duplicar. El cron (/api/push/cron) borra las
+-- filas cuyo envío devuelve 404/410 (endpoint caducado en el navegador).
+personal.push_subscriptions (
+  id uuid PK,
+  owner_id uuid FK auth.users,
+  endpoint text NOT NULL UNIQUE,
+  p256dh text NOT NULL,
+  auth text NOT NULL,
+  user_agent text,
+  created_at
+)
+```
+
 ### Finanzas
 
 ```sql
@@ -573,3 +591,4 @@ coaching.roadmap_subtasks (
 | `23_lista_deseos.sql` | Lista de deseos | CREATE `personal.deseos_categorias` + `personal.lista_deseos`; INSERT sidebar_items ("🎁 Lista de deseos", movida después de Personal a Finanzas vía UPDATE directo) |
 | `24_contenido.sql` | Contenido | CREATE `coaching.contenido_ideas` (sistema de 3 capas). Sustituye a `contenido_ig` en UI y en `/api/asistente/{chat,planificar}` — `contenido_ig` queda huérfana |
 | `25_lead_contexto.sql` | Ventas — script de llamada | CREATE `coaching.lead_contexto` (cuestionario/datos manuales + script IA por lead). Sección "Preparar llamada" añadida a `LeadModal.tsx` (`/coaching/leads`, no `/coaching/ventas` — ver nota abajo) |
+| `26_push_subscriptions.sql` | Notificaciones push | CREATE `personal.push_subscriptions` (endpoint UNIQUE). Cron diario en `vercel.json` (`/api/push/cron`, 6:00 UTC = 8:00 España) manda avisos de revisiones/mesociclos/pagos/onboarding vía `web-push` |

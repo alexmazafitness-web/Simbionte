@@ -23,6 +23,15 @@ Nunca editar un fichero SQL de `supabase/` ya aplicado. Cada cambio de esquema a
 ### 7. Secretos de servidor — nunca al cliente
 `ANTHROPIC_API_KEY` y `CREDENTIALS_SECRET` (clave de cifrado de la bóveda de credenciales en Infra, ver `personal.credenciales`) viven solo como variables de entorno de servidor (Vercel + `.env.local`). Cualquier operación que las use pasa por una ruta API (`app/api/.../route.ts`) o Server Action — nunca se exponen a `NEXT_PUBLIC_*` ni se importan en Client Components. Si `CREDENTIALS_SECRET` cambia, todas las credenciales cifradas con la clave anterior dejan de ser descifrables — no es una rotación trivial.
 
+### 8. Notificaciones push — variables y generación
+Variables de servidor para `/api/push/*` (ver `.env.local` para los valores actuales):
+- `NEXT_PUBLIC_VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` — par de claves VAPID, generadas con `npx web-push generate-vapid-keys`. La pública lleva el prefijo `NEXT_PUBLIC_` porque el navegador la necesita en `PushSetup.tsx` para suscribirse (Next.js solo expone al cliente las variables con ese prefijo) — no es una elección de estilo, es un requisito técnico.
+- `VAPID_SUBJECT` — `mailto:alexmaza.fitness@gmail.com`.
+- `CRON_SECRET` — string aleatorio (`openssl rand -base64 32`). Vercel añade automáticamente `Authorization: Bearer $CRON_SECRET` en las llamadas a rutas de cron definidas en `vercel.json` cuando esta variable está configurada en el proyecto — `/api/push/cron` solo compara ese header.
+- `SUPABASE_SERVICE_ROLE_KEY` — **no generada por la app**, hay que copiarla del dashboard de Supabase (Project Settings → API → "service_role" key → Reveal). El cron no tiene sesión de usuario/cookies, así que la RLS (`owner_id = auth.uid()`) bloquearía todas sus consultas con el cliente normal; `lib/supabase/service.ts` usa esta key para bypasarla. Nunca exponer con `NEXT_PUBLIC_`, nunca usar fuera de rutas server-only sin sesión.
+
+Todas viven en Vercel (producción) y `.env.local` (local). Añadir a Vercel manualmente tras generar — Claude no tiene acceso a ese panel.
+
 ---
 
 ## Patrones de código

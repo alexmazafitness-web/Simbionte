@@ -56,3 +56,49 @@ self.addEventListener("fetch", (event) => {
     }),
   );
 });
+
+// ── Notificaciones push ───────────────────────────────────────────────────
+
+self.addEventListener("push", (event) => {
+  let payload = { title: "Simbionte", body: "" };
+  if (event.data) {
+    try {
+      payload = event.data.json();
+    } catch {
+      payload = { title: "Simbionte", body: event.data.text() };
+    }
+  }
+
+  const title = payload.title || "Simbionte";
+  const url = payload.url || "/";
+
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body: payload.body || "",
+      icon: "/icons/icon-192.png",
+      badge: "/icons/icon-192.png",
+      data: { url },
+    }),
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = event.notification.data && event.notification.data.url ? event.notification.data.url : "/";
+
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientsArr) => {
+      // Si ya hay una pestaña abierta en esa misma URL, solo enfocarla.
+      const existente = clientsArr.find((c) => c.url.includes(url));
+      if (existente && "focus" in existente) return existente.focus();
+
+      // Si no, reusar cualquier pestaña de la app ya abierta y navegar en ella.
+      if (clientsArr.length > 0 && "focus" in clientsArr[0]) {
+        return clientsArr[0].navigate(url).then(() => clientsArr[0].focus());
+      }
+
+      // Sin ninguna pestaña abierta, abrir una nueva.
+      return self.clients.openWindow(url);
+    }),
+  );
+});
