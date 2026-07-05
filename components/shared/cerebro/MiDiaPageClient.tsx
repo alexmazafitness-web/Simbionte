@@ -31,6 +31,7 @@ import type { GoalVM } from "@/lib/personal/goal";
 import type { EventBlockVM, EventoUnicoVM } from "@/lib/personal/events";
 import type { ReminderVM } from "@/lib/personal/reminders";
 import { CalEventModal, type CalModalProps } from "./CalEventModal";
+import { DiaPopover } from "./DiaPopover";
 import { BloqueModal } from "./BloqueModal";
 import { CalMovDialog } from "./CalMovDialog";
 import { RevisionNotasDrawer } from "./RevisionNotasDrawer";
@@ -274,6 +275,10 @@ export function MiDiaPageClient({
   // Modal
   const [calModal, setCalModal] = useState<CalModal>(null);
 
+  // Popover de día (vistas Mes/Año) — click en un día ya no navega directo a
+  // Día, abre este menú con las 3 acciones rápidas.
+  const [diaPopover, setDiaPopover] = useState<{ iso: string; rect: DOMRect } | null>(null);
+
   // Drag state — refs to avoid stale closures in event listeners
   const dragRef     = useRef<DragInfo | null>(null);
   const daysRef     = useRef<string[]>([]);
@@ -318,6 +323,14 @@ export function MiDiaPageClient({
     setNavStack((s) => [...s, vista]);
     setVistaState(target);
     guardarVistaCalendario(target).catch(() => {});
+  }
+
+  // Click en un día (Mes/Año): abre el popover de acciones rápidas en vez de
+  // navegar directo a Día — "Ver día" dentro del popover es lo que ahora
+  // llama a drillTo("dia", iso).
+  function abrirDiaPopover(e: React.MouseEvent, iso: string) {
+    e.stopPropagation();
+    setDiaPopover({ iso, rect: e.currentTarget.getBoundingClientRect() });
   }
 
   // Volver: sube al nivel de origen más reciente y lo desapila.
@@ -846,7 +859,7 @@ export function MiDiaPageClient({
             return (
               <div
                 key={i}
-                onClick={() => drillTo("dia", iso)}
+                onClick={(e) => abrirDiaPopover(e, iso)}
                 className={`min-h-[80px] cursor-pointer p-2.5 transition hover:bg-white/[0.03] ${borders}`}
               >
                 <span className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-[12px] font-medium ${
@@ -926,7 +939,7 @@ export function MiDiaPageClient({
                     return (
                       <div
                         key={i}
-                        onClick={() => drillTo("dia", iso)}
+                        onClick={(e) => abrirDiaPopover(e, iso)}
                         className="flex h-5 cursor-pointer flex-col items-center justify-center rounded hover:bg-white/[0.04]"
                       >
                         <span className="text-[9px] leading-none" style={{ color: isToday ? "#C9A96E" : "#6b7280", fontWeight: isToday ? 700 : 400 }}>
@@ -1609,6 +1622,29 @@ export function MiDiaPageClient({
 
       {/* Calendar event modal (create / edit) */}
       {calModal && <CalEventModal {...calModal} />}
+
+      {/* Popover de acciones rápidas al hacer click en un día (Mes/Año) */}
+      {diaPopover && (
+        <DiaPopover
+          anchorRect={diaPopover.rect}
+          onNuevoEvento={() => {
+            const iso = diaPopover.iso;
+            setDiaPopover(null);
+            setCalModal({ mode: "create", iso, startMin: 9 * 60, tipoInicial: "evento", onClose: () => setCalModal(null) });
+          }}
+          onNuevoRecordatorio={() => {
+            const iso = diaPopover.iso;
+            setDiaPopover(null);
+            setCalModal({ mode: "create", iso, startMin: 9 * 60, tipoInicial: "recordatorio", onClose: () => setCalModal(null) });
+          }}
+          onVerDia={() => {
+            const iso = diaPopover.iso;
+            setDiaPopover(null);
+            drillTo("dia", iso);
+          }}
+          onClose={() => setDiaPopover(null)}
+        />
+      )}
 
       {/* Recurring block edit modal */}
       <BloqueModal

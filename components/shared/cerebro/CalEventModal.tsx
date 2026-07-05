@@ -40,7 +40,7 @@ function tsToHHMM(isoTs: string): string {
 // ── types ────────────────────────────────────────────────────────────────────
 
 export type CalModalProps =
-  | { mode: "create"; iso: string; startMin: number; onClose: () => void }
+  | { mode: "create"; iso: string; startMin: number; tipoInicial?: "evento" | "recordatorio"; onClose: () => void }
   | { mode: "evento";   ev: EventoUnicoVM; iso: string; onClose: () => void }
   | { mode: "reminder"; r: ReminderVM;     iso: string; onClose: () => void };
 
@@ -53,9 +53,11 @@ export function CalEventModal(props: CalModalProps) {
 
   const isCreate = props.mode === "create";
 
-  const [tipo, setTipo] = useState<"evento" | "recordatorio">(() =>
-    props.mode === "reminder" ? "recordatorio" : "evento"
-  );
+  const [tipo, setTipo] = useState<"evento" | "recordatorio">(() => {
+    if (props.mode === "reminder") return "recordatorio";
+    if (props.mode === "create" && props.tipoInicial) return props.tipoInicial;
+    return "evento";
+  });
 
   const [titulo, setTitulo] = useState(() => {
     if (props.mode === "evento")   return props.ev.title;
