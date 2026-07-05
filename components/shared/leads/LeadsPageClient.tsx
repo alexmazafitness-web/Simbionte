@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { Lead } from "@/lib/coaching/leads";
+import type { LeadContextoVM } from "@/lib/coaching/lead-contexto";
 import { agendarLlamada, avanzarLead, crearLead, descartarLead, editarLead, eliminarLead } from "@/lib/coaching/leads-actions";
 import { Chip } from "@/components/ui/Chip";
 import { SearchInput } from "@/components/ui/SearchInput";
@@ -10,7 +11,7 @@ import { LeadsBoard } from "./LeadsBoard";
 import { LeadModal } from "./LeadModal";
 import { AgendarLlamadaModal } from "./AgendarLlamadaModal";
 
-export function LeadsPageClient({ leads }: { leads: Lead[] }) {
+export function LeadsPageClient({ leads, leadContextos }: { leads: Lead[]; leadContextos: Record<string, LeadContextoVM> }) {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [filtro, setFiltro] = useState<"activos" | "historico">("activos");
@@ -83,6 +84,7 @@ export function LeadsPageClient({ leads }: { leads: Lead[] }) {
         open={modalOpen}
         onClose={() => setModalLeadId(null)}
         lead={modalLead}
+        contexto={modalLead ? leadContextos[modalLead.id] ?? null : null}
         pending={pending}
         onSave={(input) =>
           run(() => (modalLead ? editarLead(modalLead.id, input) : crearLead(input)), () => setModalLeadId(null))

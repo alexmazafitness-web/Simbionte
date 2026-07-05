@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import type { Lead } from "@/lib/coaching/leads";
 import type { LeadInput } from "@/lib/coaching/leads-actions";
+import type { LeadContextoVM } from "@/lib/coaching/lead-contexto";
+import { PrepararLlamada } from "./PrepararLlamada";
 
 const inputClass = "w-full rounded-lg border border-line bg-panel-2 px-3 py-2.5 text-[13.5px] outline-none focus:border-gold-dim";
 
@@ -11,6 +13,7 @@ export function LeadModal({
   open,
   onClose,
   lead,
+  contexto,
   pending,
   onSave,
   onDelete,
@@ -18,6 +21,7 @@ export function LeadModal({
   open: boolean;
   onClose: () => void;
   lead: Lead | null;
+  contexto?: LeadContextoVM | null;
   pending: boolean;
   onSave: (input: LeadInput) => void;
   onDelete?: () => void;
@@ -36,7 +40,7 @@ export function LeadModal({
   }
 
   return (
-    <Modal open={open} onClose={onClose} title={lead ? "Editar lead" : "Nuevo lead"}>
+    <Modal open={open} onClose={onClose} title={lead ? "Editar lead" : "Nuevo lead"} widthClassName="w-[560px]">
       <form onSubmit={handleSubmit}>
         <div className="mb-3.5">
           <label className="mb-1.5 block text-[11px] tracking-wide text-text-dim uppercase">Nombre</label>
@@ -84,6 +88,8 @@ export function LeadModal({
           </button>
         )}
       </form>
+
+      {lead && <PrepararLlamada leadId={lead.id} contexto={contexto ?? null} />}
     </Modal>
   );
 }

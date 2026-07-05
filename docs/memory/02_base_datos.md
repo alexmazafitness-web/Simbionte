@@ -445,6 +445,26 @@ coaching.llamadas (
                                          --  'vision'|'prescripcion'|'precio'|'objeciones'|'cierre'
   created_at, updated_at
 )
+
+-- Preparación de llamada por lead (añadida en 25_lead_contexto.sql). Una
+-- fila por lead (UNIQUE lead_id, upsert). Nota: fase_alcanzada (arriba) y
+-- las 9 fases del script generado (apertura y rapport/transición a
+-- preguntas/situación actual/problema y consecuencias/solución ideal/
+-- presentación/objeciones/cierre/seguimiento) son taxonomías DISTINTAS —
+-- una registra en qué fase se quedó una llamada ya hecha, la otra es la
+-- plantilla completa del guión que genera la IA.
+coaching.lead_contexto (
+  id uuid PK,
+  owner_id uuid FK auth.users,
+  lead_id uuid FK coaching.leads ON DELETE CASCADE UNIQUE,
+  respuestas_cuestionario text,  -- texto pegado tal cual (Typeform u similar)
+  datos_manuales jsonb,          -- DatosManualesLead: nombre, edad, objetivo, experiencia,
+                                 -- disponibilidad, obstaculo, tuvoCoach, motivacion,
+                                 -- notasEconomicas, otros
+  script_generado text,          -- JSON.stringify(ScriptGenerado): fases[] + resumenFinal
+  script_generado_at timestamptz,
+  created_at, updated_at
+)
 ```
 
 ### Contenido y negocio
@@ -552,3 +572,4 @@ coaching.roadmap_subtasks (
 | `22_credenciales.sql` | Infra | CREATE `personal.credenciales` (bóveda cifrada) + funciones `cifrar_valor`/`descifrar_valor` (pgcrypto) |
 | `23_lista_deseos.sql` | Lista de deseos | CREATE `personal.deseos_categorias` + `personal.lista_deseos`; INSERT sidebar_items ("🎁 Lista de deseos", movida después de Personal a Finanzas vía UPDATE directo) |
 | `24_contenido.sql` | Contenido | CREATE `coaching.contenido_ideas` (sistema de 3 capas). Sustituye a `contenido_ig` en UI y en `/api/asistente/{chat,planificar}` — `contenido_ig` queda huérfana |
+| `25_lead_contexto.sql` | Ventas — script de llamada | CREATE `coaching.lead_contexto` (cuestionario/datos manuales + script IA por lead). Sección "Preparar llamada" añadida a `LeadModal.tsx` (`/coaching/leads`, no `/coaching/ventas` — ver nota abajo) |

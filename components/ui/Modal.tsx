@@ -30,7 +30,7 @@ export function Modal({
   return createPortal(
     <>
       <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className={`fixed top-1/2 left-1/2 z-50 ${widthClassName} max-w-[92vw] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-line bg-panel p-6`}>
+      <div className={`fixed top-1/2 left-1/2 z-50 ${widthClassName} max-h-[85vh] max-w-[92vw] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-line bg-panel p-6`}>
         <div className="mb-4 flex items-start justify-between gap-3">
           <h3 className="font-heading text-lg font-bold">{title}</h3>
           <button
