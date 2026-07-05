@@ -3,6 +3,7 @@ import { requireUserId } from "@/lib/supabase/auth";
 import { ETAPA_LABEL } from "@/lib/coaching/constants";
 import { FRONT_LABEL, type Front } from "@/lib/personal/constants";
 import { fmtDateCorta } from "@/lib/personal/format";
+import { RUTAS_APP } from "@/lib/personal/sidebar";
 
 type Resultado = {
   id: string;
@@ -30,11 +31,24 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const q = (searchParams.get("q") ?? "").trim();
 
-  const vacio = { clientes: [], tareas: [], knowledge: [], ideas: [], leads: [], recordatorios: [] };
+  const vacio = { navegacion: [], clientes: [], tareas: [], knowledge: [], ideas: [], leads: [], recordatorios: [] };
   if (!q) return Response.json(vacio);
 
   const like = `%${q}%`;
   const likeOr = `%${paraOr(q)}%`;
+
+  // Secciones de navegación (no son datos, son el mapa de rutas ya usado por
+  // el selector "añadir enlace" de la sidebar) — coincidencia por nombre.
+  const qLower = q.toLowerCase();
+  const navegacion: Resultado[] = RUTAS_APP
+    .filter((r) => r.label.toLowerCase().includes(qLower))
+    .slice(0, LIMIT)
+    .map((r) => ({
+      id:        r.ruta,
+      titulo:    r.label,
+      subtitulo: `Ir a ${r.label}`,
+      href:      r.ruta,
+    }));
 
   const [clientesRes, tareasRes, knowledgeRes, ideasRes, leadsRes, recordatoriosRes] = await Promise.allSettled([
     supabase.schema("coaching").from("clientes")
@@ -125,5 +139,5 @@ export async function GET(req: Request) {
       }))
     : [];
 
-  return Response.json({ clientes, tareas, knowledge, ideas, leads, recordatorios });
+  return Response.json({ navegacion, clientes, tareas, knowledge, ideas, leads, recordatorios });
 }

@@ -5,13 +5,16 @@ import { useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
 
 type Resultado = { id: string; titulo: string; subtitulo: string; href: string; remindAtISO?: string };
-type Categoria = "clientes" | "tareas" | "knowledge" | "ideas" | "leads" | "recordatorios";
+type Categoria = "navegacion" | "clientes" | "tareas" | "knowledge" | "ideas" | "leads" | "recordatorios";
 type Resultados = Record<Categoria, Resultado[]>;
 
-const VACIO: Resultados = { clientes: [], tareas: [], knowledge: [], ideas: [], leads: [], recordatorios: [] };
+const VACIO: Resultados = { navegacion: [], clientes: [], tareas: [], knowledge: [], ideas: [], leads: [], recordatorios: [] };
 
-const CATEGORIA_ORDEN: Categoria[] = ["clientes", "tareas", "knowledge", "ideas", "leads", "recordatorios"];
+// "navegacion" va primero: es una coincidencia exacta de nombre de sección,
+// más precisa que una búsqueda de texto libre en la BD.
+const CATEGORIA_ORDEN: Categoria[] = ["navegacion", "clientes", "tareas", "knowledge", "ideas", "leads", "recordatorios"];
 const CATEGORIA_LABEL: Record<Categoria, string> = {
+  navegacion:    "Navegación",
   clientes:      "Clientes",
   tareas:        "Tareas",
   knowledge:     "Knowledge",
@@ -20,6 +23,7 @@ const CATEGORIA_LABEL: Record<Categoria, string> = {
   recordatorios: "Recordatorios",
 };
 const CATEGORIA_ICONO: Record<Categoria, string> = {
+  navegacion:    "🔗",
   clientes:      "👤",
   tareas:        "✅",
   knowledge:     "📚",
@@ -33,6 +37,7 @@ const ACCESOS_RAPIDOS = [
   { icono: "👤", label: "Clientes",    href: "/coaching/clientes" },
   { icono: "📚", label: "Knowledge",   href: "/personal/cerebro/knowledge" },
   { icono: "✅", label: "Nueva tarea", href: "/personal/cerebro/tareas" },
+  { icono: "🎯", label: "Leads",       href: "/coaching/leads" },
 ];
 
 // Evento propio para que la sidebar (u otro sitio) pueda abrir el buscador
