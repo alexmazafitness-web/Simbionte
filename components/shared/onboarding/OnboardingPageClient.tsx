@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useTransition, useOptimistic } from "react";
-import type { OnboardingVM, OnboardingPaso } from "@/lib/coaching/onboarding-queries";
+import type { OnboardingVM, OnboardingPaso, OnboardingMensajeVM } from "@/lib/coaching/onboarding-queries";
 import { FASE_LABEL, type OnboardingFase } from "@/lib/coaching/onboarding-constants";
 import { marcarPaso } from "@/lib/coaching/onboarding-actions";
+import { GuiaPasos } from "./GuiaPasos";
+import { MensajesPredefinidos } from "./MensajesPredefinidos";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -206,9 +208,11 @@ function OnboardingCard({
 export function OnboardingPageClient({
   activos,
   completados,
+  mensajes,
 }: {
   activos:    OnboardingVM[];
   completados: OnboardingVM[];
+  mensajes:   OnboardingMensajeVM[];
 }) {
   const [tab, setTab] = useState<TabValue>("activos");
   const [expanded, setExpanded] = useState<Set<string>>(() => {
@@ -216,6 +220,17 @@ export function OnboardingPageClient({
     if (activos.length === 1) return new Set([activos[0].id]);
     return new Set();
   });
+  const [clienteId, setClienteId] = useState("");
+  const [copiadoEtapa, setCopiadoEtapa] = useState<string | null>(null);
+
+  const clienteNombre = activos.find((a) => a.clienteId === clienteId)?.clienteNombre ?? null;
+
+  function copiar(etapa: string, contenido: string) {
+    const texto = clienteNombre ? contenido.replaceAll("[nombre]", clienteNombre) : contenido;
+    void navigator.clipboard.writeText(texto);
+    setCopiadoEtapa(etapa);
+    setTimeout(() => setCopiadoEtapa((prev) => (prev === etapa ? null : prev)), 1500);
+  }
 
   function toggleExpand(id: string) {
     setExpanded((prev) => {
@@ -228,7 +243,37 @@ export function OnboardingPageClient({
   const list = tab === "activos" ? activos : completados;
 
   return (
-    <div>
+    <div className="flex flex-col gap-10">
+      {/* Selector de cliente — alimenta la sustitución de [nombre] al copiar */}
+      <div className="flex flex-wrap items-center gap-3">
+        <label htmlFor="cliente-onboarding" className="text-[11px] uppercase tracking-wider text-text-dim">
+          Cliente para personalizar mensajes
+        </label>
+        <select
+          id="cliente-onboarding"
+          value={clienteId}
+          onChange={(e) => setClienteId(e.target.value)}
+          className="rounded-lg border border-line-soft bg-panel-2 px-3 py-2 text-[12.5px] text-text-2 focus:border-gold-dim focus:outline-none"
+        >
+          <option value="">Sin seleccionar</option>
+          {activos.map((a) => (
+            <option key={a.clienteId} value={a.clienteId}>
+              {a.clienteNombre}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <GuiaPasos mensajes={mensajes} copiadoEtapa={copiadoEtapa} onCopiar={copiar} />
+
+      <MensajesPredefinidos mensajes={mensajes} copiadoEtapa={copiadoEtapa} onCopiar={copiar} />
+
+      <div>
+      <h2 className="mb-1 font-heading text-lg font-bold tracking-wide">Seguimiento por cliente</h2>
+      <p className="mb-5 text-sm text-text-dim">
+        Progreso real del onboarding de cada cliente en curso.
+      </p>
+
       {/* Tabs */}
       <div className="mb-6 flex gap-1 rounded-xl bg-panel-2 p-1 w-fit">
         {(["activos", "completados"] as TabValue[]).map((t) => (
@@ -271,6 +316,7 @@ export function OnboardingPageClient({
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireUserId } from "@/lib/supabase/auth";
 import { addDaysISO } from "./format";
-import { ONBOARDING_PASOS, FASE_REMINDER_LABEL } from "./onboarding-constants";
+import { ONBOARDING_PASOS, FASE_REMINDER_LABEL, type OnboardingFase } from "./onboarding-constants";
 
 const PATH = "/coaching/onboarding";
 
@@ -65,6 +65,21 @@ export async function initOnboarding(
       .insert(reminders);
     if (remError) throw remError;
   }
+
+  revalidatePath(PATH);
+}
+
+export async function actualizarMensajeOnboarding(etapa: OnboardingFase, contenido: string) {
+  const supabase = await createClient();
+  const ownerId = await requireUserId(supabase);
+
+  const { error } = await supabase
+    .schema("coaching")
+    .from("onboarding_mensajes")
+    .update({ contenido })
+    .eq("owner_id", ownerId)
+    .eq("etapa", etapa);
+  if (error) throw error;
 
   revalidatePath(PATH);
 }

@@ -1,10 +1,11 @@
-import { listOnboardings } from "@/lib/coaching/onboarding-queries";
+import { listOnboardings, listOnboardingMensajes } from "@/lib/coaching/onboarding-queries";
 import { OnboardingPageClient } from "@/components/shared/onboarding/OnboardingPageClient";
 
 export default async function OnboardingPage() {
-  const [activos, completados] = await Promise.all([
+  const [activos, completados, mensajes] = await Promise.all([
     listOnboardings("en_progreso"),
     listOnboardings("completado"),
+    listOnboardingMensajes(),
   ]);
 
   return (
@@ -22,7 +23,7 @@ export default async function OnboardingPage() {
         </p>
       </div>
 
-      <OnboardingPageClient activos={activos} completados={completados} />
+      <OnboardingPageClient activos={activos} completados={completados} mensajes={mensajes} />
     </div>
   );
 }

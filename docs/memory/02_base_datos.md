@@ -439,6 +439,48 @@ coaching.notas_cliente (
 )
 ```
 
+### Onboarding
+
+```sql
+-- Seguimiento real del proceso de onboarding de cada cliente nuevo
+-- (16_onboarding.sql). Los pasos se copian desde ONBOARDING_PASOS
+-- (lib/coaching/onboarding-constants.ts) al crear el onboarding.
+coaching.onboarding (
+  id uuid PK,
+  owner_id uuid FK auth.users,
+  cliente_id uuid FK coaching.clientes ON DELETE CASCADE,
+  fecha_inicio date NOT NULL,
+  estado text DEFAULT 'en_progreso',     -- 'en_progreso'|'completado'
+  completado_at timestamptz,
+  created_at, updated_at
+)
+
+coaching.onboarding_pasos (
+  id uuid PK,
+  owner_id uuid FK auth.users,
+  onboarding_id uuid FK coaching.onboarding ON DELETE CASCADE,
+  fase text NOT NULL,                    -- 'D0'|'D3'|'S1'|'MES1'
+  dia_offset integer DEFAULT 0,
+  titulo text NOT NULL,
+  completado boolean DEFAULT false,
+  completado_at timestamptz,
+  orden integer DEFAULT 0,
+  created_at
+)
+
+-- Plantillas de mensaje editables por etapa, distintas de lo anterior:
+-- esto es texto reutilizable (uno por owner+etapa), no seguimiento por
+-- cliente (28_onboarding_mensajes.sql).
+coaching.onboarding_mensajes (
+  id uuid PK,
+  owner_id uuid FK auth.users,
+  etapa text NOT NULL CHECK IN ('D0','D3','S1','MES1'),
+  contenido text NOT NULL,               -- puede incluir "[nombre]" como placeholder
+  updated_at timestamptz,
+  UNIQUE (owner_id, etapa)
+)
+```
+
 ### Leads y ventas
 
 ```sql
@@ -597,3 +639,4 @@ coaching.roadmap_subtasks (
 | `25_lead_contexto.sql` | Ventas — script de llamada | CREATE `coaching.lead_contexto` (cuestionario/datos manuales + script IA por lead). Sección "Preparar llamada" añadida a `LeadModal.tsx` (`/coaching/leads`, no `/coaching/ventas` — ver nota abajo) |
 | `26_push_subscriptions.sql` | Notificaciones push | CREATE `personal.push_subscriptions` (endpoint UNIQUE). Cron diario en `vercel.json` (`/api/push/cron`, 6:00 UTC = 8:00 España) manda avisos de revisiones/mesociclos/pagos/onboarding vía `web-push` |
 | `27_all_day.sql` | Calendario | ALTER `personal.events`/`personal.reminders` añaden `all_day`. Franja especial en `calGrid` (CalEventModal + RecordatorioModal), chips en vista Mes; Año conserva solo los puntos de color existentes |
+| `28_onboarding_mensajes.sql` | Onboarding | CREATE `coaching.onboarding_mensajes` (plantillas D0/D3/S1/MES1 editables, UNIQUE owner_id+etapa) + seed con los 4 mensajes reales. Pantalla `/coaching/onboarding` añade "Guía de pasos" (timeline de referencia) y "Mensajes predefinidos" (edición inline + copiar con sustitución de `[nombre]`) junto al seguimiento por cliente ya existente; `ONBOARDING_PASOS` se reescribió con la redacción real de los pasos |
