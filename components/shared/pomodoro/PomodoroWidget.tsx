@@ -2,8 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { usePomodoroCtx } from "@/lib/pomodoro/PomodoroContext";
-import type { Phase, PomodoroConfig } from "@/lib/pomodoro/PomodoroContext";
+import {
+  usePomodoroCtx,
+  MODE_PRESETS,
+  MODE_LABEL,
+  CYCLE_OPTIONS,
+} from "@/lib/pomodoro/PomodoroContext";
+import type { Phase, PomodoroConfig, PomodoroMode } from "@/lib/pomodoro/PomodoroContext";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -33,12 +38,13 @@ const PHASE_BG: Record<Phase, string> = {
 
 // ── Config form ───────────────────────────────────────────────────────────────
 
-type CfgKey = keyof PomodoroConfig;
-const CFG_FIELDS: Array<{ label: string; key: CfgKey; max: number }> = [
-  { label: "Enfoque (min)",      key: "focusMins",  max: 90 },
-  { label: "Descanso (min)",     key: "shortMins",  max: 30 },
-  { label: "Desc. largo (min)",  key: "longMins",   max: 60 },
-  { label: "Ciclos",             key: "cycleCount", max: 10 },
+const MODES: PomodoroMode[] = ["clasico", "sprint", "deep", "micro", "personalizado"];
+
+type CustomKey = "focusMins" | "shortMins" | "longMins";
+const CUSTOM_FIELDS: Array<{ label: string; key: CustomKey; max: number }> = [
+  { label: "Enfoque",     key: "focusMins", max: 180 },
+  { label: "Descanso",    key: "shortMins", max: 60  },
+  { label: "Desc. largo", key: "longMins",  max: 90  },
 ];
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
@@ -89,8 +95,7 @@ function IconSkip() {
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function PomodoroWidget() {
-  const [mounted, setMounted]     = useState(false);
-  const [showConfig, setShowConfig] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const { state, play, pause, reset, skip, close, minimize, expand, updateConfig } = usePomodoroCtx();
 
   useEffect(() => setMounted(true), []);
@@ -99,6 +104,14 @@ export function PomodoroWidget() {
 
   const accent = PHASE_ACCENT[state.phase];
   const bg     = PHASE_BG[state.phase];
+
+  function selectMode(mode: PomodoroMode) {
+    if (mode === "personalizado") {
+      updateConfig({ mode });
+    } else {
+      updateConfig({ mode, ...MODE_PRESETS[mode] });
+    }
+  }
 
   // ── Minimized pill ────────────────────────────────────────────────────────
   if (state.minimized) {
@@ -135,7 +148,7 @@ export function PomodoroWidget() {
   // ── Full widget ───────────────────────────────────────────────────────────
   return createPortal(
     <div
-      className="fixed bottom-6 right-6 z-50 w-72 rounded-2xl border shadow-2xl shadow-black/60 transition-colors duration-500"
+      className="fixed bottom-6 right-6 z-50 w-80 rounded-2xl border shadow-2xl shadow-black/60 transition-colors duration-500"
       style={{ backgroundColor: bg, borderColor: "#2a2a2a" }}
     >
       {/* Header row */}
@@ -147,14 +160,6 @@ export function PomodoroWidget() {
           {PHASE_LABEL[state.phase]}
         </span>
         <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={() => setShowConfig((v) => !v)}
-            className="flex h-6 w-6 items-center justify-center rounded-md text-[11px] text-neutral-600 transition hover:text-neutral-300"
-            title="Configuración"
-          >
-            ⚙
-          </button>
           <button
             type="button"
             onClick={() => minimize()}
@@ -184,7 +189,7 @@ export function PomodoroWidget() {
       {/* Timer display */}
       <div className="px-4 py-4 text-center">
         <span
-          className="font-heading tabular-nums leading-none"
+          className="font-display tabular-nums leading-none"
           style={{ fontSize: "72px", color: accent, lineHeight: 1 }}
         >
           {fmt(state.secondsLeft)}
@@ -236,13 +241,37 @@ export function PomodoroWidget() {
         </button>
       </div>
 
-      {/* Config panel */}
-      {showConfig && (
-        <div className="border-t px-4 py-3" style={{ borderColor: "#242424" }}>
-          <div className="grid grid-cols-2 gap-2.5">
-            {CFG_FIELDS.map(({ label, key, max }) => (
+      {/* Modos predefinidos */}
+      <div className="border-t px-4 py-3" style={{ borderColor: "#242424" }}>
+        <div className="mb-2 text-[9.5px] uppercase tracking-wide text-neutral-600">Modo</div>
+        <div className="flex flex-wrap gap-1.5">
+          {MODES.map((m) => {
+            const active = state.config.mode === m;
+            return (
+              <button
+                key={m}
+                type="button"
+                onClick={() => selectMode(m)}
+                className={`rounded-full border px-2.5 py-1.5 text-[11px] font-semibold transition ${
+                  active
+                    ? "border-transparent bg-[#C9A96E] text-[#1a1208]"
+                    : "border-white/10 text-neutral-400 hover:border-white/20 hover:text-neutral-200"
+                }`}
+              >
+                {MODE_LABEL[m]}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Valores personalizados — solo en modo "Personalizado" */}
+      {state.config.mode === "personalizado" && (
+        <div className="px-4 pb-3">
+          <div className="grid grid-cols-3 gap-2">
+            {CUSTOM_FIELDS.map(({ label, key, max }) => (
               <div key={key}>
-                <label className="mb-1 block text-[9.5px] uppercase tracking-wide text-neutral-600">
+                <label className="mb-1 block text-[9px] uppercase tracking-wide text-neutral-600">
                   {label}
                 </label>
                 <input
@@ -261,6 +290,51 @@ export function PomodoroWidget() {
           </div>
         </div>
       )}
+
+      {/* Ciclos + descanso largo */}
+      <div className="flex items-center justify-between gap-3 border-t px-4 py-3" style={{ borderColor: "#242424" }}>
+        <div className={state.config.longBreakEnabled ? "" : "pointer-events-none opacity-40"}>
+          <div className="mb-1.5 text-[9.5px] uppercase tracking-wide text-neutral-600">
+            Ciclos antes del descanso largo
+          </div>
+          <div className="flex gap-1.5">
+            {CYCLE_OPTIONS.map((n) => {
+              const active = state.config.cycleCount === n;
+              return (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => updateConfig({ cycleCount: n })}
+                  className={`flex h-7 w-7 items-center justify-center rounded-full border text-[12px] font-semibold transition ${
+                    active
+                      ? "border-transparent bg-[#C9A96E] text-[#1a1208]"
+                      : "border-white/10 text-neutral-400 hover:border-white/20 hover:text-neutral-200"
+                  }`}
+                >
+                  {n}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <label className="flex shrink-0 flex-col items-end gap-1.5">
+          <span className="text-[9.5px] uppercase tracking-wide text-neutral-600">Descanso largo activo</span>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={state.config.longBreakEnabled}
+            onClick={() => updateConfig({ longBreakEnabled: !state.config.longBreakEnabled })}
+            className="relative h-5 w-9 shrink-0 rounded-full transition"
+            style={{ backgroundColor: state.config.longBreakEnabled ? "#C9A96E" : "rgba(255,255,255,0.1)" }}
+          >
+            <span
+              className="absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform"
+              style={{ transform: state.config.longBreakEnabled ? "translateX(18px)" : "translateX(2px)" }}
+            />
+          </button>
+        </label>
+      </div>
     </div>,
     document.body,
   );

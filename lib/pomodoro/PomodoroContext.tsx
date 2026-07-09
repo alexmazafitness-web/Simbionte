@@ -13,11 +13,15 @@ import {
 
 export type Phase = "focus" | "short" | "long";
 
+export type PomodoroMode = "clasico" | "sprint" | "deep" | "micro" | "personalizado";
+
 export type PomodoroConfig = {
+  mode: PomodoroMode;
   focusMins: number;
   shortMins: number;
   longMins: number;
   cycleCount: number;
+  longBreakEnabled: boolean;
 };
 
 export type LinkedTask = { id: string; title: string };
@@ -49,11 +53,28 @@ type Action =
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+export const MODE_PRESETS: Record<Exclude<PomodoroMode, "personalizado">, { focusMins: number; shortMins: number; longMins: number }> = {
+  clasico: { focusMins: 25, shortMins: 5,  longMins: 15 },
+  sprint:  { focusMins: 50, shortMins: 10, longMins: 30 },
+  deep:    { focusMins: 90, shortMins: 10, longMins: 20 },
+  micro:   { focusMins: 15, shortMins: 3,  longMins: 10 },
+};
+
+export const MODE_LABEL: Record<PomodoroMode, string> = {
+  clasico:       "🍅 Clásico",
+  sprint:        "⚡ Sprint",
+  deep:          "🧠 Deep Work",
+  micro:         "🎯 Micro",
+  personalizado: "⚙️ Personalizado",
+};
+
+export const CYCLE_OPTIONS = [2, 3, 4, 5, 6] as const;
+
 const DEFAULT_CONFIG: PomodoroConfig = {
-  focusMins: 25,
-  shortMins: 5,
-  longMins: 15,
+  mode: "clasico",
+  ...MODE_PRESETS.clasico,
   cycleCount: 4,
+  longBreakEnabled: true,
 };
 
 function phaseSeconds(phase: Phase, cfg: PomodoroConfig): number {
@@ -66,10 +87,15 @@ function advancePhase(s: State): Pick<State, "phase" | "secondsLeft" | "pomodoro
   if (s.phase === "focus") {
     const pomodorosCompleted = s.pomodorosCompleted + 1;
     const next = s.pomodorosThisCycle + 1;
-    if (next >= s.config.cycleCount) {
+    if (s.config.longBreakEnabled && next >= s.config.cycleCount) {
       return { phase: "long", secondsLeft: phaseSeconds("long", s.config), pomodorosCompleted, pomodorosThisCycle: 0 };
     }
-    return { phase: "short", secondsLeft: phaseSeconds("short", s.config), pomodorosCompleted, pomodorosThisCycle: next };
+    return {
+      phase: "short",
+      secondsLeft: phaseSeconds("short", s.config),
+      pomodorosCompleted,
+      pomodorosThisCycle: next >= s.config.cycleCount ? 0 : next,
+    };
   }
   return { phase: "focus", secondsLeft: phaseSeconds("focus", s.config), pomodorosCompleted: s.pomodorosCompleted, pomodorosThisCycle: s.pomodorosThisCycle };
 }
