@@ -177,7 +177,7 @@ function HistorialPanel({ items }: { items: HistorialItem[] }) {
     );
   }
   return (
-    <div className="divide-y divide-line-soft">
+    <div className="divide-y-2 divide-line-soft">
       {items.map((item) => (
         <div key={item.id} className="py-4">
           <p className="mb-1 text-[12px] font-semibold text-foreground">
@@ -375,7 +375,7 @@ export function RevisionPageClient({
                   >
                     {generando ? (
                       <>
-                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-[#1a1208]/30 border-t-[#1a1208]" />
+                        <span className="h-4 w-4 animate-spin rounded-full border-[3px] border-[#1a1208]/30 border-t-[#1a1208]" />
                         Analizando con Claude…
                       </>
                     ) : feedback ? (

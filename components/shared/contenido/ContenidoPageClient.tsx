@@ -115,7 +115,7 @@ function PiezaCard({ pieza, onClick }: { pieza: ContenidoIdeaVM; onClick: () => 
       type="button"
       onClick={onClick}
       className="w-full rounded-lg p-2.5 text-left transition hover:brightness-110"
-      style={{ backgroundColor: ESTADO_BG[pieza.estado], border: `1px solid ${ESTADO_ACCENT[pieza.estado]}33` }}
+      style={{ backgroundColor: ESTADO_BG[pieza.estado], border: `2px solid ${ESTADO_ACCENT[pieza.estado]}33` }}
     >
       <div className="mb-1 flex items-center gap-1.5">
         <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: ESTADO_ACCENT[pieza.estado] }} />

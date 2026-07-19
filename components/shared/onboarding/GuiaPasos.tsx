@@ -59,7 +59,7 @@ export function GuiaPasos({
           return (
             <div key={fase} className="relative flex gap-4">
               <div
-                className="z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 bg-background text-[10.5px] font-bold"
+                className="z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-[3px] bg-background text-[10.5px] font-bold"
                 style={{ borderColor: color, color }}
               >
                 {fase}

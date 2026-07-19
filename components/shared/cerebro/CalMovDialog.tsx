@@ -23,7 +23,7 @@ export function CalMovDialog({ open, dow, onHoy, onTodos, onCancel }: Props) {
       {/* Panel */}
       <div
         className="relative z-10 w-72 rounded-2xl p-5"
-        style={{ background: "#1a1a1a", border: "1px solid rgba(255,255,255,0.1)" }}
+        style={{ background: "#1a1a1a", border: "2px solid rgba(255,255,255,0.1)" }}
       >
         <p className="mb-1 text-[13px] font-semibold text-white">¿Mover bloque?</p>
         <p className="mb-4 text-[12px] text-neutral-500">
@@ -34,7 +34,7 @@ export function CalMovDialog({ open, dow, onHoy, onTodos, onCancel }: Props) {
           type="button"
           onClick={onHoy}
           className="mb-2 w-full rounded-lg py-2.5 text-[13px] font-semibold transition hover:brightness-110"
-          style={{ background: "rgba(201,169,110,.15)", color: "#C9A96E", border: "1px solid rgba(201,169,110,.25)" }}
+          style={{ background: "rgba(201,169,110,.15)", color: "#C9A96E", border: "2px solid rgba(201,169,110,.25)" }}
         >
           Solo hoy
         </button>
@@ -43,7 +43,7 @@ export function CalMovDialog({ open, dow, onHoy, onTodos, onCancel }: Props) {
           type="button"
           onClick={onTodos}
           className="mb-2 w-full rounded-lg py-2.5 text-[13px] font-semibold transition hover:brightness-110"
-          style={{ background: "rgba(255,255,255,.06)", color: "#e5e5e5", border: "1px solid rgba(255,255,255,.1)" }}
+          style={{ background: "rgba(255,255,255,.06)", color: "#e5e5e5", border: "2px solid rgba(255,255,255,.1)" }}
         >
           Todos los {diaPlural}
         </button>

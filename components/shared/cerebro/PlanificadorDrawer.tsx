@@ -405,7 +405,7 @@ export function PlanificadorDrawer({
         className="relative z-10 flex h-full w-full max-w-[520px] flex-col overflow-hidden"
         style={{
           backgroundColor: "#141414",
-          borderLeft:      "1px solid #2a2a2a",
+          borderLeft:      "2px solid #2a2a2a",
           transform:       open ? "translateX(0)" : "translateX(100%)",
           transition:      "transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)",
         }}
@@ -414,7 +414,7 @@ export function PlanificadorDrawer({
         {/* Header */}
         <div
           className="flex shrink-0 items-center justify-between px-5 py-4"
-          style={{ borderBottom: "1px solid #1e1e1e" }}
+          style={{ borderBottom: "2px solid #1e1e1e" }}
         >
           <div>
             <div className="flex items-center gap-2">
@@ -477,7 +477,7 @@ export function PlanificadorDrawer({
                         style={{
                           backgroundColor: horas === h ? "rgba(201,169,110,.15)" : "#1e1e1e",
                           color:           horas === h ? "#C9A96E" : "#6b7280",
-                          border:          `1px solid ${horas === h ? "rgba(201,169,110,.3)" : "#2a2a2a"}`,
+                          border:          `2px solid ${horas === h ? "rgba(201,169,110,.3)" : "#2a2a2a"}`,
                         }}
                       >
                         {h < 1 ? "30 min" : `${h}h`}
@@ -623,7 +623,7 @@ export function PlanificadorDrawer({
         {/* Footer */}
         <div
           className="shrink-0 px-5 py-4"
-          style={{ borderTop: "1px solid #1e1e1e" }}
+          style={{ borderTop: "2px solid #1e1e1e" }}
         >
           {fase === "input" && (
             <button
@@ -662,7 +662,7 @@ export function PlanificadorDrawer({
           {fase === "aceptando" && (
             <div className="flex items-center justify-center gap-2 py-2.5 text-[13px] text-neutral-500">
               <div
-                className="h-4 w-4 animate-spin rounded-full border-2"
+                className="h-4 w-4 animate-spin rounded-full border-[3px]"
                 style={{ borderColor: "#3a3a3a", borderTopColor: "#C9A96E" }}
               />
               Guardando en el calendario...

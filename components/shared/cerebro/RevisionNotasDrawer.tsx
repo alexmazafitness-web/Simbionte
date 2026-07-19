@@ -32,7 +32,7 @@ export function CatChip({ cat }: { cat: Categoria }) {
   return (
     <span
       className="shrink-0 rounded px-1.5 py-0.5 text-[9.5px] font-semibold uppercase tracking-wide"
-      style={{ backgroundColor: s.bg, color: s.text, border: `1px solid ${s.bg === "#1a1a1a" ? "#2a2a2a" : s.bg}` }}
+      style={{ backgroundColor: s.bg, color: s.text, border: `2px solid ${s.bg === "#1a1a1a" ? "#2a2a2a" : s.bg}` }}
     >
       {CATEGORIA_LABEL[cat]}
     </span>
@@ -159,7 +159,7 @@ export function RevisionNotasDrawer({
                     style={{
                       backgroundColor: active ? s.bg : "#1e1e1e",
                       color: active ? s.text : "#6b7280",
-                      border: `1px solid ${active ? (s.bg === "#1a1a1a" ? "#3a3a3a" : s.bg) : "#2a2a2a"}`,
+                      border: `2px solid ${active ? (s.bg === "#1a1a1a" ? "#3a3a3a" : s.bg) : "#2a2a2a"}`,
                     }}
                   >
                     {CATEGORIA_LABEL[c]}

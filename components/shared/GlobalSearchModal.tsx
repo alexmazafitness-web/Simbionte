@@ -161,7 +161,7 @@ export function GlobalSearchModal() {
             placeholder="Buscar en Simbionte…"
             className="flex-1 bg-transparent text-lg outline-none placeholder:text-neutral-600"
           />
-          {loading && <span className="h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-line border-t-gold" />}
+          {loading && <span className="h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-[3px] border-line border-t-gold" />}
         </div>
 
         <div className="max-h-[60vh] overflow-y-auto p-2">

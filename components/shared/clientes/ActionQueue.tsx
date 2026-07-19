@@ -65,7 +65,7 @@ function QueueCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className={`overflow-hidden rounded-xl border border-line-soft border-t-[3px] bg-panel ${CARD_BORDER[cls]}`}>
+    <div className={`overflow-hidden rounded-xl border border-line-soft border-t-[4px] bg-panel ${CARD_BORDER[cls]}`}>
       <div className={`flex items-center gap-2.5 border-b border-line-soft px-4 py-3 ${CARD_HEAD_BG[cls]}`}>
         <div className={`flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-lg ${CARD_ICON[cls]}`}>
           <span className="h-4 w-4">{icon}</span>

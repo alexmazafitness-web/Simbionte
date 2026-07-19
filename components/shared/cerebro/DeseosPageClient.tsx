@@ -96,7 +96,7 @@ function DeseoCard({
   return (
     <div
       className={`group flex flex-col rounded-xl border border-line-soft bg-panel p-4 transition ${comprado ? "opacity-50" : ""}`}
-      style={{ borderLeft: `3px solid ${color}` }}
+      style={{ borderLeft: `4px solid ${color}` }}
     >
       {deseo.imagenUrl && (
         // eslint-disable-next-line @next/next/no-img-element

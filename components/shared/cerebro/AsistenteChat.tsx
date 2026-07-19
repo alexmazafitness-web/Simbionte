@@ -254,7 +254,7 @@ export function AsistenteChat({ open, onClose }: Props) {
         style={{
           width: 480,
           background: "#111",
-          borderLeft: "1px solid rgba(255,255,255,0.07)",
+          borderLeft: "2px solid rgba(255,255,255,0.07)",
           transform: open ? "translateX(0)" : "translateX(100%)",
           transition: "transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)",
         }}
@@ -262,7 +262,7 @@ export function AsistenteChat({ open, onClose }: Props) {
         {/* Header */}
         <div
           className="flex shrink-0 items-center justify-between px-5 py-4"
-          style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+          style={{ borderBottom: "2px solid rgba(255,255,255,0.06)" }}
         >
           <div className="flex items-center gap-2.5">
             <span style={{ fontSize: 18 }}>✨</span>
@@ -307,8 +307,8 @@ export function AsistenteChat({ open, onClose }: Props) {
                   style={{
                     maxWidth: "92%",
                     background: "#161616",
-                    border: "1px solid rgba(255,255,255,0.06)",
-                    borderLeft: "3px solid rgba(201,169,110,0.45)",
+                    border: "2px solid rgba(255,255,255,0.06)",
+                    borderLeft: "4px solid rgba(201,169,110,0.45)",
                     borderRadius: 10,
                     padding: "10px 14px",
                     fontSize: 13,
@@ -341,7 +341,7 @@ export function AsistenteChat({ open, onClose }: Props) {
                   style={{
                     maxWidth: "80%",
                     background: "#1e1e1e",
-                    border: "1px solid rgba(255,255,255,0.08)",
+                    border: "2px solid rgba(255,255,255,0.08)",
                     borderRadius: 10,
                     padding: "8px 13px",
                     fontSize: 13,
@@ -361,7 +361,7 @@ export function AsistenteChat({ open, onClose }: Props) {
         {!isBusy && messages.length > 0 && (
           <div
             className="shrink-0 px-4 pb-2 pt-2"
-            style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}
+            style={{ borderTop: "2px solid rgba(255,255,255,0.04)" }}
           >
             <div className="flex flex-wrap gap-1.5">
               {QUICK_ACTIONS.map((a) => (
@@ -373,7 +373,7 @@ export function AsistenteChat({ open, onClose }: Props) {
                     fontSize: 11,
                     padding: "4px 10px",
                     borderRadius: 20,
-                    border: "1px solid rgba(255,255,255,0.08)",
+                    border: "2px solid rgba(255,255,255,0.08)",
                     background: "rgba(255,255,255,0.03)",
                     color: "#666",
                     cursor: "pointer",
@@ -392,11 +392,11 @@ export function AsistenteChat({ open, onClose }: Props) {
         {/* Input */}
         <div
           className="shrink-0 px-4 py-3"
-          style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}
+          style={{ borderTop: "2px solid rgba(255,255,255,0.06)" }}
         >
           <div
             className="flex items-end gap-2 rounded-xl px-3 py-2"
-            style={{ background: "#161616", border: "1px solid rgba(255,255,255,0.09)" }}
+            style={{ background: "#161616", border: "2px solid rgba(255,255,255,0.09)" }}
           >
             <textarea
               ref={textareaRef}

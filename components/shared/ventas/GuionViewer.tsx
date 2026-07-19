@@ -104,7 +104,7 @@ export function GuionViewer() {
                 <div key={d.label} className={d.destacado ? "col-span-2" : ""}>
                   <div className="mb-0.5 text-[11px] text-text-dim">{d.label}</div>
                   {d.destacado ? (
-                    <p className="rounded border-l-2 border-gold bg-[rgba(201,169,110,.1)] px-3 py-2 text-[13px] italic text-gold-bright">{d.texto}</p>
+                    <p className="rounded border-l-[3px] border-gold bg-[rgba(201,169,110,.1)] px-3 py-2 text-[13px] italic text-gold-bright">{d.texto}</p>
                   ) : (
                     <p className="text-[13px] leading-relaxed text-gold-bright">{d.texto}</p>
                   )}

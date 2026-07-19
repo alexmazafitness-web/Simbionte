@@ -82,3 +82,16 @@ select {
   padding-bottom: 0.5rem;
   padding-right: 2.5rem;
 }
+
+/* Grosor de borde global +1px sobre el default de Tailwind (1px → 2px).
+   Los anchos explícitos (border-2, border-[Npx], etc.) no se ven afectados
+   por esta capa — se suben aparte en cada sitio donde se usan. */
+@layer utilities {
+  .border   { border-width: 2px; }
+  .border-t { border-top-width: 2px; }
+  .border-r { border-right-width: 2px; }
+  .border-b { border-bottom-width: 2px; }
+  .border-l { border-left-width: 2px; }
+  .border-x { border-left-width: 2px; border-right-width: 2px; }
+  .border-y { border-top-width: 2px; border-bottom-width: 2px; }
+}

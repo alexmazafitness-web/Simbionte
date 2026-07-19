@@ -162,7 +162,7 @@ export function CalendarioPageClient({
                     style={{
                       top, height,
                       backgroundColor: FRONT_COLOR[ev.type] + "18",
-                      borderLeft: `3px solid ${FRONT_COLOR[ev.type]}`,
+                      borderLeft: `4px solid ${FRONT_COLOR[ev.type]}`,
                     }}
                   >
                     <div className="truncate text-[11.5px] font-semibold leading-tight" style={{ color: FRONT_COLOR[ev.type] }}>
@@ -187,7 +187,7 @@ export function CalendarioPageClient({
                     style={{
                       top, height: 40,
                       backgroundColor: FRONT_COLOR[ev.type] + "18",
-                      borderLeft: `3px solid ${FRONT_COLOR[ev.type]}`,
+                      borderLeft: `4px solid ${FRONT_COLOR[ev.type]}`,
                     }}
                   >
                     <div className="truncate text-[11.5px] font-semibold leading-tight" style={{ color: FRONT_COLOR[ev.type] }}>

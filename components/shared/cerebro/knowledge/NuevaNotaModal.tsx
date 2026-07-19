@@ -293,7 +293,7 @@ export function NuevaNotaModal({
       {/* ── PROCESANDO ────────────────────────────────────────────────────── */}
       {step === "procesando" && (
         <div className="flex flex-col items-center gap-4 py-10">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-line border-t-gold" />
+          <div className="h-8 w-8 animate-spin rounded-full border-[3px] border-line border-t-gold" />
           <p className="text-[13px] text-text-dim">
             {isLarga
               ? "Claude está extrayendo el conocimiento valioso… puede tardar unos segundos"

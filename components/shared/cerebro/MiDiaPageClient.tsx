@@ -960,7 +960,7 @@ export function MiDiaPageClient({
                         title={ev.title}
                         onClick={() => setCalModal({ mode: "evento", ev, iso, onClose: () => setCalModal(null) })}
                         className="truncate rounded px-1.5 py-0.5 text-left text-[9.5px] font-semibold text-white transition hover:brightness-110"
-                        style={{ backgroundColor: EVENTO_BG, borderLeft: `2px solid ${EVENTO_BORDER}` }}
+                        style={{ backgroundColor: EVENTO_BG, borderLeft: `3px solid ${EVENTO_BORDER}` }}
                       >
                         {ev.title}
                       </button>
@@ -972,7 +972,7 @@ export function MiDiaPageClient({
                         title={r.text}
                         onClick={() => setCalModal({ mode: "reminder", r, iso, onClose: () => setCalModal(null) })}
                         className="truncate rounded px-1.5 py-0.5 text-left text-[9.5px] font-semibold transition hover:brightness-110"
-                        style={{ backgroundColor: REMINDER_BG, color: "#C9A96E", borderLeft: "2px solid #C9A96E" }}
+                        style={{ backgroundColor: REMINDER_BG, color: "#C9A96E", borderLeft: "3px solid #C9A96E" }}
                       >
                         {r.text}
                       </button>
@@ -1021,7 +1021,7 @@ export function MiDiaPageClient({
                 {/* Drag target indicator */}
                 {dragVisual && dragVisual.iso === iso && (
                   <div
-                    className="pointer-events-none absolute inset-x-0.5 z-10 rounded-md border-2 border-dashed"
+                    className="pointer-events-none absolute inset-x-0.5 z-10 rounded-md border-[3px] border-dashed"
                     style={{
                       top:    GRID_PAD + (Math.max(0, dragVisual.startMin) / 60) * HOUR_H,
                       height: Math.max(18, ((dragVisual.endMin - Math.max(0, dragVisual.startMin)) / 60) * HOUR_H - 2),
@@ -1043,7 +1043,7 @@ export function MiDiaPageClient({
                     <div
                       key={ev.id}
                       className={`absolute left-0.5 right-0.5 select-none overflow-hidden rounded-md px-1.5 py-0.5 transition-opacity ${isDraggingThis ? "opacity-30" : "cursor-grab hover:brightness-110"}`}
-                      style={{ top, height, backgroundColor: style.bg, borderLeft: `3px solid ${style.border}` }}
+                      style={{ top, height, backgroundColor: style.bg, borderLeft: `4px solid ${style.border}` }}
                       onMouseDown={(e) => handleBloquePointerDown(e, ev.id, ev.startMin, ev.endMin, iso)}
                       onClick={(e) => e.stopPropagation()}
                     >
@@ -1073,7 +1073,7 @@ export function MiDiaPageClient({
                     <div
                       key={ev.id}
                       className={`absolute left-0.5 right-0.5 select-none overflow-hidden rounded-md transition-opacity ${isDragging ? "opacity-30" : "hover:brightness-110"}`}
-                      style={{ top, height, backgroundColor: EVENTO_BG, borderLeft: `3px solid ${EVENTO_BORDER}`, cursor: "grab" }}
+                      style={{ top, height, backgroundColor: EVENTO_BG, borderLeft: `4px solid ${EVENTO_BORDER}`, cursor: "grab" }}
                       onMouseDown={(e) => handleEventPointerDown(e, "evento", ev.id, ev, undefined, evStartMin, evEndMin, iso)}
                     >
                       <div className="px-1.5 py-0.5">
@@ -1107,7 +1107,7 @@ export function MiDiaPageClient({
                       <div
                         key={r.id}
                         className={`absolute left-0.5 right-0.5 select-none overflow-hidden rounded-md transition-opacity ${isDragging ? "opacity-30" : "hover:brightness-110"}`}
-                        style={{ top, height: 26, backgroundColor: REMINDER_BG, borderLeft: `3px solid #C9A96E`, cursor: "grab" }}
+                        style={{ top, height: 26, backgroundColor: REMINDER_BG, borderLeft: `4px solid #C9A96E`, cursor: "grab" }}
                         onMouseDown={(e) => handleEventPointerDown(e, "reminder", r.id, undefined, r, rMin, rMin + 30, iso)}
                       >
                         <div className="truncate px-1.5 py-0.5 text-[9.5px] font-semibold text-[#C9A96E]">
@@ -1264,7 +1264,7 @@ export function MiDiaPageClient({
               type="button"
               onClick={() => setAsistenteChatOpen(true)}
               className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-semibold transition hover:brightness-110"
-              style={{ backgroundColor: "rgba(201,169,110,.15)", color: "#C9A96E", border: "1px solid rgba(201,169,110,.25)" }}
+              style={{ backgroundColor: "rgba(201,169,110,.15)", color: "#C9A96E", border: "2px solid rgba(201,169,110,.25)" }}
             >
               <span className="text-[13px] leading-none">👩🏼‍💼</span>
               Asistente

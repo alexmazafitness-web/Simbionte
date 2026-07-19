@@ -153,7 +153,7 @@ export function SesionModo({
   if (step === "procesando") {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-5 bg-[#0f0f0f]">
-        <div className="h-9 w-9 animate-spin rounded-full border-2 border-line border-t-gold" />
+        <div className="h-9 w-9 animate-spin rounded-full border-[3px] border-line border-t-gold" />
         <p className="text-[13px] text-text-dim">
           Claude está integrando {notas.length} nota{notas.length !== 1 ? "s" : ""} de la sesión…
         </p>
@@ -343,7 +343,7 @@ export function SesionModo({
             <p className="text-[13px] text-text-dim">Añade tu primera nota abajo</p>
           </div>
         ) : (
-          <div className="divide-y divide-line-soft">
+          <div className="divide-y-2 divide-line-soft">
             {notas.map((n, i) => (
               <div key={n.id} className="group flex items-start gap-4 py-3.5">
                 <span className="mt-0.5 shrink-0 font-display text-[16px] leading-tight text-gold-dim">
