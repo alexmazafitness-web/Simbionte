@@ -260,6 +260,9 @@ personal.lista_deseos (
   estado text NOT NULL DEFAULT 'pendiente',  -- 'pendiente'|'comprado'
   notas text,
   imagen_url text,
+  -- añadido en 29: precio real pagado, pedido al marcar como comprado;
+  -- se compara con `precio` (estimado) para mostrar ahorro/sobrecoste
+  precio_final numeric(12,2),
   created_at, updated_at
 )
 ```
@@ -640,3 +643,4 @@ coaching.roadmap_subtasks (
 | `26_push_subscriptions.sql` | Notificaciones push | CREATE `personal.push_subscriptions` (endpoint UNIQUE). Cron diario en `vercel.json` (`/api/push/cron`, 6:00 UTC = 8:00 España) manda avisos de revisiones/mesociclos/pagos/onboarding vía `web-push` |
 | `27_all_day.sql` | Calendario | ALTER `personal.events`/`personal.reminders` añaden `all_day`. Franja especial en `calGrid` (CalEventModal + RecordatorioModal), chips en vista Mes; Año conserva solo los puntos de color existentes |
 | `28_onboarding_mensajes.sql` | Onboarding | CREATE `coaching.onboarding_mensajes` (plantillas D0/D3/S1/MES1 editables, UNIQUE owner_id+etapa) + seed con los 4 mensajes reales. Pantalla `/coaching/onboarding` añade "Guía de pasos" (timeline de referencia) y "Mensajes predefinidos" (edición inline + copiar con sustitución de `[nombre]`) junto al seguimiento por cliente ya existente; `ONBOARDING_PASOS` se reescribió con la redacción real de los pasos |
+| `29_deseos_precio_final.sql` | Lista de deseos | ALTER `personal.lista_deseos` añade `precio_final`. Al marcar un deseo como comprado se pide el precio final (`ConfirmarCompraModal.tsx`) y se muestra ahorro/sobrecoste comparando con `precio` (estimado); al desmarcar, `precio_final` vuelve a `null` |

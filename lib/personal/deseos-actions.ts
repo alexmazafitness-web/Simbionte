@@ -85,9 +85,13 @@ export async function editarDeseo(id: string, input: DeseoInput) {
   revalidatePath(PATH);
 }
 
-export async function cambiarEstadoDeseo(id: string, estado: DeseoEstado) {
+export async function cambiarEstadoDeseo(id: string, estado: DeseoEstado, precioFinal?: number | null) {
   const supabase = await createClient();
-  const { error } = await supabase.schema("personal").from("lista_deseos").update({ estado }).eq("id", id);
+  const { error } = await supabase
+    .schema("personal")
+    .from("lista_deseos")
+    .update({ estado, precio_final: estado === "comprado" ? (precioFinal ?? null) : null })
+    .eq("id", id);
   if (error) throw error;
   revalidatePath(PATH);
 }

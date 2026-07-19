@@ -30,7 +30,7 @@ export async function listDeseos(): Promise<DeseoVM[]> {
   const { data, error } = await supabase
     .schema("personal")
     .from("lista_deseos")
-    .select("id, nombre, categoria_id, precio, link, prioridad, estado, notas, imagen_url, created_at")
+    .select("id, nombre, categoria_id, precio, precio_final, link, prioridad, estado, notas, imagen_url, created_at")
     .order("created_at", { ascending: false });
   if (error) throw error;
   return data.map((row) => ({
@@ -38,6 +38,7 @@ export async function listDeseos(): Promise<DeseoVM[]> {
     nombre:      row.nombre,
     categoriaId: row.categoria_id,
     precio:      row.precio !== null ? Number(row.precio) : null,
+    precioFinal: row.precio_final !== null ? Number(row.precio_final) : null,
     link:        row.link,
     prioridad:   row.prioridad as DeseoPrioridad,
     estado:      row.estado as DeseoEstado,

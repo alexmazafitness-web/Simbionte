@@ -13,11 +13,20 @@ import {
   type DeseoInput,
 } from "@/lib/personal/deseos-actions";
 import { DeseoModal } from "./DeseoModal";
+import { ConfirmarCompraModal } from "./ConfirmarCompraModal";
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "2-digit" });
+}
+
+function ahorroInfo(deseo: DeseoVM): { texto: string; cls: string } | null {
+  if (deseo.estado !== "comprado" || deseo.precioFinal == null || deseo.precio == null) return null;
+  const diff = deseo.precio - deseo.precioFinal;
+  if (diff > 0) return { texto: `Ahorraste ${fmtEUR(diff, 2)}`, cls: "text-ok" };
+  if (diff < 0) return { texto: `+${fmtEUR(Math.abs(diff), 2)} sobre lo previsto`, cls: "text-bad" };
+  return { texto: "Pagaste el precio previsto", cls: "text-text-dim" };
 }
 
 // ── CatRow (mismo patrón visual que Knowledge) ───────────────────────────────
@@ -77,6 +86,7 @@ function DeseoCard({
   const [confirmDel, setConfirmDel] = useState(false);
   const color = PRIORIDAD_COLOR[deseo.prioridad];
   const comprado = deseo.estado === "comprado";
+  const ahorro = ahorroInfo(deseo);
 
   function handleDelete() {
     if (!confirmDel) { setConfirmDel(true); return; }
@@ -131,7 +141,17 @@ function DeseoCard({
         </div>
       </div>
 
-      {deseo.precio != null && <p className="mb-1.5 text-[13px] font-semibold text-gold-dim">{fmtEUR(deseo.precio, 2)}</p>}
+      {comprado && deseo.precioFinal != null ? (
+        <div className="mb-1 flex flex-wrap items-center gap-1.5">
+          <span className="text-[13px] font-semibold text-gold-dim">{fmtEUR(deseo.precioFinal, 2)}</span>
+          {deseo.precio != null && deseo.precio !== deseo.precioFinal && (
+            <span className="text-[11px] text-text-dim line-through">{fmtEUR(deseo.precio, 2)}</span>
+          )}
+        </div>
+      ) : (
+        deseo.precio != null && <p className="mb-1.5 text-[13px] font-semibold text-gold-dim">{fmtEUR(deseo.precio, 2)}</p>
+      )}
+      {ahorro && <p className={`mb-1.5 text-[11.5px] font-semibold ${ahorro.cls}`}>{ahorro.texto}</p>}
       {deseo.notas && <p className="mb-2.5 text-[12px] text-text-2">{deseo.notas}</p>}
 
       <div className="mt-auto flex flex-wrap items-center gap-2 pt-1">
@@ -169,6 +189,7 @@ export function DeseosPageClient({
   const [filtroPrioridad, setFiltroPrioridad] = useState<DeseoPrioridad | "todas">("todas");
   const [filtroEstado, setFiltroEstado]       = useState<DeseoEstado | "todos">("todos");
   const [modal, setModal]                     = useState<ModalState>(null);
+  const [confirmandoCompraId, setConfirmandoCompraId] = useState<string | null>(null);
   const [editingCatId, setEditingCatId]       = useState<string | null>(null);
   const [editDraft, setEditDraft]             = useState({ emoji: "", nombre: "" });
   const [addEmoji, setAddEmoji]               = useState("📌");
@@ -286,7 +307,11 @@ export function DeseosPageClient({
                     deseo={d}
                     catLabel={cat ? `${cat.emoji ?? ""} ${cat.nombre}`.trim() : null}
                     onEdit={() => setModal({ type: "detalle", id: d.id })}
-                    onToggleEstado={() => run(() => cambiarEstadoDeseo(d.id, d.estado === "comprado" ? "pendiente" : "comprado"))}
+                    onToggleEstado={() =>
+                      d.estado === "comprado"
+                        ? run(() => cambiarEstadoDeseo(d.id, "pendiente"))
+                        : setConfirmandoCompraId(d.id)
+                    }
                     onDelete={() => run(() => eliminarDeseo(d.id))}
                   />
                 );
@@ -309,6 +334,17 @@ export function DeseosPageClient({
           run(() => (deseoDetalle ? editarDeseo(deseoDetalle.id, input) : crearDeseo(input)), () => setModal(null))
         }
         onDelete={deseoDetalle ? () => run(() => eliminarDeseo(deseoDetalle.id), () => setModal(null)) : undefined}
+      />
+
+      <ConfirmarCompraModal
+        key={confirmandoCompraId ?? "confirmar-closed"}
+        open={confirmandoCompraId !== null}
+        deseo={confirmandoCompraId ? (deseos.find((d) => d.id === confirmandoCompraId) ?? null) : null}
+        pending={pending}
+        onClose={() => setConfirmandoCompraId(null)}
+        onConfirm={(precioFinal) => {
+          if (confirmandoCompraId) run(() => cambiarEstadoDeseo(confirmandoCompraId, "comprado", precioFinal));
+        }}
       />
 
       <Modal open={modal?.type === "addCat"} onClose={() => setModal(null)} title="Nueva categoría">

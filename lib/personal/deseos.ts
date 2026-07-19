@@ -27,6 +27,7 @@ export type DeseoVM = {
   nombre: string;
   categoriaId: string | null;
   precio: number | null;
+  precioFinal: number | null;
   link: string | null;
   prioridad: DeseoPrioridad;
   estado: DeseoEstado;
